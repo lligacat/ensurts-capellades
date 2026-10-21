@@ -63,6 +63,7 @@
   <h1 id="fTitol">S'HA ACABAT!</h1>
   <div class="resultat" id="fPunts">0</div>
   <p class="titol-rang" id="fRang"></p>
+  <p class="titol-rang" id="fRamon" style="color:#ffe14d"></p>
   <p class="sub" id="fDetall"></p>
   <div class="fila">
     <button class="boto" id="bRepetir">TORNA-HI</button>
@@ -104,7 +105,7 @@ const PERSONATGES = [
 // ---------- Armes que es troben pel carrer ----------
 const ARMES = {
   tambor:    { nom: 'TAMBOR', curt: 'TAMBOR', dany: 1, usos: 8, rec: 0.5, radi: 170, mult: 1.5, policia: 'glaca', durPol: 2.5, crit: 'BOM BOM BOM!', color: '#ffb347' },
-  altaveu:   { nom: 'ALTAVEU', curt: 'RAMUN', dany: 2, usos: 5, rec: 1.4, radi: 270, mult: 2, policia: 'glaca', durPol: 3.5, crit: 'HOLAAA EM DIC RAMUUUN!', color: '#ffe14d' },
+  altaveu:   { nom: 'ALTAVEU', curt: 'RAMUN', dany: 2, usos: 5, rec: 1.4, radi: 270, mult: 2, policia: 'glaca', durPol: 3.5, crit: 'HOLAAA EM DIC RAMOOOON!', color: '#ffe14d' },
   sogres:    { nom: 'ESPANTA-SOGRES', curt: 'PRRRI', dany: 1, usos: 12, rec: 0.3, radi: 200, con: true, mult: 1.5, policia: 'glaca', durPol: 1.6, crit: 'PRRRIIIII!', color: '#7fe0ff' },
   motoserra: { nom: 'MOTOSERRA', curt: 'RRRN', dany: 3, usos: 6, rec: 0.8, radi: 150, mult: 3, policia: 'fuig', durPol: 5, crit: 'RRRRNNNNNN!', color: '#ff6a3d' },
 };
@@ -151,19 +152,34 @@ function so(tipus) {
     if (tipus === 'tambor') for (let i = 0; i < 3; i++) osc('sine', 130, 45, 0.18, 0.35, i * 0.14);
     if (tipus === 'sogres') osc('square', 700, 1500, 0.45, 0.06);
     if (tipus === 'motoserra') { osc('sawtooth', 85, 140, 0.9, 0.12); osc('square', 60, 70, 0.9, 0.05); }
-    if (tipus === 'altaveu') {
-      osc('square', 320, 260, 1.4, 0.04);
-      if ('speechSynthesis' in window) {
-        const u = new SpeechSynthesisUtterance('Holaaaa, em dic Ramuuuun!');
-        u.lang = 'ca-ES'; u.rate = 0.8; u.pitch = 0.5; u.volume = 1;
-        speechSynthesis.cancel(); speechSynthesis.speak(u);
-      }
-    }
+    if (tipus === 'altaveu') { osc('square', 320, 260, 0.25, 0.04); parlaRamon(true); }
     if (tipus === 'boom') { osc('sawtooth', 120, 30, 1.4, 0.3); osc('square', 60, 25, 1.6, 0.2); }
     if (tipus === 'enfadat') { osc('sawtooth', 110, 70, 0.5, 0.15); osc('square', 140, 90, 0.4, 0.06, 0.05); }
     if (tipus === 'cop') { osc('square', 180, 60, 0.15, 0.2); }
     if (tipus === 'ko') { osc('square', 800, 200, 0.4, 0.08); osc('triangle', 300, 60, 0.6, 0.2, 0.1); }
     if (tipus === 'metxa') osc('square', 1200, 1100, 0.05, 0.02);
+  } catch (e) {}
+}
+
+// La veu de «Holaaa, em dic Ramooon» (àudio gravat, perquè soni igual a tots els aparells)
+let veuRamon = null, bytesRamon = null;
+fetch('ramon.wav').then(r => r.arrayBuffer()).then(b => { bytesRamon = b; }).catch(() => {});
+function parlaRamon(megafon) {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === 'suspended') ac.resume();
+    const sona = buf => {
+      const src = ac.createBufferSource(); src.buffer = buf; src.playbackRate.value = megafon ? 0.9 : 0.82;
+      const vol = ac.createGain(); vol.gain.value = 1.4;
+      if (megafon) { // so d'altaveu: sense greus ni aguts
+        const f1 = ac.createBiquadFilter(); f1.type = 'highpass'; f1.frequency.value = 450;
+        const f2 = ac.createBiquadFilter(); f2.type = 'lowpass'; f2.frequency.value = 3200;
+        src.connect(f1); f1.connect(f2); f2.connect(vol);
+      } else src.connect(vol);
+      vol.connect(ac.destination); src.start();
+    };
+    if (veuRamon) sona(veuRamon);
+    else if (bytesRamon) ac.decodeAudioData(bytesRamon.slice(0)).then(buf => { veuRamon = buf; sona(buf); });
   } catch (e) {}
 }
 
@@ -753,6 +769,8 @@ function actualitza(dt) {
 function perdVida(txt) {
   J.vides--; so('ferit'); J.tremolor = .5;
   textFlotant(J.jug.x, J.jug.y - 92, txt, '#ff5c5c', 14);
+  // L'últim crit del personatge
+  parlaRamon(false);
   J.bales = [];
   for (const a of J.agents) { a.estat = 'patrulla'; a.cami = []; }
   // El novio, satisfet, se'n torna amb la novia
@@ -761,6 +779,7 @@ function perdVida(txt) {
   if (J.vides <= 0) return final("T'HAN ENXAMPAT!");
   anunci(txt + ' ET QUEDEN ' + J.vides + (J.vides === 1 ? ' VIDA' : ' VIDES'), 1.8);
   J.jug.x = 4.5 * TS; J.jug.y = 5.5 * TS; J.jug.invul = 2.5; J.combo = 1;
+  J.textos.push({ x: J.jug.x, y: J.jug.y - 110, txt: 'HOLAAA EM DIC RAMOOOON!', color: '#ffe14d', mida: 12, t: 2.6 });
 }
 
 const RANGS = [[0, 'Aprenent de fantasma'], [2000, 'Ensurtador de barri'], [5000, 'Terror de La Bassa'], [9000, 'Malson del Molí Paperer'], [14000, "Llegenda de l'Abric Romaní"]];
@@ -768,6 +787,7 @@ function final(titol) {
   estat = 'final'; document.body.classList.remove('jugant');
   let millor = 0; try { millor = +localStorage.getItem('ensurts-millor') || 0; if (J.punts > millor) localStorage.setItem('ensurts-millor', J.punts); } catch (e) {}
   document.getElementById('fTitol').textContent = titol;
+  document.getElementById('fRamon').textContent = J.vides <= 0 ? '«HOLAAA EM DIC RAMOOOON!»' : '';
   document.getElementById('fPunts').textContent = J.punts + ' PUNTS';
   document.getElementById('fRang').textContent = triat.nom.toUpperCase() + ': ' + RANGS.filter(r => J.punts >= r[0]).pop()[1].toUpperCase();
   document.getElementById('fDetall').innerHTML = J.espantades + ' parelles espantades · ' + J.bodes + (J.bodes === 1 ? ' boda cancel·lada' : ' bodes cancel·lades') +
