@@ -102,7 +102,7 @@ function construeix(nom) {
   sc.fog = new THREE.Fog(horitzo, interior ? 6 : vic ? 4 : 8, interior ? 30 : vic ? 26 : 42);
   sc.background = new THREE.Color(horitzo);
   // Terra: el mateix mapa dibuixat, però sense edificis ni arbres
-  const terra = pintaMapa(m, nom, true).fons;
+  const terra = terraReduida(nom);
   const tt = textura(terra); tt.repeat.set(1, 1); tt.wrapS = tt.wrapT = THREE.ClampToEdgeWrapping;
   const sol = new THREE.Mesh(new THREE.PlaneGeometry(MW, MH), mat({ map: tt, roughness: .95 }));
   sol.rotation.x = -Math.PI / 2; sol.position.set(MW / 2, 0, MH / 2); sol.receiveShadow = true; sc.add(sol);
@@ -138,7 +138,17 @@ function construeix(nom) {
 
   // Edificis: cada bloc de caselles iguals es fa amb una sola caixa
   const vist = Array.from({ length: MH }, () => Array(MW).fill(false));
-  const solids = new Set([C.EDIF, C.GARATGE, C.ESGL, C.MOLI, C.ROCA, C.PARET, C.TANCA, C.ALTAVEU, C.ESCENARI, C.PORTA, C.BUIT]);
+  M.rocaMat = mat({ map: textura(pedra, 1, 2), color: 0xd8b48a, roughness: 1, flatShading: true });
+  const solids = new Set([C.EDIF, C.GARATGE, C.ESGL, C.MOLI, C.ROCA, C.PARET, C.TANCA, C.ALTAVEU, C.ESCENARI, C.PORTA, C.BUIT, C.SAGRADA, C.GLORIES, C.PEDRERA, C.ESTADI, C.MONESTIR, C.BOSC]);
+  // Montserrat: agulles de roca altes, una per casella, en lloc d'un bloc pla
+  if (nom === 'capellades') for (let y = 30; y < MH; y++) for (let x = 0; x < MW; x++) {
+    if (m[y][x] !== C.ROCA) continue;
+    vist[y][x] = true;
+    const alt = 1.6 + hash(x * 5, y * 3) * 4.5, r = .45 + hash(y, x) * .25;
+    M.cubells.has(M.rocaMat) || M.cubells.set(M.rocaMat, { geos: [], ombra: true });
+    M.cubells.get(M.rocaMat).geos.push(new THREE.CylinderGeometry(r * .55, r, alt, 7).translate(x + .5, alt / 2, y + .5));
+    M.cubells.get(M.rocaMat).geos.push(new THREE.SphereGeometry(r * .58, 7, 5).translate(x + .5, alt, y + .5));
+  }
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
     const t = m[y][x]; if (vist[y][x] || !solids.has(t)) continue;
     // rectangle més gran possible del mateix tipus a partir d'aquí
@@ -172,12 +182,19 @@ function construeix(nom) {
   }
   // Aigua
   let aigua = null;
-  const aig = []; for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) if (m[y][x] === C.AIGUA) aig.push([x, y]);
+  const aig = []; for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) if (m[y][x] === C.AIGUA || m[y][x] === C.MAR) aig.push([x, y]);
   if (aig.length) {
     const to = textura(texOnes(), 1, 1);
     aigua = mat({ map: to, color: 0x8fc0e0, roughness: .08, metalness: .35, transparent: true, opacity: .92 });
     const pl = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), aigua, aig.length), tm = new THREE.Matrix4();
     aig.forEach(([x, y], i) => { tm.makeTranslation(x + .5, .02, y + .5); pl.setMatrixAt(i, tm); }); pl.receiveShadow = true; sc.add(pl);
+  }
+  // Rètols dels locals temàtics sobre la porta
+  for (const l of LOCALS[nom] || []) {
+    const T = TIPUS_LOCAL[l.tipus];
+    const rt = llenç(512, 96, (g) => { g.fillStyle = '#141414'; g.fillRect(0, 0, 512, 96); g.strokeStyle = T.color; g.lineWidth = 8; g.strokeRect(6, 6, 500, 84); g.fillStyle = '#fff'; g.font = 'bold 40px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(T.nom, 256, 50); });
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(2.2, .42), new THREE.MeshBasicMaterial({ map: textura(rt), toneMapped: false }));
+    pl.position.set(l.x, 1.2, Math.floor(l.y) + .02); sc.add(pl);
   }
   // Fanals al llarg de les voreres
   if (!zona) {
@@ -213,6 +230,11 @@ function caixaUV(w, alt, h, rx) {
 // Les peces de tots els edificis s'agrupen per material i al final es fusionen en poques malles (molt més ràpid)
 const MAT_CORNISA = mat({ color: 0xd8cfbf }), MAT_XEMENEIA = mat({ color: 0x9a5a40 }), MAT_PUNXA = mat({ color: 0x6e6656, flatShading: true });
 const MAT_ESCENARI = mat({ color: 0x3a2a1f }), MAT_BUIT = mat({ color: 0x111111 });
+const MAT_COLORS = [0xe63946, 0xf2c230, 0x2a9d8f].map(c => mat({ color: c, emissive: c, emissiveIntensity: .25 }));
+const MAT_GLORIES = mat({ color: 0x4f86c6, emissive: 0x1d4f9a, emissiveIntensity: .45, roughness: .25, metalness: .5, side: THREE.DoubleSide });
+const MAT_PEDRERA = mat({ color: 0xf1ebdd, roughness: .8 });
+const MAT_ESTADI = mat({ color: 0xa50044, roughness: .7 });
+const MAT_PI = mat({ color: 0x24502a, flatShading: true });
 function fusiona(geos) {
   const parts = geos.map(g => g.index ? g.toNonIndexed() : g);
   const total = parts.reduce((a, g) => a + g.attributes.position.count, 0), out = new THREE.BufferGeometry();
@@ -261,6 +283,28 @@ function afegeixBloc(sc, t, x, y, w, h, M) {
   } else if (t === C.TANCA || t === C.PORTA) {
     caixa(1.2, matDe(t === C.PORTA ? M.porta : M.tanca, { transparent: true, alphaTest: .4, side: THREE.DoubleSide, color: t === C.PORTA ? 0xffd23f : 0xffffff }), 0, 1, false);
   } else if (t === C.ALTAVEU) { caixa(nomGran(M.nom, y) ? 2.2 : 1.6, matDe(M.altaveu, { roughness: .7 }));
+  } else if (t === C.SAGRADA) { // basílica amb torres altes de pedra
+    caixa(1.6, matDe(M.pedra), 0, 2);
+    const torres = [[.15, .2, 6.5], [.38, .1, 7.5], [.62, .1, 7.5], [.85, .2, 6.5], [.42, .62, 8.6], [.58, .62, 8.6], [.5, .45, 10], [.2, .9, 5], [.8, .9, 5]];
+    for (const [fx, fz, alt] of torres) {
+      const tx = x + fx * w, tz = y + fz * h;
+      posa(new THREE.CylinderGeometry(.22, .34, alt, 9).translate(tx, alt / 2, tz), matDe(M.pedra));
+      posa(new THREE.ConeGeometry(.24, .9, 9).translate(tx, alt + .45, tz), MAT_PUNXA);
+      posa(new THREE.SphereGeometry(.13, 8, 6).translate(tx, alt + .95, tz), MAT_COLORS[Math.floor(alt) % 3]);
+    }
+  } else if (t === C.GLORIES) { // torre en forma de bala amb llums de colors
+    posa(new THREE.CylinderGeometry(w * .5, w * .55, 7, 24, 1, true).translate(cx0, 3.5, cz), MAT_GLORIES);
+    posa(new THREE.SphereGeometry(w * .5, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 1.4, 1).translate(cx0, 7, cz), MAT_GLORIES);
+  } else if (t === C.PEDRERA) { // façana blanca ondulada amb xemeneies guerreres
+    for (let i = 0; i < 6; i++) posa(caixaUV(w + Math.sin(i * 1.3) * .3, .5, h + Math.cos(i) * .25, 1).translate(cx0, .25 + i * .5, cz), MAT_PEDRERA);
+    for (let i = 0; i < 8; i++) posa(new THREE.ConeGeometry(.15, .6, 6).translate(x + .5 + hash(i, 4) * (w - 1), 3.3, y + .5 + hash(4, i) * (h - 1)), MAT_CORNISA);
+  } else if (t === C.ESTADI) { caixa(2.2, MAT_ESTADI, 0, 3);
+  } else if (t === C.MONESTIR) {
+    caixa(2.4, matDe(M.pedra), 0, 3);
+    posa(new THREE.ConeGeometry(Math.SQRT1_2, .7, 4).rotateY(Math.PI / 4).scale(w + .2, 1, h + .2).translate(cx0, 2.75, cz), MAT_PUNXA);
+  } else if (t === C.BOSC) { // vores del món: arbres alts
+    if (M.nom === 'muntanya') return;
+    for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) posa(new THREE.ConeGeometry(.5, 2, 7).translate(xx + .5, 1.6, yy + .5), MAT_PI);
   } else if (t === C.ESCENARI) { caixa(.6, MAT_ESCENARI);
   } else if (t === C.BUIT) { caixa(1.3, MAT_BUIT); }
 }
@@ -304,6 +348,8 @@ export function inicia() {
   preparaTextures();
 }
 
+export function invalida(nom) { const e = escenes.get(nom); if (e) { escenes.delete(nom); setTimeout(() => e.sc.traverse(o => { if (o.geometry) o.geometry.dispose(); }), 0); } }
+
 export function amaga() { if (canvas3d) canvas3d.style.display = 'none'; }
 
 export function dibuixa(w, h) {
@@ -331,13 +377,13 @@ export function dibuixa(w, h) {
   }
   if (E.aigua) E.aigua.map.offset.set(t * .02, t * .013);
   // Cotxes
-  const llista = [...J.cotxes, J.vila, J.subi].filter(c => c && c !== j.cotxe);
+  const llista = [...J.cotxes, J.vila, J.subi, J.carro].filter(c => c && c !== j.cotxe);
   if (!J.zona) llista.push({ x: TAXI.x, y: TAXI.y, ang: 0, tipus: 'taxi', color: '#f2c230' });
   while (E.cotxes.length < llista.length) { const c = cotxe3d(); E.sc.add(c); E.cotxes.push(c); }
   E.cotxes.forEach((m, i) => {
     const c = llista[i]; m.visible = !!c; if (!c) return;
     m.position.set(c.x / TS, 0, c.y / TS); m.rotation.y = -(c.ang || 0);
-    const col = c.tipus === 'policia' ? '#f4f6fa' : c.tipus === 'subineta' ? '#2c5aa0' : c.tipus === 'vilamovil' ? '#f7f7f2' : c.color;
+    const col = c.tipus === 'policia' ? '#f4f6fa' : c.tipus === 'subineta' ? '#2c5aa0' : c.tipus === 'vilamovil' ? '#f7f7f2' : c.tipus === 'carromato' ? '#0d0d10' : c.color;
     m.userData.cos.color.set(col); m.scale.setScalar(c.tipus === 'subineta' ? 1.25 : 1);
     m.userData.llum.visible = c.tipus === 'policia'; if (c.tipus === 'policia') m.userData.llum.material.color.set(Math.floor(t * 6) % 2 ? 0xff2d2d : 0x2d6bff), m.userData.llum.material.emissive.copy(m.userData.llum.material.color);
   });
