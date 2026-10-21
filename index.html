@@ -198,6 +198,12 @@ function so(tipus) {
     if (tipus === 'aigua') { osc('triangle', 900, 180, .5, .12); osc('sine', 300, 120, .4, .1, .1); }
     if (tipus === 'tabal') { const k = (Math.floor(ac.currentTime / .42) % 4); osc('sine', k === 3 ? 140 : 95, 45, .2, k === 3 ? .35 : .25); }
     if (tipus === 'foc') { osc('sawtooth', 300, 60, .5, .06); osc('square', 1800, 900, .15, .03); }
+    if (tipus === 'pas') osc('triangle', 150, 70, .05, .03);
+    if (tipus === 'punts') { osc('square', 880, 880, .06, .04); osc('square', 1320, 1320, .09, .04, .06); }
+    if (tipus === 'clic') osc('square', 640, 640, .04, .04);
+    if (tipus === 'porta') { osc('triangle', 240, 140, .15, .1); osc('square', 90, 60, .1, .06, .12); }
+    if (tipus === 'rebot') osc('square', 1600, 500, .06, .015);
+    if (tipus === 'xerra') { const greu = Math.random() < .5 ? 1 : 1.7; for (let i = 0; i < 4 + Math.floor(Math.random() * 3); i++) { const fr = (150 + Math.random() * 180) * greu; osc(i % 2 ? 'triangle' : 'square', fr, fr * (.9 + Math.random() * .3), .055, .025, i * .07); } }
     if (tipus === 'metxa') osc('square', 1200, 1100, 0.05, 0.02);
   } catch (e) {}
 }
@@ -225,6 +231,47 @@ function clip(nom, megafon, rate, volum = 1.4) {
   } catch (e) {}
 }
 
+// Cançó de fons i soroll de motor mentre vas en vespa o en Vilamovil
+const COND = { musica: null, motor: null, oscMotor: null, filtre: null, font: null, buffer: null, bytes: null, actiu: false, desxifrant: false };
+fetch('conduir.m4a').then(r => r.arrayBuffer()).then(b => { COND.bytes = b; }).catch(() => {});
+function soConduir(actiu, vel) {
+  if (!ac) return;
+  const t = ac.currentTime;
+  if (actiu && !COND.musica) {
+    COND.musica = ac.createGain(); COND.musica.gain.value = 0; COND.musica.connect(ac.destination);
+    COND.motor = ac.createGain(); COND.motor.gain.value = 0; COND.motor.connect(ac.destination);
+    COND.filtre = ac.createBiquadFilter(); COND.filtre.type = 'lowpass'; COND.filtre.frequency.value = 380; COND.filtre.connect(COND.motor);
+    COND.oscMotor = ac.createOscillator(); COND.oscMotor.type = 'sawtooth'; COND.oscMotor.frequency.value = 45; COND.oscMotor.connect(COND.filtre); COND.oscMotor.start();
+  }
+  if (!COND.musica) return;
+  COND.actiu = actiu;
+  const arrenca = buf => { if (COND.font || !COND.actiu) return; const src = ac.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(COND.musica); src.start(); COND.font = src; };
+  if (actiu && !COND.font) {
+    if (COND.buffer) arrenca(COND.buffer);
+    else if (COND.bytes && !COND.desxifrant) { COND.desxifrant = true; ac.decodeAudioData(COND.bytes.slice(0)).then(b => { COND.buffer = b; arrenca(b); }).catch(() => {}); }
+  }
+  const k = Math.min(1, vel / 300);
+  COND.musica.gain.setTargetAtTime(actiu ? .5 : 0, t, actiu ? .3 : .4);
+  COND.motor.gain.setTargetAtTime(actiu ? .045 + k * .05 : 0, t, .15);
+  COND.oscMotor.frequency.setTargetAtTime(40 + k * 85, t, .12);
+  if (!actiu && COND.font) { const font = COND.font; COND.font = null; setTimeout(() => { try { font.stop(); } catch (e) {} }, 1600); }
+}
+
+// Remor de gent (la Patum, el festival i la rave)
+const REMOR = { guany: null };
+function soRemor(nivell) {
+  if (!ac) return;
+  if (!REMOR.guany) {
+    const buf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    const fl = ac.createBiquadFilter(); fl.type = 'bandpass'; fl.frequency.value = 700; fl.Q.value = .8;
+    REMOR.guany = ac.createGain(); REMOR.guany.gain.value = 0;
+    src.connect(fl); fl.connect(REMOR.guany); REMOR.guany.connect(ac.destination); src.start();
+  }
+  REMOR.guany.gain.setTargetAtTime(nivell, ac.currentTime, .4);
+}
+
 // Música drum'n'bass de la rave (174 BPM), feta amb l'àudio del navegador
 const DNB = { sortida: null, seguent: 0, pas: 0, soroll: null };
 function musicaRave(vol) {
@@ -234,7 +281,7 @@ function musicaRave(vol) {
     DNB.soroll = ac.createBuffer(1, ac.sampleRate * .3, ac.sampleRate);
     const d = DNB.soroll.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   }
-  DNB.sortida.gain.setTargetAtTime(vol * .45, ac.currentTime, .15);
+  DNB.sortida.gain.setTargetAtTime(vol * .6, ac.currentTime, .15);
   if (vol <= .01) return;
   const sem = 60 / 174 / 4;
   if (DNB.seguent < ac.currentTime) DNB.seguent = ac.currentTime + .05;
@@ -656,7 +703,12 @@ function novaParella(tipus) {
   if (tipus === 'valents') { base.valor = 3; base.a.ulleres = base.b.ulleres = true; }
   if (tipus === 'gelos') { base.b.cuirassat = true; base.b.roba = '#c62828'; }
   if (tipus === 'calents' || tipus === 'tenda') { base.a.banyador = tria(ROBA); base.b.banyador = tria(ROBA); }
-  if (tipus === 'raver') { base.sol = true; base.a.roba = tria(NEO); base.a.raver = tria(NEO); base.ball = Math.random() * 6; return base; }
+  if (tipus === 'raver') {
+    base.sol = true; base.a.roba = tria(NEO); base.a.raver = Math.random() < .6 ? tria(NEO) : null; base.ball = Math.random() * 6;
+    base.a.rastes = Math.random() < .45; base.a.fuma = Math.random() < .3;
+    if (base.a.rastes) base.a.cabell = tria(['#3a2416', '#5a3a22', '#8b6a3e', '#c99a4a']);
+    return base;
+  }
   if (tipus === 'festi') { base.sol = Math.random() < .35; base.ball = Math.random() * 6; base.a.roba = tria(['#111', '#2e2e2e', '#7a1f1f', ...ROBA]); return base; }
   if (tipus === 'tenda' || tipus === 'llit' || tipus === 'banyera' || tipus === 'sofa' || tipus === 'patum') return base;
   if (tipus === 'calents') { const a = Math.random() * TAU; base.fx = Math.cos(a); base.fy = Math.sin(a); return Object.assign(base, casellaLluny(480)); }
@@ -699,6 +751,7 @@ function comenca(p) {
     cotxes: [], vila: null, tVila: 8, tPoliCotxe: 0, subi: null, tSubi: 30, vespes: [], tBici: 5, punxades: 0,
   };
   J.zona = null; J.exterior = null; J.teoAbrilFet = false; J.quadres = 0; J.pintors = []; J.multitud = []; J.gegants = []; J.focs = []; J.guita = null;
+  J.brossa = null;
   J.ciutat = 'capellades'; J.control = []; J.tendes = []; J.raveApagada = false; J.festiEnces = false; J.festiBuit = false; J.tRamon = 0; J.tTenda = 8; J.viatges = 0;
   portaOberta = false;
   entraCiutat('capellades', false);
@@ -766,14 +819,14 @@ function entraZona(zona, portal) {
   j.x = ZONES[zona].inici.x; j.y = ZONES[zona].inici.y;
   if (zona === 'casa') poblaCasa();
   if (zona === 'patum') poblaPatum();
-  anunci(ZONES[zona].nom, 1.6); so('agafar');
+  anunci(ZONES[zona].nom, 1.6); so('porta');
 }
 
 function sortirZona() {
   const e = J.exterior, j = J.jug;
   J.zona = null; activaCiutat(e.ciutat);
   Object.assign(J, { parelles: e.parelles, agents: e.agents, matons: e.matons, cotxes: e.cotxes, armes: e.armes, vespes: e.vespes, vila: e.vila, subi: e.subi, pintors: e.pintors, bales: [], particules: [], textos: [], ones: [], multitud: [], gegants: [], focs: [], guita: null });
-  j.x = e.x; j.y = e.y; J.exterior = null; so('agafar');
+  j.x = e.x; j.y = e.y; J.exterior = null; so('porta');
 }
 
 function parellaA(tipus, x, y, fx, fy) { return Object.assign(novaParella(tipus), { x, y, fx: fx || 0, fy: fy ?? 1 }); }
@@ -879,7 +932,7 @@ function vespaPropera() {
   return J.vespes.find(v => !v.ocupada && !v.reservada && Math.hypot(v.x - j.x, v.y - j.y) < 60) || null;
 }
 function pujaVespa(v) { const j = J.jug; j.vespa = v; v.ocupada = j; j.x = v.x; j.y = v.y; so('vespa'); textFlotant(j.x, j.y - 90, 'BRRRUM!', '#fff', 11); }
-function baixaVespa() { const j = J.jug, v = j.vespa; if (!v) return; v.ocupada = null; j.vespa = null; }
+function baixaVespa() { const j = J.jug, v = j.vespa; if (!v) return; so('porta'); v.ocupada = null; j.vespa = null; }
 function baixaAgentVespa(a) { if (a.vespa) { a.vespa.ocupada = null; a.vespa = null; } }
 
 function casellaDe(filtre) {
@@ -894,6 +947,11 @@ function poblaVic() {
   if (!J.raveApagada) {
     const pista = casellaDe((x, y, t) => t === C.RAVE && y >= 7);
     for (let i = 0; i < 26; i++) { const [tx, ty] = tria(pista); J.parelles.push(Object.assign(novaParella('raver'), { x: (tx + .2 + Math.random() * .6) * TS, y: (ty + .2 + Math.random() * .6) * TS })); }
+  }
+  // La rave fa fàstic: llaunes, gots, burilles, bosses i taques per tot arreu
+  if (!J.brossa) {
+    const terra = casellaDe((x, y, t) => t === C.RAVE || t === C.PORTA);
+    J.brossa = Array.from({ length: 170 }, () => { const [tx, ty] = tria(terra); return { x: (tx + Math.random()) * TS, y: (ty + Math.random()) * TS, tipus: tria(['llauna', 'llauna', 'got', 'got', 'burilla', 'burilla', 'ampolla', 'bossa', 'pastilla', 'taca', 'taca', 'paper']), a: Math.random() * TAU, c: tria(['#d62828', '#2e86de', '#f2c230', '#2fd38a', '#fff']) }; });
   }
   // Cabró Rock: multitud al voltant de l'altaveu gegant
   if (!J.festiBuit) {
@@ -1004,6 +1062,7 @@ function fesAtac(ox, oy, radi, o = {}) {
     c.glacat = Math.max(2, o.durPol); textFlotant(c.x, c.y - 60, 'FRENADA!', '#7fc3ff', 10); J.punts += 50;
   }
   if (n > 0) {
+    so('punts');
     J.combo = Math.min(5, J.combo + n * 0.5); J.tCombo = 4; J.millorCombo = Math.max(J.millorCombo, J.combo);
     if (!o.total) { if (n >= 3) anunci('ENSURT TRIPLE!', 1.3); else if (n === 2) anunci('DOBLET!', 1); }
   }
@@ -1034,6 +1093,7 @@ function accio() {
     if (j.arma.usos <= 0) { textFlotant(j.x, j.y - 116, d.nom + ' ESGOTAT', '#bbb', 9); j.arma = null; }
   } else {
     j.recBuh = 0.55; clip('hula', false, 0.85); J.tremolor = 0.18;
+    if (j.cotxe || j.vespa) so('pec');
     textFlotant(j.x, j.y - 80, 'HULAAA!', '#fff', 16);
     ona(j.x, j.y, RADI_BUH, '#ffffff');
     fesAtac(j.x, j.y, RADI_BUH);
@@ -1215,7 +1275,7 @@ function pujaVila() {
 }
 function baixaVila() {
   const j = J.jug, v = j.cotxe; if (!v) return;
-  j.cotxe = null; if (v.estat === 'conduit') { v.estat = 'aparcat'; v.t = 0; }
+  so('porta'); j.cotxe = null; if (v.estat === 'conduit') { v.estat = 'aparcat'; v.t = 0; }
   const px = -Math.sin(v.ang) * 46, py = Math.cos(v.ang) * 46;
   if (lliure(v.x + px, v.y + py, 14)) { j.x = v.x + px; j.y = v.y + py; } else if (lliure(v.x - px, v.y - py, 14)) { j.x = v.x - px; j.y = v.y - py; }
   for (const c of J.cotxes) if (c.tipus === 'policia') c.estat = 'marxa';
@@ -1310,7 +1370,10 @@ function actualitzaVic(dt) {
   const centre = { x: 33 * TS, y: 8.5 * TS };
   musicaRave(J.raveApagada ? 0 : dinsRave(j) ? 1 : Math.max(0, 1 - (dist(j, centre) - 300) / 900));
   // Ravers i festivalers ballant
-  for (const p of J.parelles) if ((p.tipus === 'raver' || p.tipus === 'festi') && p.estat !== 'espantada') p.ball += dt * (p.tipus === 'raver' ? 11.6 : 8);
+  for (const p of J.parelles) if ((p.tipus === 'raver' || p.tipus === 'festi') && p.estat !== 'espantada') {
+    p.ball += dt * (p.tipus === 'raver' ? 11.6 : 8);
+    if (p.a.fuma && Math.random() < dt * 2.5) J.particules.push({ x: p.x + 14, y: p.y - 44, vx: (Math.random() - .5) * 14, vy: -26, t: 1.2, c: 'rgba(220,220,220,.55)', m: 7 });
+  }
   // Control policial: no deixa passar ningú
   for (const c of J.control) {
     c.pas += dt;
@@ -1336,6 +1399,34 @@ function actualitzaVic(dt) {
       J.festiBuit = true; J.punts += 2000; anunci('EL CABRÓ ROCK HA QUEDAT BUIT! +2000', 2.5);
     }
   }
+}
+
+const FRASES_CARRER = ['EI, TU, QUÈ FAS?', 'QUIN CAP MÉS GRAN!', 'NO M\'AGRADA COM ENS MIRA...', 'VIGILA, NANO!', 'ETS FAMÓS?', 'AQUEST NO ÉS EL DE LA FOTO?', 'MIRA QUINES PINTES', 'T\'HAS PERDUT?', 'FAS UNA OLOR ESTRANYA', 'SEGUEIX CAMINANT, AMIC', 'ON VAS TAN MUDAT?', 'EM SONA LA TEVA CARA', 'NO ENS ESPANTARÀS PAS, EH?', 'UI, QUIN ESGARRIFANÇ', 'BONA TARDA, OI?', 'QUÈ, DE PASSEIG?'];
+const FRASES_VIC = ['AIXÒ ÉS VIC, NOI!', 'QUINA BOIRA QUE FA...', 'HAS PROVAT EL FUET?', 'A VIC NO S\'ESPANTA NINGÚ'];
+const FRASES_RAVE = ['QUIN SUBIDÓN!', 'TENS FOC?', 'ON ÉS EL LAVABO?', 'DRUM\'N\'BASS O RES!', 'PORTO TRES DIES SENSE DORMIR', 'ETS DEL CONTROL?', 'QUI ÉS EL DJ?', 'NO TINDER, NO PROBLEM', 'PUJA EL VOLUM!', 'AQUEST BAIX EM MATA'];
+const FRASES_PATUM = ['VISCA LA PATUM!', 'COMPTE AMB ELS PLENS!', 'NO EMPENTIS!', 'ON ÉS LA GUITA?', 'TABAAAL!', 'AQUÍ NO HI CAP NINGÚ MÉS', 'EM CREMO, EM CREMO!'];
+const FRASES_FESTI = ['VISCA EL CABRÓ ROCK!', 'QUIN CONCERTÀS!', 'ON ÉS LA BARRA?', 'UN ALTRE, UN ALTRE!', 'AQUEST ALTAVEU NO SONA?'];
+const FRASES_POLI = ['CIRCULEU, CIRCULEU', 'BONA TARDA, CIUTADÀ', 'TOT BÉ PER AQUÍ?', 'NO FEM TONTERIES, EH?', 'US TINC CONTROLATS'];
+function fraseDe(e) {
+  if (J.agents.includes(e)) return tria(FRASES_POLI);
+  if (e.tipus === 'raver') return tria(FRASES_RAVE);
+  if (J.zona === 'patum') return tria(FRASES_PATUM);
+  if (e.tipus === 'festi') return tria(FRASES_FESTI);
+  if (e.tipus === 'gelos') return tria(["MIRA'M A MI, NO A ELLA", 'QUÈ, BUSQUES RAONS?']);
+  if (e.tipus === 'valents') return tria(['NO ENS FAS POR!', 'QUÈ ET PENSES QUE ETS?']);
+  if (e.tipus === 'calents' || e.tipus === 'peto') return tria(['EI, UNA MICA D\'INTIMITAT!', 'NO MIRIS!', 'QUÈ, T\'AGRADA?']);
+  if (J.ciutat === 'vic' && Math.random() < .4) return tria(FRASES_VIC);
+  return tria(FRASES_CARRER);
+}
+function xerrades(dt) {
+  const j = J.jug;
+  if ((J.tXerra = (J.tXerra || 0) - dt) > 0 || j.cotxe) return;
+  const ara = performance.now(), callen = new Set(['tenda', 'llit', 'banyera', 'bici']);
+  const candidats = [...J.parelles.filter(p => p.estat !== 'espantada' && !callen.has(p.tipus)), ...J.multitud, ...J.agents.filter(a => a.estat !== 'persegueix' && !a.vespa)];
+  const e = candidats.find(e => Math.hypot(e.x - j.x, e.y - j.y) < 80 && !(ara - (e.dit || 0) < 9000));
+  if (!e) return;
+  e.dit = ara; J.tXerra = 1.3;
+  textFlotant(e.x, e.y - 74, fraseDe(e), '#fff', 8); so('xerra');
 }
 
 // ---------- Actualització ----------
@@ -1372,6 +1463,7 @@ function actualitza(dt) {
   if (tecles.ArrowUp || tecles.KeyW) iy--; if (tecles.ArrowDown || tecles.KeyS) iy++;
   if (joystick.actiu) { ix = joystick.dx; iy = joystick.dy; }
   const m = Math.hypot(ix, iy);
+  j.mou = m > 0.1;
   if (j.cotxe) { // conduint el Vilamovil
     const v = j.cotxe, x0 = v.x, y0 = v.y;
     if (m > 0.1) { const vel = 320 * Math.min(1, m); mou(v, ix / m * vel, iy / m * vel, dt, 18); v.fx = ix / m; v.fy = iy / m; orienta(v, dt); }
@@ -1384,7 +1476,9 @@ function actualitza(dt) {
     if (J.zona === 'muntanya') vel = 270 * Math.min(1, m); // en bici
     if (J.zona === 'patum') vel *= .3; // hi ha tanta gent que gairebé no avances
     mou(j, ix / m * vel, iy / m * vel, dt, j.vespa ? 12 : 14);
-    j.fx = ix / m; j.fy = iy / m; j.pas += dt * 12;
+    j.fx = ix / m; j.fy = iy / m;
+    const pasAbans = j.pas; j.pas += dt * 12;
+    if (!j.vespa && J.zona !== 'muntanya' && Math.floor(j.pas / Math.PI) !== Math.floor(pasAbans / Math.PI)) so('pas');
     if (j.vespa) { const v = j.vespa; v.x = j.x; v.y = j.y; v.fx = j.fx; v.fy = j.fy; orienta(v, dt); }
   }
   j.galleda = Math.max(0, (j.galleda || 0) - dt);
@@ -1487,6 +1581,7 @@ function actualitza(dt) {
   }
   J.parelles = J.parelles.filter(p => !(p.estat === 'espantada' && p.t > 2.2) && !p.acabat);
   if (!J.zona) omplirParelles();
+  xerrades(dt);
   // Atropellar no: si passes massa a prop s'espanten (des de dalt del Vilamovil)
   if (j.cotxe && j.cotxe.vel > 60) fesAtac(j.x, j.y, 50, { nomesParelles: true });
 
@@ -1562,7 +1657,7 @@ function actualitza(dt) {
   // Bales
   for (const b of J.bales) {
     b.t -= dt; b.x += b.vx * dt; b.y += b.vy * dt;
-    if (tapaVista(tileA(b.x, b.y + 20))) { b.t = 0; for (let i = 0; i < 4; i++) J.particules.push({ x: b.x, y: b.y, vx: (Math.random() - .5) * 160, vy: (Math.random() - .5) * 160, t: .25, c: '#ddd', m: 3 }); }
+    if (tapaVista(tileA(b.x, b.y + 20))) { b.t = 0; so('rebot'); for (let i = 0; i < 4; i++) J.particules.push({ x: b.x, y: b.y, vx: (Math.random() - .5) * 160, vy: (Math.random() - .5) * 160, t: .25, c: '#ddd', m: 3 }); }
     else if (j.cotxe && Math.hypot(b.x - j.x, b.y - (j.y - 8)) < 36) { b.t = 0; textFlotant(b.x, b.y - 10, 'CLONC!', '#ddd', 8); }
     else if (!j.cotxe && j.invul <= 0 && Math.hypot(b.x - j.x, b.y - (j.y - 30)) < 22) { b.t = 0; return perdVida("T'HAN DONAT!"); }
   }
@@ -1665,6 +1760,12 @@ function personaPetita(g, x, y, pr, pas, cap, assegut) {
   g.fillStyle = pr.pell; g.beginPath(); g.arc(x, y - 33, 8, 0, TAU); g.fill();
   g.fillStyle = pr.cabell; g.beginPath(); g.arc(x, y - 35, 8.5, Math.PI * 1.05, TAU * 0.99); g.fill();
   if (pr.llarg) g.fillRect(x - 8, y - 35, 4, 13), g.fillRect(x + 4, y - 35, 4, 13);
+  if (pr.rastes) { // rastes
+    g.strokeStyle = pr.cabell; g.lineWidth = 3; g.lineCap = 'round';
+    for (let i = 0; i < 7; i++) { const a = Math.PI * (.85 + i * .19); g.beginPath(); g.moveTo(x + Math.cos(a) * 7, y - 35 + Math.sin(a) * 4); g.lineTo(x + Math.cos(a) * 11, y - 18 + Math.sin(i * 1.7) * 3); g.stroke(); }
+    g.lineCap = 'butt';
+  }
+  if (pr.fuma) { g.fillStyle = '#eee'; g.fillRect(x + 3, y - 29, 7, 2); g.fillStyle = '#ff5c2a'; g.fillRect(x + 10, y - 29, 2, 2); }
   if (pr.nuvia) { g.fillStyle = '#fff'; g.fillRect(x - 7, y - 44, 14, 4); g.fillStyle = '#ff9ab3'; g.fillRect(x - 2, y - 45, 4, 4); }
   if (pr.raver) { // braços amunt amb barres de llum
     g.strokeStyle = pr.pell; g.lineWidth = 3; g.beginPath(); g.moveTo(x - 6, y - 24); g.lineTo(x - 12, y - 44); g.moveTo(x + 6, y - 24); g.lineTo(x + 12, y - 44); g.stroke();
@@ -2187,6 +2288,24 @@ function dibuixa() {
 function dibuixaVic(g) {
   const t = performance.now() / 1000;
   const x0 = RAVE.x0 * TS, y0 = RAVE.y0 * TS, w = (RAVE.x1 - RAVE.x0 + 1) * TS, h = (RAVE.y1 - RAVE.y0 + 1) * TS;
+  // Brutícia de la rave
+  for (const b of J.brossa || []) {
+    g.save(); g.translate(b.x, b.y); g.rotate(b.a);
+    if (b.tipus === 'taca') { g.fillStyle = 'rgba(70,50,30,.45)'; g.beginPath(); g.ellipse(0, 0, 18, 9, 0, 0, TAU); g.fill(); }
+    else if (b.tipus === 'llauna') { g.fillStyle = b.c; g.fillRect(-6, -3, 12, 6); g.fillStyle = '#ccc'; g.fillRect(5, -3, 2, 6); }
+    else if (b.tipus === 'got') { g.fillStyle = 'rgba(255,255,255,.75)'; g.beginPath(); g.moveTo(-6, -4); g.lineTo(6, -3); g.lineTo(6, 3); g.lineTo(-6, 4); g.fill(); }
+    else if (b.tipus === 'burilla') { g.fillStyle = '#f2e6c9'; g.fillRect(-4, -1, 6, 2); g.fillStyle = '#c97a2b'; g.fillRect(2, -1, 2, 2); }
+    else if (b.tipus === 'ampolla') { g.fillStyle = 'rgba(60,140,60,.85)'; g.fillRect(-9, -3, 13, 6); g.fillRect(4, -1.5, 5, 3); }
+    else if (b.tipus === 'bossa') { g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(-4, -3, 8, 7); g.fillStyle = '#fff'; g.fillRect(-3, 0, 6, 3); }
+    else if (b.tipus === 'pastilla') { g.fillStyle = b.c; g.beginPath(); g.arc(0, 0, 2.5, 0, TAU); g.arc(6, 2, 2.5, 0, TAU); g.fill(); }
+    else { g.fillStyle = '#e8e2d0'; g.fillRect(-5, -4, 10, 8); }
+    g.restore();
+  }
+  // Pancartes penjades a la tanca
+  for (const [txt, px] of [['NO TINDER NO PROBLEM', 29.5], ['CATALUNYA TAMBÉ ÉS TRANCE', 36]]) {
+    g.font = '7px "Press Start 2P"'; const w = g.measureText(txt).width + 14;
+    g.fillStyle = '#efe9dc'; g.fillRect(px * TS - w / 2, 3.15 * TS, w, 22); g.fillStyle = '#222'; g.textAlign = 'center'; g.fillText(txt, px * TS, 3.15 * TS + 14);
+  }
   // Llums de la rave
   if (!J.raveApagada) {
     g.save(); g.beginPath(); g.rect(x0, y0, w, h); g.clip();
@@ -2389,6 +2508,9 @@ function bucle(t) {
   if (estat === 'joc') actualitza(dt);
   else if (estat === 'taxi') { actualitzaTaxi(dt); musicaRave(0); }
   else musicaRave(0);
+  const jj = J && J.jug, jugant = estat === 'joc' && !!jj;
+  soConduir(jugant && !!(jj.cotxe || jj.vespa), jj ? (jj.cotxe ? jj.cotxe.vel : jj.mou ? 250 : 0) : 0);
+  soRemor(!jugant ? 0 : J.zona === 'patum' ? .1 : (J.ciutat === 'vic' && !J.zona && (dinsFesti(jj) || dinsRave(jj))) ? .05 : 0);
   if (J && (estat === 'taxi' || (estat === 'pausa' && J.abansPausa === 'taxi'))) dibuixaTaxi(); else dibuixa();
   requestAnimationFrame(bucle);
 }
@@ -2450,6 +2572,8 @@ const finalToc = e => { for (const t of e.changedTouches) if (t.identifier === j
 cv.addEventListener('touchend', finalToc); cv.addEventListener('touchcancel', finalToc);
 const botoTactil = (id, f) => document.getElementById(id).addEventListener('touchstart', e => { e.preventDefault(); if (estat === 'joc') f(); }, { passive: false });
 botoTactil('bBuh', accio); botoTactil('bEsp', fesPoder); botoTactil('bBomba', llencaBomba); botoTactil('bAgafar', accioF);
+
+document.addEventListener('click', e => { if (e.target.closest('button')) so('clic'); });
 
 // ---------- Dificultat al menú ----------
 function pintaDificultat() {
