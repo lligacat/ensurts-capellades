@@ -56,6 +56,7 @@
   <div class="cartes" id="cartes"></div>
   <p class="controls teclat"><b>WASD</b>/<b>FLETXES</b> moure't &nbsp; <b>ESPAI</b> BUH! o arma &nbsp; <b>E</b> poder &nbsp; <b>F</b> agafar arma &nbsp; <b>Q</b> EXPLOSIÓ PERFECTA &nbsp; <b>P</b> pausa</p>
   <p class="controls">Recull tambors, altaveus, espanta-sogres i motoserres pel carrer · Per l'esquena val el doble · Amaga't darrere les cases per despistar els municipals</p>
+  <p class="controls">Les parelles amb ulleres de sol són valentes: cal espantar-les 3 cops · Compte amb els novios de samarreta vermella: si s'enfaden et venen a buscar i els has de deixar K.O. abans que t'atrapin</p>
 </div>
 
 <div class="pantalla amagada" id="pFinal">
@@ -102,10 +103,10 @@ const PERSONATGES = [
 
 // ---------- Armes que es troben pel carrer ----------
 const ARMES = {
-  tambor:    { nom: 'TAMBOR', curt: 'TAMBOR', usos: 8, rec: 0.5, radi: 170, mult: 1.5, policia: 'glaca', durPol: 2.5, crit: 'BOM BOM BOM!', color: '#ffb347' },
-  altaveu:   { nom: 'ALTAVEU', curt: 'RAMUN', usos: 5, rec: 1.4, radi: 270, mult: 2, policia: 'glaca', durPol: 3.5, crit: 'HOLAAA EM DIC RAMUUUN!', color: '#ffe14d' },
-  sogres:    { nom: 'ESPANTA-SOGRES', curt: 'PRRRI', usos: 12, rec: 0.3, radi: 200, con: true, mult: 1.5, policia: 'glaca', durPol: 1.6, crit: 'PRRRIIIII!', color: '#7fe0ff' },
-  motoserra: { nom: 'MOTOSERRA', curt: 'RRRN', usos: 6, rec: 0.8, radi: 150, mult: 3, policia: 'fuig', durPol: 5, crit: 'RRRRNNNNNN!', color: '#ff6a3d' },
+  tambor:    { nom: 'TAMBOR', curt: 'TAMBOR', dany: 1, usos: 8, rec: 0.5, radi: 170, mult: 1.5, policia: 'glaca', durPol: 2.5, crit: 'BOM BOM BOM!', color: '#ffb347' },
+  altaveu:   { nom: 'ALTAVEU', curt: 'RAMUN', dany: 2, usos: 5, rec: 1.4, radi: 270, mult: 2, policia: 'glaca', durPol: 3.5, crit: 'HOLAAA EM DIC RAMUUUN!', color: '#ffe14d' },
+  sogres:    { nom: 'ESPANTA-SOGRES', curt: 'PRRRI', dany: 1, usos: 12, rec: 0.3, radi: 200, con: true, mult: 1.5, policia: 'glaca', durPol: 1.6, crit: 'PRRRIIIII!', color: '#7fe0ff' },
+  motoserra: { nom: 'MOTOSERRA', curt: 'RRRN', dany: 3, usos: 6, rec: 0.8, radi: 150, mult: 3, policia: 'fuig', durPol: 5, crit: 'RRRRNNNNNN!', color: '#ff6a3d' },
 };
 const TIPUS_ARMES = Object.keys(ARMES);
 
@@ -159,6 +160,9 @@ function so(tipus) {
       }
     }
     if (tipus === 'boom') { osc('sawtooth', 120, 30, 1.4, 0.3); osc('square', 60, 25, 1.6, 0.2); }
+    if (tipus === 'enfadat') { osc('sawtooth', 110, 70, 0.5, 0.15); osc('square', 140, 90, 0.4, 0.06, 0.05); }
+    if (tipus === 'cop') { osc('square', 180, 60, 0.15, 0.2); }
+    if (tipus === 'ko') { osc('square', 800, 200, 0.4, 0.08); osc('triangle', 300, 60, 0.6, 0.2, 0.1); }
     if (tipus === 'metxa') osc('square', 1200, 1100, 0.05, 0.02);
   } catch (e) {}
 }
@@ -352,9 +356,12 @@ function casellaLluny(d) {
   const [tx, ty] = tria(caselles); return { x: (tx + .5) * TS, y: (ty + .5) * TS };
 }
 
-// Modalitats: passeja, banc, peto, boda
+// Modalitats: passeja, banc, peto, boda, valents (cal espantar-los 3 cops) i gelos (el noi t'ataca)
+const CAMINEN = new Set(['passeja', 'valents', 'gelos']);
 function novaParella(tipus) {
-  const base = { tipus, fx: 0, fy: 1, a: novaPersona(), b: novaPersona(), cami: [], estat: 'tranquil', t: 0, alerta: 0, aparicio: 0, cor: Math.random() * 3, pausa: 0, glacat: 0, vx: 0, vy: 0 };
+  const base = { tipus, fx: 0, fy: 1, a: novaPersona(), b: novaPersona(), cami: [], estat: 'tranquil', t: 0, alerta: 0, aparicio: 0, cor: Math.random() * 3, pausa: 0, glacat: 0, vx: 0, vy: 0, valor: 1, tremola: 0 };
+  if (tipus === 'valents') { base.valor = 3; base.a.ulleres = base.b.ulleres = true; }
+  if (tipus === 'gelos') { base.b.cuirassat = true; base.b.roba = '#c62828'; }
   if (tipus === 'boda') {
     const x = 28.5 * TS + 4, y = 18.9 * TS;
     if (!lluny(x, y, 420)) return null;
@@ -381,7 +388,7 @@ function comenca(p) {
   triat = p;
   J = {
     jug: { x: 4.5 * TS, y: 5.5 * TS, fx: 1, fy: 0, pas: 0, buh: 0, recBuh: 0, poder: 0, recPoder: 0, invul: 0, arma: null },
-    parelles: [], agents: [], particules: [], textos: [], ones: [], bales: [], armes: [], bomba: null, bombaUsada: false,
+    parelles: [], agents: [], matons: [], kos: 0, particules: [], textos: [], ones: [], bales: [], armes: [], bomba: null, bombaUsada: false,
     temps: DURADA, punts: 0, vides: 3, combo: 1, tCombo: 0, espantades: 0, bodes: 0, despistats: 0, millorCombo: 1,
     tremolor: 0, flash: 0, missatge: null, tBoda: 6, tArma: 0, reforcos: false, cam: { x: 0, y: 0, z: 1 },
   };
@@ -398,7 +405,8 @@ function omplirParelles() {
   if (!vives('boda') && J.tBoda <= 0) { const b = novaParella('boda'); if (b) J.parelles.push(b); }
   while (J.parelles.filter(p => p.tipus !== 'boda').length < NUM_PARELLES) {
     const r = Math.random();
-    const tipus = vives('banc') < 3 && r < .3 ? 'banc' : vives('peto') < 2 && r < .5 ? 'peto' : 'passeja';
+    const tipus = vives('banc') < 3 && r < .2 ? 'banc' : vives('peto') < 2 && r < .32 ? 'peto'
+      : vives('valents') < 2 && r < .5 ? 'valents' : vives('gelos') < 2 && r < .68 ? 'gelos' : 'passeja';
     J.parelles.push(novaParella(tipus) || novaParella('passeja'));
   }
 }
@@ -414,15 +422,50 @@ function textFlotant(x, y, txt, color, mida) { J.textos.push({ x, y, txt, color,
 function ona(x, y, r, color, con) { J.ones.push({ x, y, r, color, con, t: 0.5 }); }
 
 // ---------- Ensurts ----------
-const PUNTS_BASE = { passeja: 100, banc: 120, peto: 150, boda: 500 };
+const PUNTS_BASE = { passeja: 100, banc: 120, peto: 150, boda: 500, valents: 300, gelos: 150 };
+const FRASES_VALENTS = ['NO FA POR!', 'HA HA HA!', 'QUÈ ÉS AIXÒ?', 'MÉS FORT!', 'BADALLO...'];
+const FRASES_GELOS = ['QUÈ MIRES?!', 'AMB LA MEVA NOVIA NO!', "T'HE VIST!", 'VINE AQUÍ!'];
+
+function enfadaNoi(p) {
+  if (p.noiFora) return;
+  p.noiFora = true; p.cami = [];
+  J.matons.push({ x: p.x + 12, y: p.y, fx: 0, fy: 1, pas: 0, vida: 3, max: 3, ko: 0, recCop: 0.8, cop: 0, glacat: 0, fuig: 0, parella: p, roba: p.b });
+  textFlotant(p.x, p.y - 70, tria(FRASES_GELOS), '#ff5c5c', 10); so('enfadat');
+}
 
 function fesAtac(ox, oy, radi, o = {}) {
   let n = 0;
+  const dins = (e) => {
+    const dx = e.x - ox, dy = e.y - oy, d = Math.hypot(dx, dy);
+    return d <= radi && !(o.con && d > 40 && (dx * o.con.x + dy * o.con.y) / d < 0.45);
+  };
+  // Novios gelosos: cada cop els treu vida
+  for (const m of J.matons) {
+    if (m.caigut || !dins(m)) continue;
+    m.vida -= o.dany || 1; m.cop = 0.3;
+    const ang = Math.atan2(m.y - oy, m.x - ox); mou(m, Math.cos(ang) * 900, Math.sin(ang) * 900, 0.04, 12);
+    if (m.vida <= 0) {
+      m.ko = 2.5; m.caigut = true; J.kos++; const g = Math.round(400 * J.combo); J.punts += g;
+      textFlotant(m.x, m.y - 80, 'K.O.!', '#ffd23f', 18); textFlotant(m.x, m.y - 56, '+' + g, '#ffd23f', 13); so('ko');
+      const p = m.parella;
+      if (p.estat !== 'espantada') { J.punts += 150; p.estat = 'espantada'; p.t = 0; p.vx = Math.cos(ang); p.vy = Math.sin(ang); textFlotant(p.x, p.y - 66, 'EL MEU NOVIO!', '#ff9ab3', 9); setTimeout(() => so('crit'), 100); }
+    } else { textFlotant(m.x, m.y - 80, tria(['PAM!', 'AU!', 'UF!']), '#fff', 12); J.punts += 25; }
+  }
   for (const p of J.parelles) {
     if (p.estat === 'espantada') continue;
     const dx = p.x - ox, dy = p.y - oy, d = Math.hypot(dx, dy);
-    if (d > radi) continue;
-    if (o.con && d > 40 && (dx * o.con.x + dy * o.con.y) / d < 0.45) continue;
+    if (!dins(p)) continue;
+    // Parelles valentes: aguanten uns quants ensurts abans de fugir
+    if (p.tipus === 'valents' && !o.total) {
+      p.valor -= o.dany || 1;
+      if (p.valor > 0) {
+        p.tremola = 0.4; J.punts += 30;
+        textFlotant(p.x, p.y - 70, tria(FRASES_VALENTS), '#ddd', 9); textFlotant(p.x, p.y - 50, '+30', '#bbb', 10);
+        continue;
+      }
+    }
+    // Novio gelós: la noia s'espanta però ell ve a per tu
+    if (p.tipus === 'gelos' && !p.noiFora && !o.total) enfadaNoi(p);
     n++;
     const dot = (-dx * p.fx - dy * p.fy) / (d || 1);
     const ninja = J.jug.poder > 0 && triat.id === 'escola';
@@ -475,7 +518,7 @@ function accio() {
     textFlotant(j.x, j.y - 92, d.crit, d.color, j.arma.tipus === 'altaveu' ? 12 : 14);
     ona(j.x, j.y, d.radi, d.color, d.con ? { x: j.fx, y: j.fy } : null);
     if (j.arma.tipus === 'altaveu') { ona(j.x, j.y, d.radi * .7, d.color); ona(j.x, j.y, d.radi * .4, d.color); }
-    fesAtac(j.x, j.y, d.radi, { mult: d.mult, con: d.con ? { x: j.fx, y: j.fy } : null, policia: d.policia, durPol: d.durPol });
+    fesAtac(j.x, j.y, d.radi, { mult: d.mult, dany: d.dany, con: d.con ? { x: j.fx, y: j.fy } : null, policia: d.policia, durPol: d.durPol });
     avisaPolicia(j.x, j.y, 420);
     if (j.arma.usos <= 0) { textFlotant(j.x, j.y - 116, d.nom + ' ESGOTAT', '#bbb', 9); j.arma = null; }
   } else {
@@ -495,12 +538,13 @@ function fesPoder() {
   if (triat.id === 'glaudiri') {
     j.poder = 0.6; j.buh = .45; so('buh'); J.tremolor = .5;
     textFlotant(j.x, j.y - 92, 'GRRRAAAH!!', '#fff', 20); ona(j.x, j.y, 270, '#ffffff');
-    fesAtac(j.x, j.y, 270, { policia: 'glaca', durPol: 2 });
+    fesAtac(j.x, j.y, 270, { policia: 'glaca', durPol: 2, dany: 2 });
   }
   if (triat.id === 'sanchez') {
     j.poder = 0.8; anunci('MIRADA BOJA!', 1.2); J.tremolor = .3;
     for (const p of J.parelles) if (p.estat !== 'espantada' && dist(p, j) < 380) { p.glacat = 3; p.alerta = 0; }
     for (const a of J.agents) if (dist(a, j) < 380) a.glacat = 3;
+    for (const m of J.matons) if (dist(m, j) < 380) m.glacat = 3;
   }
   if (triat.id === 'escola') { j.poder = 4; anunci('MODE NINJA', 1); for (const a of J.agents) if (a.estat === 'persegueix') a.perdut = 3; }
 }
@@ -520,7 +564,7 @@ function explota(b) {
     const a = Math.random() * TAU, v = 120 + Math.random() * 520;
     J.particules.push({ x: b.x, y: b.y - 20, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: .6 + Math.random() * .8, c: tria(['#ffb000', '#ff5c2a', '#fff3a0', '#ff5c8a']), m: 6 + Math.random() * 10, cor: Math.random() < .3 });
   }
-  const n = fesAtac(b.x, b.y, 520, { mult: 2, total: true, policia: 'fuig', durPol: 6 });
+  const n = fesAtac(b.x, b.y, 520, { mult: 2, total: true, policia: 'fuig', durPol: 6, dany: 99 });
   anunci('EXPLOSIÓ PERFECTA! x' + n, 2.2);
 }
 
@@ -603,7 +647,8 @@ function actualitza(dt) {
       continue;
     }
     if (p.aparicio < 1) p.aparicio += dt * 1.5;
-    if (p.tipus === 'passeja') {
+    p.tremola = Math.max(0, p.tremola - dt);
+    if (CAMINEN.has(p.tipus) && !p.noiFora) {
       if (p.pausa > 0) p.pausa -= dt;
       else if (!segueixCami(p, p.alerta >= 1 ? 85 : 42, dt)) {
         if (Math.random() < .35) p.pausa = 2 + Math.random() * 3;
@@ -614,6 +659,9 @@ function actualitza(dt) {
     // Et veuen venir? Els del banc i els nuvis miren cap avall.
     const d = Math.hypot(j.x - p.x, j.y - p.y);
     const dot = ((j.x - p.x) * p.fx + (j.y - p.y) * p.fy) / (d || 1);
+    // El novio gelós salta si t'hi acostes massa o si et veu venir
+    if (p.tipus === 'gelos' && !p.noiFora && !invisible && (d < 100 || (d < 190 && dot > 0.35))) enfadaNoi(p);
+    if (p.noiFora) continue;
     const abast = p.tipus === 'boda' ? 190 : 150;
     if (!invisible && d < abast && dot > 0.35) {
       p.alerta = Math.min(1, p.alerta + dt * (p.tipus === 'boda' ? 1.8 : 1.4));
@@ -626,6 +674,25 @@ function actualitza(dt) {
   }
   J.parelles = J.parelles.filter(p => !(p.estat === 'espantada' && p.t > 2.2));
   omplirParelles();
+
+  // Novios gelosos: et persegueixen a cops de puny fins que els deixes K.O.
+  for (const m of J.matons) {
+    m.pas += dt * 12; m.cop = Math.max(0, m.cop - dt); m.recCop = Math.max(0, m.recCop - dt);
+    if (m.caigut) { m.ko -= dt; continue; }
+    if (m.glacat > 0) { m.glacat -= dt; continue; }
+    const dx = j.x - m.x, dy = j.y - m.y, d = Math.hypot(dx, dy) || 1;
+    if (invisible) { if (Math.random() < dt * .5) textFlotant(m.x, m.y - 80, 'ON ETS?!', '#ff9a9a', 9); continue; }
+    m.fx = dx / d; m.fy = dy / d;
+    if (d > 26) {
+      if (d > 120 && hiHaVista(m.x, m.y, j.x, j.y) === false) {
+        if (!m.cami || !m.cami.length || Math.random() < dt * 2) m.cami = cami(m.x, m.y, Math.floor(j.x / TS), Math.floor(j.y / TS));
+        segueixCami(m, 150, dt);
+      } else mou(m, m.fx * 150, m.fy * 150, dt, 12);
+    }
+    if (Math.random() < dt * .4) textFlotant(m.x, m.y - 80, tria(['ET MATARÉ!', 'VINE, COBARD!', 'ET FARÉ PICADILLO!', 'NO CORRIS!']), '#ff9a9a', 8);
+    if (d < 34 && m.recCop <= 0 && j.invul <= 0) { m.recCop = 1; m.cop = 0.3; so('cop'); return perdVida("T'HA ATONYINAT!"); }
+  }
+  J.matons = J.matons.filter(m => !(m.caigut && m.ko <= 0));
 
   // Agents municipals: et veuen, et disparen, i si et perden de vista et busquen
   for (const a of J.agents) {
@@ -688,6 +755,9 @@ function perdVida(txt) {
   textFlotant(J.jug.x, J.jug.y - 92, txt, '#ff5c5c', 14);
   J.bales = [];
   for (const a of J.agents) { a.estat = 'patrulla'; a.cami = []; }
+  // El novio, satisfet, se'n torna amb la novia
+  for (const m of J.matons) if (!m.caigut && m.parella.estat !== 'espantada') { m.parella.noiFora = false; m.parella.alerta = 0; }
+  J.matons = J.matons.filter(m => m.caigut);
   if (J.vides <= 0) return final("T'HAN ENXAMPAT!");
   anunci(txt + ' ET QUEDEN ' + J.vides + (J.vides === 1 ? ' VIDA' : ' VIDES'), 1.8);
   J.jug.x = 4.5 * TS; J.jug.y = 5.5 * TS; J.jug.invul = 2.5; J.combo = 1;
@@ -701,7 +771,8 @@ function final(titol) {
   document.getElementById('fPunts').textContent = J.punts + ' PUNTS';
   document.getElementById('fRang').textContent = triat.nom.toUpperCase() + ': ' + RANGS.filter(r => J.punts >= r[0]).pop()[1].toUpperCase();
   document.getElementById('fDetall').innerHTML = J.espantades + ' parelles espantades · ' + J.bodes + (J.bodes === 1 ? ' boda cancel·lada' : ' bodes cancel·lades') +
-    '<br>' + J.despistats + ' municipals despistats · combo màxim x' + J.millorCombo.toFixed(1) +
+    '<br>' + J.kos + (J.kos === 1 ? ' novio gelós K.O.' : ' novios gelosos K.O.') + ' · ' + J.despistats + ' municipals despistats' +
+    '<br>combo màxim x' + J.millorCombo.toFixed(1) +
     '<br>' + (J.punts > millor ? 'NOU RÈCORD!' : 'Rècord: ' + millor);
   document.getElementById('pFinal').classList.remove('amagada');
 }
@@ -732,13 +803,22 @@ function personaPetita(g, x, y, pr, pas, cap, assegut) {
     g.fillStyle = pr.nuvi ? '#111' : '#333';
     if (assegut) { g.fillRect(x - 5, y - 10, 4, 6); g.fillRect(x + 1, y - 10, 4, 6); }
     else { g.fillRect(x - 5, y - 10 + cama, 4, 10 - cama); g.fillRect(x + 1, y - 10 - cama, 4, 10 + cama); }
-    g.fillStyle = pr.roba; g.fillRect(x - 7, y - 26, 14, 17);
+    if (pr.cuirassat) { // samarreta de tirants i braços de gimnàs
+      g.fillStyle = pr.pell; g.fillRect(x - 13, y - 26, 6, 13); g.fillRect(x + 7, y - 26, 6, 13);
+      g.beginPath(); g.arc(x - 10, y - 24, 4.5, 0, TAU); g.arc(x + 10, y - 24, 4.5, 0, TAU); g.fill();
+      g.fillStyle = pr.roba; g.fillRect(x - 8, y - 27, 16, 18);
+    } else { g.fillStyle = pr.roba; g.fillRect(x - 7, y - 26, 14, 17); }
     if (pr.nuvi) { g.fillStyle = '#fff'; g.fillRect(x - 2, y - 26, 4, 10); g.fillStyle = '#c92a3a'; g.fillRect(x - 3, y - 26, 6, 3); }
   }
   g.fillStyle = pr.pell; g.beginPath(); g.arc(x, y - 33, 8, 0, TAU); g.fill();
   g.fillStyle = pr.cabell; g.beginPath(); g.arc(x, y - 35, 8.5, Math.PI * 1.05, TAU * 0.99); g.fill();
   if (pr.llarg) g.fillRect(x - 8, y - 35, 4, 13), g.fillRect(x + 4, y - 35, 4, 13);
   if (pr.nuvia) { g.fillStyle = '#fff'; g.fillRect(x - 7, y - 44, 14, 4); g.fillStyle = '#ff9ab3'; g.fillRect(x - 2, y - 45, 4, 4); }
+  if (pr.ulleres && !cap) { g.fillStyle = '#111'; g.fillRect(x - 7, y - 35, 6, 4); g.fillRect(x + 1, y - 35, 6, 4); g.fillRect(x - 2, y - 34, 4, 1.5); }
+  if (pr.enfadat) { // celles arrufades
+    g.strokeStyle = '#111'; g.lineWidth = 2; g.beginPath(); g.moveTo(x - 6, y - 37); g.lineTo(x - 1, y - 34); g.moveTo(x + 6, y - 37); g.lineTo(x + 1, y - 34); g.stroke();
+    g.fillStyle = '#111'; g.fillRect(x - 4, y - 28, 8, 2);
+  }
   if (cap) {
     g.fillStyle = '#000'; g.beginPath(); g.arc(x - 3, y - 33, 2, 0, TAU); g.arc(x + 3, y - 33, 2, 0, TAU); g.fill();
     g.beginPath(); g.ellipse(x, y - 28, 2.5, 3, 0, 0, TAU); g.fill();
@@ -776,10 +856,19 @@ function dibuixaParella(g, p) {
   const assegut = p.tipus === 'banc' && !esp;
   g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(p.x, p.y, 22, 7, 0, 0, TAU); g.fill();
   const sep = esp ? 14 + Math.min(p.t, 1) * 18 : p.tipus === 'peto' ? 6 : 10;
-  const baixa = assegut ? 6 : 0;
-  if (!esp && p.tipus !== 'peto') { g.strokeStyle = p.a.pell; g.lineWidth = 3; g.beginPath(); g.moveTo(p.x - sep + 6, p.y - 16 + baixa); g.lineTo(p.x + sep - 6, p.y - 16 + baixa); g.stroke(); }
-  personaPetita(g, p.x - sep, p.y + salt + baixa, p.a, pas, esp, assegut);
-  personaPetita(g, p.x + sep, p.y + salt * 0.8 + baixa, p.b, pas + 1.5, esp, assegut);
+  const baixa = assegut ? 6 : 0, tr = p.tremola > 0 ? (Math.random() - .5) * 5 : 0;
+  if (p.noiFora) { // la novia es queda sola animant-lo
+    personaPetita(g, p.x + tr, p.y + salt, p.a, esp ? pas : 0, esp, false);
+    if (!esp) { g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#fff'; if (Math.sin(p.cor * 2) > .3) g.fillText('DONA-LI!', p.x, p.y - 52); }
+    g.globalAlpha = 1; return;
+  }
+  if (!esp && p.tipus !== 'peto') { g.strokeStyle = p.a.pell; g.lineWidth = 3; g.beginPath(); g.moveTo(p.x - sep + 6 + tr, p.y - 16 + baixa); g.lineTo(p.x + sep - 6 + tr, p.y - 16 + baixa); g.stroke(); }
+  personaPetita(g, p.x - sep + tr, p.y + salt + baixa, p.a, pas, esp, assegut);
+  personaPetita(g, p.x + sep + tr, p.y + salt * 0.8 + baixa, p.b, pas + 1.5, esp, assegut);
+  if (p.tipus === 'valents' && !esp) { // cors de valentia que queden
+    for (let i = 0; i < 3; i++) { g.globalAlpha = alfa * (i < p.valor ? 1 : .2); cor(g, p.x - 16 + i * 16, p.y - 66, 10, i < p.valor ? '#4fc3f7' : '#555'); }
+    g.globalAlpha = alfa;
+  }
   if (p.tipus === 'boda' && !esp) { // ram de flors
     g.fillStyle = '#ff7aa2'; g.beginPath(); g.arc(p.x - 4, p.y - 18, 4, 0, TAU); g.fill();
     g.fillStyle = '#ffd23f'; g.beginPath(); g.arc(p.x - 7, p.y - 20, 3, 0, TAU); g.fill();
@@ -790,7 +879,7 @@ function dibuixaParella(g, p) {
     if (p.tipus === 'peto') { for (let i = 0; i < 3; i++) { const k = (p.cor * .8 + i / 3) % 1; g.globalAlpha = alfa * (1 - k); cor(g, p.x + Math.sin(k * 9 + i) * 10, p.y - 46 - k * 34, 10, '#ff5c8a'); } g.globalAlpha = alfa; }
     else if (p.alerta >= 1) { g.font = '16px "Press Start 2P"'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText('!', p.x, p.y - 56); }
     else if (p.alerta > 0.05) { g.fillStyle = '#000'; g.fillRect(p.x - 14, p.y - 62, 28, 6); g.fillStyle = '#ffd23f'; g.fillRect(p.x - 13, p.y - 61, 26 * p.alerta, 4); }
-    else cor(g, p.x, p.y - (p.tipus === 'boda' ? 92 : 64) + b, p.tipus === 'boda' ? 18 : 14, '#ff5c8a');
+    else if (p.tipus !== 'valents') cor(g, p.x, p.y - (p.tipus === 'boda' ? 92 : 64) + b, p.tipus === 'boda' ? 18 : 14, '#ff5c8a');
   }
   g.globalAlpha = 1;
 }
@@ -814,6 +903,31 @@ function dibuixaAgent(g, a) {
   if (a.fuig > 0) { g.fillStyle = '#7fd3ff'; g.fillRect(a.x + 10, a.y - 54, 3, 6); g.fillRect(a.x - 13, a.y - 50, 3, 6); }
   else if (a.estat === 'persegueix' && a.glacat <= 0) { g.fillStyle = a.veu ? '#ff3b3b' : '#ffd23f'; g.fillText(a.veu ? '!' : '?', a.x, a.y - 66); }
   if (a.glacat > 0) { g.fillStyle = 'rgba(150,220,255,.45)'; g.fillRect(a.x - 14, a.y - 62, 28, 62); }
+}
+
+function dibuixaMaton(g, m) {
+  const pr = Object.assign({}, m.roba, { enfadat: true });
+  g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(m.x, m.y, 18, 7, 0, 0, TAU); g.fill();
+  if (m.caigut) { // estirat a terra amb estrelles
+    g.globalAlpha = Math.min(1, m.ko);
+    g.save(); g.translate(m.x, m.y - 6); g.rotate(-Math.PI / 2);
+    personaPetita(g, 0, 18, pr, 0, true, false); g.restore();
+    for (let i = 0; i < 3; i++) { const a = performance.now() / 300 + i * TAU / 3; g.fillStyle = '#ffd23f'; g.font = '10px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('*', m.x - 18 + Math.cos(a) * 14, m.y - 18 + Math.sin(a) * 5); }
+    g.globalAlpha = 1; return;
+  }
+  const xoc = m.cop > 0 ? (Math.random() - .5) * 6 : 0;
+  personaPetita(g, m.x + xoc, m.y, pr, m.glacat > 0 ? 0 : m.pas, false, false);
+  // puny alçat
+  g.fillStyle = pr.pell; g.beginPath(); g.arc(m.x + m.fx * 16 + 8, m.y - 30 + Math.sin(m.pas) * 3, 5, 0, TAU); g.fill();
+  // símbol d'enfadat
+  g.strokeStyle = '#ff3b3b'; g.lineWidth = 2.5;
+  const sx = m.x + 12, sy = m.y - 50;
+  g.beginPath(); g.moveTo(sx - 4, sy - 1); g.lineTo(sx - 1, sy - 1); g.lineTo(sx - 1, sy - 4); g.moveTo(sx + 4, sy - 1); g.lineTo(sx + 1, sy - 1); g.lineTo(sx + 1, sy - 4);
+  g.moveTo(sx - 4, sy + 3); g.lineTo(sx - 1, sy + 3); g.lineTo(sx - 1, sy + 6); g.moveTo(sx + 4, sy + 3); g.lineTo(sx + 1, sy + 3); g.lineTo(sx + 1, sy + 6); g.stroke();
+  // vida
+  g.fillStyle = '#000'; g.fillRect(m.x - 16, m.y - 62, 32, 7);
+  for (let i = 0; i < m.max; i++) { g.fillStyle = i < m.vida ? '#ff3b3b' : '#444'; g.fillRect(m.x - 15 + i * 10.3, m.y - 61, 9, 5); }
+  if (m.glacat > 0) { g.fillStyle = 'rgba(150,220,255,.45)'; g.fillRect(m.x - 16, m.y - 50, 32, 52); }
 }
 
 function iconaArma(g, tipus, x, y, s) {
@@ -926,6 +1040,7 @@ function dibuixa() {
   J.armes.forEach(a => ents.push([a.y, () => dibuixaArmaTerra(cx, a)]));
   J.parelles.forEach(p => ents.push([p.y, escalat(p, () => dibuixaParella(cx, p))]));
   J.agents.forEach(a => ents.push([a.y, escalat(a, () => dibuixaAgent(cx, a))]));
+  J.matons.forEach(m => ents.push([m.y, () => { cx.save(); cx.translate(m.x, m.y); cx.scale(1.6, 1.6); cx.translate(-m.x, -m.y); dibuixaMaton(cx, m); cx.restore(); }]));
   ents.push([j.y, () => dibuixaJugador(cx)]);
   ents.sort((a, b) => a[0] - b[0]).forEach(e => e[1]());
   // Bales
@@ -1014,6 +1129,7 @@ function dibuixaHUD(W, H, dpr) {
   g.fillStyle = '#f2c230'; J.armes.forEach(a => g.fillRect(mx + a.x * k - 2, my + a.y * k - 2, 4, 4));
   J.parelles.forEach(p => { if (p.estat !== 'espantada') { g.fillStyle = p.tipus === 'boda' ? '#fff' : '#ff5c8a'; g.fillRect(mx + p.x * k - 2, my + p.y * k - 2, 4, 4); } });
   J.agents.forEach(a => { g.fillStyle = a.estat === 'persegueix' ? '#ff3b3b' : '#7fc3ff'; g.fillRect(mx + a.x * k - 2, my + a.y * k - 2, 5, 5); });
+  g.fillStyle = '#ff8c1a'; J.matons.forEach(m => { if (!m.caigut) g.fillRect(mx + m.x * k - 3, my + m.y * k - 3, 6, 6); });
   g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 1; g.fillRect(mx + j.x * k - 3, my + j.y * k - 3, 6, 6); g.strokeRect(mx + j.x * k - 3, my + j.y * k - 3, 6, 6);
   // Missatge central
   if (J.missatge) {
@@ -1023,9 +1139,10 @@ function dibuixaHUD(W, H, dpr) {
     g.globalAlpha = 1;
   }
   // Avís de perill
-  if (J.agents.some(a => a.estat === 'persegueix' && a.veu)) {
+  const avis = J.agents.some(a => a.estat === 'persegueix' && a.veu) ? "T'HAN VIST! AMAGA'T!" : J.matons.some(m => !m.caigut) ? 'NOVIO GELÓS! TOMBA-LO!' : null;
+  if (avis) {
     g.textAlign = 'center'; g.font = '10px "Press Start 2P"'; g.fillStyle = Math.floor(performance.now() / 250) % 2 ? '#ff3b3b' : '#fff';
-    g.fillText("T'HAN VIST! AMAGA'T!", W / 2, petit ? 190 : 34);
+    g.fillText(avis, W / 2, petit ? 190 : 120);
   }
   g.textAlign = 'left';
   // Joystick
