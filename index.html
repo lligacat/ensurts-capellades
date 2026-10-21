@@ -23,7 +23,7 @@
   .carta .nom { font-size: 13px; }
   .carta .poder { font-size: 8px; color: var(--verd); text-align: center; line-height: 1.7; min-height: 28px; }
   .carta .desc { font-size: 7px; color: #9fb0a5; text-align: center; line-height: 1.8; }
-  .controls { font-size: 9px; color: #9fb0a5; text-align: center; line-height: 2; }
+  .controls { font-size: 9px; color: #9fb0a5; text-align: center; line-height: 2.2; max-width: 760px; }
   .controls b { color: #fff; font-weight: normal; background: #333; padding: 2px 6px; border-bottom: 2px solid #000; }
   .boto { font-family: inherit; font-size: 12px; padding: 14px 20px; background: var(--rosa); color: #fff; border: 0; box-shadow: 0 0 0 3px #000, 5px 5px 0 #000; cursor: pointer; }
   .boto.sec { background: #3a4a40; }
@@ -31,13 +31,19 @@
   .resultat { font-size: clamp(22px, 5vw, 38px); color: var(--verd); text-shadow: 3px 3px 0 #000; }
   .titol-rang { font-size: 12px; color: var(--rosa); text-align: center; line-height: 1.8; }
   .fila { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
-  #tactil { position: fixed; right: 16px; bottom: 22px; display: none; gap: 14px; z-index: 3; }
-  #tactil button { width: 84px; height: 84px; border-radius: 50%; border: 4px solid #000; font-family: inherit; font-size: 13px; color: #fff; background: var(--rosa); box-shadow: 4px 4px 0 #000; }
-  #tactil button#bEsp { background: #2c8d63; font-size: 10px; }
-  body.tactil.jugant #tactil { display: flex; }
+  #bAcabar { position: fixed; right: 14px; top: 150px; z-index: 3; display: none; font-family: inherit; font-size: 9px; padding: 9px 12px; color: #fff; background: #141414; border: 2px solid var(--verd); box-shadow: 0 0 0 2px #000; cursor: pointer; }
+  body.jugant #bAcabar { display: block; }
+  #tactil { position: fixed; right: 14px; bottom: 18px; display: none; grid-template-columns: auto auto; gap: 12px; align-items: end; justify-items: center; z-index: 3; }
+  #tactil button { width: 70px; height: 70px; border-radius: 50%; border: 4px solid #000; font-family: inherit; font-size: 9px; color: #fff; background: #2c8d63; box-shadow: 4px 4px 0 #000; }
+  #tactil button#bBuh { width: 92px; height: 92px; background: var(--rosa); font-size: 11px; }
+  #tactil button#bBomba { background: #e0782a; font-size: 7px; line-height: 1.5; }
+  #tactil button#bAgafar { background: #f2c230; color: #000; visibility: hidden; }
+  #tactil button#bAgafar.visible { visibility: visible; }
+  body.tactil.jugant #tactil { display: grid; }
   @media (max-width: 760px) {
     .cartes { grid-template-columns: repeat(2, minmax(0, 170px)); }
     .controls.teclat { display: none; }
+    #bAcabar { top: 118px; }
   }
 </style>
 </head>
@@ -46,10 +52,10 @@
 
 <div class="pantalla" id="pInici">
   <h1>ENSURTS A<br><em>CAPELLADES</em></h1>
-  <p class="sub">Les parelles felices passegen per La Bassa, l'Abric Romaní i el Molí Paperer. Tria el teu monstre i fes-los un bon ensurt abans que t'enxampi l'agent municipal.</p>
+  <p class="sub">Les parelles felices passegen per La Bassa, seuen als bancs, es fan petons i fins i tot es casen a la Plaça de l'Església. Tria el teu monstre i fes-los un bon ensurt. Compte: els municipals disparen!</p>
   <div class="cartes" id="cartes"></div>
-  <p class="controls teclat"><b>WASD</b>/<b>FLETXES</b> moure-se &nbsp; <b>ESPAI</b> BUH! &nbsp; <b>E</b> poder especial &nbsp; <b>P</b> pausa</p>
-  <p class="controls">Per l'esquena val el doble · Si et veuen venir, en treus poc · Encadena ensurts per fer combo</p>
+  <p class="controls teclat"><b>WASD</b>/<b>FLETXES</b> moure't &nbsp; <b>ESPAI</b> BUH! o arma &nbsp; <b>E</b> poder &nbsp; <b>F</b> agafar arma &nbsp; <b>Q</b> EXPLOSIÓ PERFECTA &nbsp; <b>P</b> pausa</p>
+  <p class="controls">Recull tambors, altaveus, espanta-sogres i motoserres pel carrer · Per l'esquena val el doble · Amaga't darrere les cases per despistar els municipals</p>
 </div>
 
 <div class="pantalla amagada" id="pFinal">
@@ -64,11 +70,18 @@
 </div>
 
 <div class="pantalla amagada" id="pPausa">
-  <h1>PAUSA</h1>
-  <button class="boto" id="bContinuar">CONTINUA</button>
+  <h1 id="pTitol">PAUSA</h1>
+  <div class="fila">
+    <button class="boto" id="bContinuar">CONTINUA</button>
+    <button class="boto sec" id="bSortir">ACABAR I TORNAR AL MENÚ</button>
+  </div>
 </div>
 
-<div id="tactil"><button id="bEsp">PODER</button><button id="bBuh">BUH!</button></div>
+<button id="bAcabar">ACABAR</button>
+<div id="tactil">
+  <button id="bAgafar">AGAFAR</button><button id="bBomba">EXPLO<br>SIÓ</button>
+  <button id="bEsp">PODER</button><button id="bBuh">BUH!</button>
+</div>
 
 <script>
 'use strict';
@@ -86,6 +99,15 @@ const PERSONATGES = [
   { id: 'escola', nom: 'escolá', cara: { x: 1205, y: 428, rx: 165, ry: 198 }, jaqueta: '#4a5233', interior: '#1d1d1d', pantalo: '#2a2a2a',
     poder: 'MODE NINJA', desc: 'Invisible 4 segons: ningú et veu venir' },
 ];
+
+// ---------- Armes que es troben pel carrer ----------
+const ARMES = {
+  tambor:    { nom: 'TAMBOR', curt: 'TAMBOR', usos: 8, rec: 0.5, radi: 170, mult: 1.5, policia: 'glaca', durPol: 2.5, crit: 'BOM BOM BOM!', color: '#ffb347' },
+  altaveu:   { nom: 'ALTAVEU', curt: 'RAMUN', usos: 5, rec: 1.4, radi: 270, mult: 2, policia: 'glaca', durPol: 3.5, crit: 'HOLAAA EM DIC RAMUUUN!', color: '#ffe14d' },
+  sogres:    { nom: 'ESPANTA-SOGRES', curt: 'PRRRI', usos: 12, rec: 0.3, radi: 200, con: true, mult: 1.5, policia: 'glaca', durPol: 1.6, crit: 'PRRRIIIII!', color: '#7fe0ff' },
+  motoserra: { nom: 'MOTOSERRA', curt: 'RRRN', usos: 6, rec: 0.8, radi: 150, mult: 3, policia: 'fuig', durPol: 5, crit: 'RRRRNNNNNN!', color: '#ff6a3d' },
+};
+const TIPUS_ARMES = Object.keys(ARMES);
 
 const foto = new Image();
 foto.src = 'colla.webp';
@@ -109,19 +131,35 @@ let ac = null;
 function so(tipus) {
   try {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-    const t = ac.currentTime, g = ac.createGain(); g.connect(ac.destination);
-    const osc = (type, f0, f1, dur, vol) => {
-      const o = ac.createOscillator(); o.type = type; o.connect(g);
+    const ara = ac.currentTime;
+    const osc = (type, f0, f1, dur, vol, ret = 0) => {
+      const t = ara + ret, g = ac.createGain(), o = ac.createOscillator();
+      o.type = type; o.connect(g); g.connect(ac.destination);
       o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
       g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
       o.start(t); o.stop(t + dur);
     };
     if (tipus === 'buh') osc('sawtooth', 160, 55, 0.45, 0.18);
-    if (tipus === 'crit') { osc('square', 900 + Math.random() * 300, 1800, 0.35, 0.07); }
-    if (tipus === 'xiulet') { osc('square', 2200, 2400, 0.5, 0.05); }
-    if (tipus === 'enxampat') osc('triangle', 400, 80, 0.7, 0.2);
+    if (tipus === 'crit') osc('square', 900 + Math.random() * 300, 1800, 0.35, 0.07);
+    if (tipus === 'xiulet') osc('square', 2200, 2400, 0.5, 0.05);
+    if (tipus === 'tret') osc('square', 600, 90, 0.12, 0.08);
+    if (tipus === 'ferit') osc('triangle', 400, 80, 0.7, 0.2);
     if (tipus === 'poder') osc('sine', 300, 1200, 0.3, 0.12);
     if (tipus === 'veu') osc('sine', 600, 500, 0.12, 0.05);
+    if (tipus === 'agafar') { osc('square', 500, 500, 0.08, 0.06); osc('square', 750, 750, 0.1, 0.06, 0.08); }
+    if (tipus === 'tambor') for (let i = 0; i < 3; i++) osc('sine', 130, 45, 0.18, 0.35, i * 0.14);
+    if (tipus === 'sogres') osc('square', 700, 1500, 0.45, 0.06);
+    if (tipus === 'motoserra') { osc('sawtooth', 85, 140, 0.9, 0.12); osc('square', 60, 70, 0.9, 0.05); }
+    if (tipus === 'altaveu') {
+      osc('square', 320, 260, 1.4, 0.04);
+      if ('speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance('Holaaaa, em dic Ramuuuun!');
+        u.lang = 'ca-ES'; u.rate = 0.8; u.pitch = 0.5; u.volume = 1;
+        speechSynthesis.cancel(); speechSynthesis.speak(u);
+      }
+    }
+    if (tipus === 'boom') { osc('sawtooth', 120, 30, 1.4, 0.3); osc('square', 60, 25, 1.6, 0.2); }
+    if (tipus === 'metxa') osc('square', 1200, 1100, 0.05, 0.02);
   } catch (e) {}
 }
 
@@ -129,6 +167,7 @@ function so(tipus) {
 const TS = 64, MW = 42, MH = 30;
 const C = { CARRER: 0, EDIF: 1, AIGUA: 2, GESPA: 3, ARBRE: 4, ROCA: 5, MOLI: 6, ESGL: 7, PLACA: 8, BANC: 9 };
 const transitable = t => t === C.CARRER || t === C.GESPA || t === C.PLACA || t === C.BANC;
+const tapaVista = t => t === C.EDIF || t === C.ROCA || t === C.MOLI || t === C.ESGL || t === C.ARBRE;
 const mapa = [];
 const hash = (x, y) => { let h = x * 374761393 + y * 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
 
@@ -163,7 +202,17 @@ const hash = (x, y) => { let h = x * 374761393 + y * 668265263; h = (h ^ (h >>> 
 
 const tileA = (px, py) => { const x = Math.floor(px / TS), y = Math.floor(py / TS); return (x < 0 || y < 0 || x >= MW || y >= MH) ? C.EDIF : mapa[y][x]; };
 const lliure = (px, py, r) => transitable(tileA(px - r, py - r)) && transitable(tileA(px + r, py - r)) && transitable(tileA(px - r, py + r)) && transitable(tileA(px + r, py + r));
-const caselles = []; for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) if (mapa[y][x] === C.CARRER || mapa[y][x] === C.PLACA) caselles.push([x, y]);
+const caselles = [], bancs = [];
+for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
+  if (mapa[y][x] === C.CARRER || mapa[y][x] === C.PLACA) caselles.push([x, y]);
+  if (mapa[y][x] === C.BANC) bancs.push({ x: (x + .5) * TS, y: (y + .5) * TS + 6 });
+}
+
+function hiHaVista(x0, y0, x1, y1) {
+  const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 16);
+  for (let i = 1; i < n; i++) if (tapaVista(tileA(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n))) return false;
+  return true;
+}
 
 function cami(sx, sy, tx, ty) {
   const ini = Math.floor(sy / TS) * MW + Math.floor(sx / TS), fi = ty * MW + tx;
@@ -253,20 +302,14 @@ const minimapa = document.createElement('canvas'); minimapa.width = MW * 4; mini
   g.fillStyle = '#b3a684'; g.fillRect(28 * TS + 40, 16 * TS - 30, 48, 60);
   g.fillStyle = '#6e6656'; g.beginPath(); g.moveTo(28 * TS + 34, 16 * TS - 30); g.lineTo(28 * TS + 64, 16 * TS - 70); g.lineTo(28 * TS + 94, 16 * TS - 30); g.fill();
   g.fillStyle = '#3c3327'; g.fillRect(28 * TS + 56, 16 * TS - 18, 16, 22);
+  // Catifa vermella de les bodes
+  g.fillStyle = '#a3262f'; g.fillRect(28 * TS + 44, 18 * TS, 40, 2.6 * TS);
+  g.fillStyle = '#c9a43a'; g.fillRect(28 * TS + 44, 18 * TS, 3, 2.6 * TS); g.fillRect(28 * TS + 81, 18 * TS, 3, 2.6 * TS);
   // Roda del Molí
   g.fillStyle = '#5a3b26'; g.beginPath(); g.arc(34 * TS + 40, 26 * TS + 30, 26, 0, TAU); g.fill();
   g.strokeStyle = '#c7a477'; g.lineWidth = 4; for (let i = 0; i < 8; i++) { const a = i * TAU / 8; g.beginPath(); g.moveTo(34 * TS + 40, 26 * TS + 30); g.lineTo(34 * TS + 40 + Math.cos(a) * 24, 26 * TS + 30 + Math.sin(a) * 24); g.stroke(); }
   // Cova de l'Abric
   g.fillStyle = '#3b2c20'; g.beginPath(); g.ellipse(20.5 * TS, 2 * TS - 4, 90, 40, 0, Math.PI, TAU); g.fill();
-  // Rètols
-  const retol = (txt, x, y) => {
-    g.font = '13px "Press Start 2P", monospace'; const w = g.measureText(txt).width + 22;
-    g.fillStyle = '#000'; g.fillRect(x - w / 2 - 3, y - 17, w + 6, 34);
-    g.fillStyle = '#141414'; g.fillRect(x - w / 2, y - 14, w, 28);
-    g.strokeStyle = '#2fd38a'; g.lineWidth = 3; g.strokeRect(x - w / 2 + 2, y - 12, w - 4, 24);
-    g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, x, y + 1);
-  };
-  g.__retol = retol;
   // Minimapa
   const m = minimapa.getContext('2d');
   const colors = { [C.CARRER]: '#8d8a85', [C.EDIF]: '#9b5a40', [C.AIGUA]: '#3f86b8', [C.GESPA]: '#6fa04f', [C.ARBRE]: '#2f6e36', [C.ROCA]: '#9a7b5c', [C.MOLI]: '#7a5136', [C.ESGL]: '#8f8a80', [C.PLACA]: '#c4b49a', [C.BANC]: '#6fa04f' };
@@ -274,17 +317,24 @@ const minimapa = document.createElement('canvas'); minimapa.width = MW * 4; mini
 })();
 
 function pintaRetols() {
-  const r = fons.getContext('2d').__retol;
+  const g = fons.getContext('2d');
+  const r = (txt, x, y) => {
+    g.font = '13px "Press Start 2P", monospace'; const w = g.measureText(txt).width + 22;
+    g.fillStyle = '#000'; g.fillRect(x - w / 2 - 3, y - 17, w + 6, 34);
+    g.fillStyle = '#141414'; g.fillRect(x - w / 2, y - 14, w, 28);
+    g.strokeStyle = '#2fd38a'; g.lineWidth = 3; g.strokeRect(x - w / 2 + 2, y - 12, w - 4, 24);
+    g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, x, y + 1);
+  };
   r('CAPELLADES', 5 * TS, 6.7 * TS);
   r('ABRIC ROMANÍ', 20.5 * TS, 1 * TS);
   r('LA BASSA', 17 * TS, 11.5 * TS);
-  r("PLAÇA DE L'ESGLÉSIA", 29 * TS, 20.5 * TS);
+  r("PLAÇA DE L'ESGLÉSIA", 29 * TS, 20.6 * TS);
   r('MOLÍ PAPERER', 37 * TS, 23.5 * TS);
   r('PARC', 5 * TS, 16.5 * TS);
 }
 
 // ---------- Estat del joc ----------
-const DURADA = 120, RADI_BUH = 100, REC_PODER = 10;
+const DURADA = 150, RADI_BUH = 100, REC_PODER = 10, NUM_PARELLES = 12;
 let J = null, triat = null, cares = {}, estat = 'menu', ultim = 0;
 const tecles = {}, joystick = { actiu: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 };
 
@@ -293,76 +343,147 @@ const CABELLS = ['#2b1d14', '#5a3a22', '#c99a4a', '#111', '#8b3a1e', '#d9d0c0'];
 const ROBA = ['#e85d75', '#4a7bd1', '#f2b632', '#53b27a', '#9b59b6', '#ffffff', '#ff8c42', '#2e2e2e'];
 const tria = a => a[Math.floor(Math.random() * a.length)];
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const lluny = (x, y, d) => !J || Math.hypot(x - J.jug.x, y - J.jug.y) > d;
 
 function novaPersona() { return { pell: tria(PELLS), cabell: tria(CABELLS), roba: tria(ROBA), llarg: Math.random() < .5 }; }
 
-function novaParella(lluny) {
-  let x, y, intents = 0;
-  do { const [tx, ty] = tria(caselles); x = (tx + .5) * TS; y = (ty + .5) * TS; intents++; }
-  while (lluny && J && Math.hypot(x - J.jug.x, y - J.jug.y) < 500 && intents < 50);
-  return { x, y, fx: 1, fy: 0, a: novaPersona(), b: novaPersona(), cami: [], estat: 'passeja', t: 0, alerta: 0, aparicio: 0, cor: Math.random() * 3, pausa: 0, glacat: 0, vx: 0, vy: 0 };
+function casellaLluny(d) {
+  for (let i = 0; i < 60; i++) { const [tx, ty] = tria(caselles), x = (tx + .5) * TS, y = (ty + .5) * TS; if (lluny(x, y, d)) return { x, y }; }
+  const [tx, ty] = tria(caselles); return { x: (tx + .5) * TS, y: (ty + .5) * TS };
 }
 
-function nouAgent() {
-  const [tx, ty] = tria(caselles.filter(([x, y]) => x > 20 || y > 14));
-  return { x: (tx + .5) * TS, y: (ty + .5) * TS, fx: 1, fy: 0, cami: [], persegueix: 0, glacat: 0, pas: 0 };
+// Modalitats: passeja, banc, peto, boda
+function novaParella(tipus) {
+  const base = { tipus, fx: 0, fy: 1, a: novaPersona(), b: novaPersona(), cami: [], estat: 'tranquil', t: 0, alerta: 0, aparicio: 0, cor: Math.random() * 3, pausa: 0, glacat: 0, vx: 0, vy: 0 };
+  if (tipus === 'boda') {
+    const x = 28.5 * TS + 4, y = 18.9 * TS;
+    if (!lluny(x, y, 420)) return null;
+    base.a = { pell: tria(PELLS), cabell: tria(CABELLS), roba: '#ffffff', llarg: true, nuvia: true };
+    base.b = { pell: tria(PELLS), cabell: tria(CABELLS), roba: '#1a1a1a', llarg: false, nuvi: true };
+    return Object.assign(base, { x, y });
+  }
+  if (tipus === 'banc') {
+    const lliures = bancs.filter(b => lluny(b.x, b.y, 380) && !J.parelles.some(p => p.tipus === 'banc' && Math.hypot(p.x - b.x, p.y - b.y) < 10));
+    if (!lliures.length) return null;
+    const b = tria(lliures); return Object.assign(base, { x: b.x, y: b.y });
+  }
+  const pos = casellaLluny(480);
+  if (tipus === 'peto') { const a = Math.random() * TAU; base.fx = Math.cos(a); base.fy = Math.sin(a); }
+  return Object.assign(base, pos);
+}
+
+function nouAgent(primer) {
+  const pos = primer ? (() => { const c = tria(caselles.filter(([x, y]) => x > 20 || y > 14)); return { x: (c[0] + .5) * TS, y: (c[1] + .5) * TS }; })() : casellaLluny(600);
+  return Object.assign(pos, { fx: 1, fy: 0, cami: [], estat: 'patrulla', perdut: 0, ultim: null, recTir: 1, glacat: 0, fuig: 0, pas: 0, veu: false });
 }
 
 function comenca(p) {
   triat = p;
   J = {
-    jug: { x: 4.5 * TS, y: 5.5 * TS, fx: 1, fy: 0, pas: 0, buh: 0, recBuh: 0, poder: 0, recPoder: 0, invul: 0, ampliacio: 0 },
-    parelles: [], agents: [], particules: [], textos: [], temps: DURADA, punts: 0, vides: 3,
-    combo: 1, tCombo: 0, espantades: 0, millorCombo: 1, tremolor: 0, missatge: null,
+    jug: { x: 4.5 * TS, y: 5.5 * TS, fx: 1, fy: 0, pas: 0, buh: 0, recBuh: 0, poder: 0, recPoder: 0, invul: 0, arma: null },
+    parelles: [], agents: [], particules: [], textos: [], ones: [], bales: [], armes: [], bomba: null, bombaUsada: false,
+    temps: DURADA, punts: 0, vides: 3, combo: 1, tCombo: 0, espantades: 0, bodes: 0, despistats: 0, millorCombo: 1,
+    tremolor: 0, flash: 0, missatge: null, tBoda: 6, tArma: 0, reforcos: false, cam: { x: 0, y: 0, z: 1 },
   };
-  for (let i = 0; i < 11; i++) J.parelles.push(novaParella(true));
-  J.agents.push(nouAgent()); J.agents.push(nouAgent());
+  omplirParelles();
+  J.agents.push(nouAgent(true), nouAgent(true));
+  for (let i = 0; i < 3; i++) novaArma();
   document.querySelectorAll('.pantalla').forEach(e => e.classList.add('amagada'));
   estat = 'joc'; so('poder'); document.body.classList.add('jugant');
   anunci('ESPANTA PARELLES!', 2);
 }
 
+function omplirParelles() {
+  const vives = t => J.parelles.filter(p => p.tipus === t).length;
+  if (!vives('boda') && J.tBoda <= 0) { const b = novaParella('boda'); if (b) J.parelles.push(b); }
+  while (J.parelles.filter(p => p.tipus !== 'boda').length < NUM_PARELLES) {
+    const r = Math.random();
+    const tipus = vives('banc') < 3 && r < .3 ? 'banc' : vives('peto') < 2 && r < .5 ? 'peto' : 'passeja';
+    J.parelles.push(novaParella(tipus) || novaParella('passeja'));
+  }
+}
+
+function novaArma(x, y, tipus, usos) {
+  const pos = x !== undefined ? { x, y } : casellaLluny(260);
+  tipus = tipus || tria(TIPUS_ARMES);
+  J.armes.push({ x: pos.x, y: pos.y, tipus, usos: usos ?? ARMES[tipus].usos, t: Math.random() * 3, espera: x !== undefined ? 1.2 : 0 });
+}
+
 function anunci(txt, dur) { J.missatge = { txt, t: dur }; }
 function textFlotant(x, y, txt, color, mida) { J.textos.push({ x, y, txt, color, mida: mida || 12, t: 1.3 }); }
+function ona(x, y, r, color, con) { J.ones.push({ x, y, r, color, con, t: 0.5 }); }
 
-// ---------- Accions ----------
-function fesBuh(radi, especial) {
-  const j = J.jug;
-  if (!especial && j.recBuh > 0) return;
-  j.recBuh = 0.55; j.buh = 0.45; J.tremolor = especial ? 0.5 : 0.18; so('buh');
-  textFlotant(j.x, j.y - 70, especial ? 'GRRRAAAH!!' : 'BUH!', '#fff', especial ? 20 : 16);
-  for (let i = 0; i < 14; i++) J.particules.push({ x: j.x, y: j.y - 20, vx: Math.cos(i / 14 * TAU) * 240, vy: Math.sin(i / 14 * TAU) * 240, t: .4, c: '#fff', m: 5 });
+// ---------- Ensurts ----------
+const PUNTS_BASE = { passeja: 100, banc: 120, peto: 150, boda: 500 };
+
+function fesAtac(ox, oy, radi, o = {}) {
   let n = 0;
   for (const p of J.parelles) {
     if (p.estat === 'espantada') continue;
-    const d = Math.hypot(p.x - j.x, p.y - j.y);
+    const dx = p.x - ox, dy = p.y - oy, d = Math.hypot(dx, dy);
     if (d > radi) continue;
+    if (o.con && d > 40 && (dx * o.con.x + dy * o.con.y) / d < 0.45) continue;
     n++;
-    const dot = ((j.x - p.x) * p.fx + (j.y - p.y) * p.fy) / (d || 1);
-    const esquena = dot < -0.2 || p.glacat > 0 || j.poder > 0 && triat.id === 'escola';
-    let base = p.alerta >= 1 ? 25 : 100;
-    if (esquena && p.alerta < 1) base *= 2;
-    const guany = Math.round(base * J.combo);
+    const dot = (-dx * p.fx - dy * p.fy) / (d || 1);
+    const ninja = J.jug.poder > 0 && triat.id === 'escola';
+    const esquena = o.total || p.tipus === 'peto' || dot < -0.2 || p.glacat > 0 || ninja;
+    const vist = p.alerta >= 1 && !o.total;
+    let base = PUNTS_BASE[p.tipus] * (vist ? .25 : 1);
+    if (esquena && !vist) base *= 2;
+    const guany = Math.round(base * J.combo * (o.mult || 1));
     J.punts += guany; J.espantades++;
-    textFlotant(p.x, p.y - 50, '+' + guany, esquena && p.alerta < 1 ? '#ffd23f' : '#ff9ab3', 13);
-    if (esquena && p.alerta < 1) textFlotant(p.x, p.y - 72, "PER L'ESQUENA!", '#ffd23f', 9);
-    if (p.alerta >= 1) textFlotant(p.x, p.y - 72, 'JA ET VEIEN...', '#bbb', 8);
+    textFlotant(p.x, p.y - 56, '+' + guany, esquena && !vist ? '#ffd23f' : '#ff9ab3', 13);
+    if (p.tipus === 'boda') { J.bodes++; J.tBoda = 25; anunci('BODA CANCEL·LADA!', 1.8); }
+    else if (esquena && !vist && !o.total) textFlotant(p.x, p.y - 78, p.tipus === 'peto' ? 'EN PLE PETÓ!' : "PER L'ESQUENA!", '#ffd23f', 9);
+    if (vist) textFlotant(p.x, p.y - 78, 'JA ET VEIEN...', '#bbb', 8);
     p.estat = 'espantada'; p.t = 0; p.glacat = 0;
-    const ang = Math.atan2(p.y - j.y, p.x - j.x);
-    p.vx = Math.cos(ang); p.vy = Math.sin(ang);
-    for (let i = 0; i < 10; i++) J.particules.push({ x: p.x, y: p.y - 40, vx: (Math.random() - .5) * 260, vy: -Math.random() * 260, t: .9, c: '#ff5c8a', m: 6, cor: true, g: 500 });
-    setTimeout(() => so('crit'), 60 + Math.random() * 120);
+    const ang = Math.atan2(dy, dx); p.vx = Math.cos(ang); p.vy = Math.sin(ang);
+    for (let i = 0; i < (p.tipus === 'boda' ? 22 : 10); i++) J.particules.push({ x: p.x, y: p.y - 40, vx: (Math.random() - .5) * 260, vy: -Math.random() * 260, t: .9, c: p.tipus === 'boda' ? tria(['#ff5c8a', '#fff', '#ffd23f']) : '#ff5c8a', m: 6, cor: true, g: 500 });
+    setTimeout(() => so('crit'), 60 + Math.random() * 140);
+  }
+  // Les armes també espanten els municipals
+  if (o.policia) for (const a of J.agents) {
+    const dx = a.x - ox, dy = a.y - oy, d = Math.hypot(dx, dy);
+    if (d > radi || (o.con && d > 40 && (dx * o.con.x + dy * o.con.y) / d < 0.45)) continue;
+    if (o.policia === 'fuig') { a.fuig = o.durPol; a.estat = 'patrulla'; a.cami = []; textFlotant(a.x, a.y - 70, 'MARE MEVA!', '#7fc3ff', 10); }
+    else { a.glacat = o.durPol; textFlotant(a.x, a.y - 70, 'GLUPS!', '#7fc3ff', 10); }
+    J.punts += 50; textFlotant(a.x, a.y - 50, '+50', '#7fc3ff', 11);
   }
   if (n > 0) {
     J.combo = Math.min(5, J.combo + n * 0.5); J.tCombo = 4; J.millorCombo = Math.max(J.millorCombo, J.combo);
-    if (n >= 3) anunci('ENSURT TRIPLE!', 1.3); else if (n === 2) anunci('DOBLET!', 1);
+    if (!o.total) { if (n >= 3) anunci('ENSURT TRIPLE!', 1.3); else if (n === 2) anunci('DOBLET!', 1); }
   }
-  // L'agent municipal ho ha vist?
-  if (!(j.poder > 0 && triat.id === 'escola')) for (const a of J.agents) {
-    if (a.glacat <= 0 && Math.hypot(a.x - j.x, a.y - j.y) < 320) {
-      if (a.persegueix <= 0) { so('xiulet'); textFlotant(a.x, a.y - 60, 'EH, TU!', '#7fc3ff', 12); }
-      a.persegueix = 7;
-    }
+  return n;
+}
+
+function avisaPolicia(x, y, radi) {
+  if (J.jug.poder > 0 && triat.id === 'escola') return;
+  for (const a of J.agents) {
+    if (a.glacat > 0 || a.fuig > 0 || Math.hypot(a.x - x, a.y - y) > radi) continue;
+    if (a.estat !== 'persegueix') { so('xiulet'); textFlotant(a.x, a.y - 70, 'ALTO!', '#7fc3ff', 12); }
+    a.estat = 'persegueix'; a.perdut = 0; a.ultim = { x: J.jug.x, y: J.jug.y };
+  }
+}
+
+function accio() {
+  const j = J.jug;
+  if (j.recBuh > 0) return;
+  j.buh = 0.45;
+  if (j.arma) {
+    const d = ARMES[j.arma.tipus];
+    j.recBuh = d.rec; j.arma.usos--; so(j.arma.tipus); J.tremolor = j.arma.tipus === 'motoserra' ? .45 : .25;
+    textFlotant(j.x, j.y - 92, d.crit, d.color, j.arma.tipus === 'altaveu' ? 12 : 14);
+    ona(j.x, j.y, d.radi, d.color, d.con ? { x: j.fx, y: j.fy } : null);
+    if (j.arma.tipus === 'altaveu') { ona(j.x, j.y, d.radi * .7, d.color); ona(j.x, j.y, d.radi * .4, d.color); }
+    fesAtac(j.x, j.y, d.radi, { mult: d.mult, con: d.con ? { x: j.fx, y: j.fy } : null, policia: d.policia, durPol: d.durPol });
+    avisaPolicia(j.x, j.y, 420);
+    if (j.arma.usos <= 0) { textFlotant(j.x, j.y - 116, d.nom + ' ESGOTAT', '#bbb', 9); j.arma = null; }
+  } else {
+    j.recBuh = 0.55; so('buh'); J.tremolor = 0.18;
+    textFlotant(j.x, j.y - 80, 'BUH!', '#fff', 16);
+    ona(j.x, j.y, RADI_BUH, '#ffffff');
+    fesAtac(j.x, j.y, RADI_BUH);
+    avisaPolicia(j.x, j.y, 320);
   }
 }
 
@@ -371,13 +492,54 @@ function fesPoder() {
   if (j.recPoder > 0) return;
   j.recPoder = REC_PODER; so('poder');
   if (triat.id === 'mena') { j.poder = 3; anunci('ESPRINT!', 1); }
-  if (triat.id === 'glaudiri') { j.poder = 0.6; fesBuh(270, true); }
+  if (triat.id === 'glaudiri') {
+    j.poder = 0.6; j.buh = .45; so('buh'); J.tremolor = .5;
+    textFlotant(j.x, j.y - 92, 'GRRRAAAH!!', '#fff', 20); ona(j.x, j.y, 270, '#ffffff');
+    fesAtac(j.x, j.y, 270, { policia: 'glaca', durPol: 2 });
+  }
   if (triat.id === 'sanchez') {
     j.poder = 0.8; anunci('MIRADA BOJA!', 1.2); J.tremolor = .3;
     for (const p of J.parelles) if (p.estat !== 'espantada' && dist(p, j) < 380) { p.glacat = 3; p.alerta = 0; }
-    for (const a of J.agents) if (dist(a, j) < 380) { a.glacat = 3; a.persegueix = 0; }
+    for (const a of J.agents) if (dist(a, j) < 380) a.glacat = 3;
   }
-  if (triat.id === 'escola') { j.poder = 4; anunci('MODE NINJA', 1); }
+  if (triat.id === 'escola') { j.poder = 4; anunci('MODE NINJA', 1); for (const a of J.agents) if (a.estat === 'persegueix') a.perdut = 3; }
+}
+
+function llencaBomba() {
+  if (J.bombaUsada) return;
+  const j = J.jug;
+  J.bombaUsada = true;
+  J.bomba = { x: j.x + j.fx * 30, y: j.y + j.fy * 30 + 4, t: 1.6 };
+  anunci('EXPLOSIÓ PERFECTA EN 3, 2, 1...', 1.6);
+}
+
+function explota(b) {
+  J.bomba = null; so('boom'); J.flash = 1; J.tremolor = 1;
+  ona(b.x, b.y, 520, '#ffb000'); ona(b.x, b.y, 380, '#ff5c2a'); ona(b.x, b.y, 220, '#fff3a0');
+  for (let i = 0; i < 70; i++) {
+    const a = Math.random() * TAU, v = 120 + Math.random() * 520;
+    J.particules.push({ x: b.x, y: b.y - 20, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: .6 + Math.random() * .8, c: tria(['#ffb000', '#ff5c2a', '#fff3a0', '#ff5c8a']), m: 6 + Math.random() * 10, cor: Math.random() < .3 });
+  }
+  const n = fesAtac(b.x, b.y, 520, { mult: 2, total: true, policia: 'fuig', durPol: 6 });
+  anunci('EXPLOSIÓ PERFECTA! x' + n, 2.2);
+}
+
+// ---------- Armes: agafar i canviar ----------
+function armaPropera() {
+  const j = J.jug;
+  let millor = null, md = 56;
+  for (const a of J.armes) { const d = Math.hypot(a.x - j.x, a.y - j.y); if (d < md && a.espera <= 0) { md = d; millor = a; } }
+  return millor;
+}
+
+function agafaArma(a) {
+  a = a || armaPropera();
+  if (!a) return;
+  const j = J.jug;
+  J.armes.splice(J.armes.indexOf(a), 1);
+  if (j.arma) { novaArma(j.x - j.fx * 20, j.y - j.fy * 20 + 10, j.arma.tipus, j.arma.usos); textFlotant(j.x, j.y - 110, 'LLENÇO ' + ARMES[j.arma.tipus].nom, '#bbb', 8); }
+  j.arma = { tipus: a.tipus, usos: a.usos };
+  so('agafar'); textFlotant(j.x, j.y - 92, ARMES[a.tipus].nom + '!', ARMES[a.tipus].color, 12);
 }
 
 // ---------- Actualització ----------
@@ -402,9 +564,11 @@ function actualitza(dt) {
   J.temps -= dt;
   if (J.temps <= 0) return final('TEMPS!');
   if (J.missatge && (J.missatge.t -= dt) <= 0) J.missatge = null;
-  J.tremolor = Math.max(0, J.tremolor - dt);
+  J.tremolor = Math.max(0, J.tremolor - dt); J.flash = Math.max(0, J.flash - dt * 1.5);
   if ((J.tCombo -= dt) <= 0) J.combo = 1;
+  J.tBoda -= dt;
   for (const k of ['recBuh', 'recPoder', 'poder', 'buh', 'invul']) j[k] = Math.max(0, j[k] - dt);
+  if (!J.reforcos && J.temps < 80) { J.reforcos = true; J.agents.push(nouAgent()); anunci('ARRIBEN REFORÇOS!', 1.6); so('xiulet'); }
 
   // Jugador
   let ix = 0, iy = 0;
@@ -413,11 +577,21 @@ function actualitza(dt) {
   if (joystick.actiu) { ix = joystick.dx; iy = joystick.dy; }
   const m = Math.hypot(ix, iy);
   if (m > 0.1) {
-    const vel =175 * (j.poder > 0 && triat.id === 'mena' ? 1.9 : 1) * Math.min(1, m);
+    const vel = 175 * (j.poder > 0 && triat.id === 'mena' ? 1.9 : 1) * Math.min(1, m);
     mou(j, ix / m * vel, iy / m * vel, dt, 14);
     j.fx = ix / m; j.fy = iy / m; j.pas += dt * 12;
   }
   const invisible = j.poder > 0 && triat.id === 'escola';
+
+  // Armes al terra: si no en portes cap, l'agafes trepitjant-la
+  if ((J.tArma -= dt) <= 0) { J.tArma = 7; if (J.armes.length < 5) novaArma(); }
+  for (const a of J.armes) { a.t += dt; a.espera = Math.max(0, a.espera - dt); }
+  const propera = armaPropera();
+  if (propera && !j.arma) agafaArma(propera);
+  document.getElementById('bAgafar').classList.toggle('visible', !!(propera && j.arma));
+
+  // Bomba
+  if (J.bomba) { J.bomba.t -= dt; if (Math.random() < dt * 12) so('metxa'); if (J.bomba.t <= 0) explota(J.bomba); }
 
   // Parelles
   for (const p of J.parelles) {
@@ -429,78 +603,143 @@ function actualitza(dt) {
       continue;
     }
     if (p.aparicio < 1) p.aparicio += dt * 1.5;
-    if (p.pausa > 0) { p.pausa -= dt; }
-    else if (!segueixCami(p, p.alerta >= 1 ? 85 : 42, dt)) {
-      if (Math.random() < .35) p.pausa = 2 + Math.random() * 3;
-      const [tx, ty] = tria(caselles); p.cami = cami(p.x, p.y, tx, ty).slice(0, 14);
+    if (p.tipus === 'passeja') {
+      if (p.pausa > 0) p.pausa -= dt;
+      else if (!segueixCami(p, p.alerta >= 1 ? 85 : 42, dt)) {
+        if (Math.random() < .35) p.pausa = 2 + Math.random() * 3;
+        const [tx, ty] = tria(caselles); p.cami = cami(p.x, p.y, tx, ty).slice(0, 14);
+      }
     }
-    // Ens veuen venir?
+    if (p.tipus === 'peto') continue; // estan massa entretinguts per veure't
+    // Et veuen venir? Els del banc i els nuvis miren cap avall.
     const d = Math.hypot(j.x - p.x, j.y - p.y);
     const dot = ((j.x - p.x) * p.fx + (j.y - p.y) * p.fy) / (d || 1);
-    if (!invisible && d < 150 && dot > 0.35) {
-      p.alerta = Math.min(1, p.alerta + dt * 1.4);
-      if (p.alerta >= 1 && !p.avisat) { p.avisat = true; textFlotant(p.x, p.y - 60, tria(['ET VEIEM!', 'QUÈ VOLS?', 'UI, UI...', 'NI HO PENSIS']), '#ddd', 8); so('veu'); }
+    const abast = p.tipus === 'boda' ? 190 : 150;
+    if (!invisible && d < abast && dot > 0.35) {
+      p.alerta = Math.min(1, p.alerta + dt * (p.tipus === 'boda' ? 1.8 : 1.4));
+      if (p.alerta >= 1 && !p.avisat) {
+        p.avisat = true; so('veu');
+        textFlotant(p.x, p.y - 66, p.tipus === 'boda' ? tria(['AVUI NO, SISPLAU!', 'ÉS EL NOSTRE DIA!']) : tria(['ET VEIEM!', 'QUÈ VOLS?', 'UI, UI...', 'NI HO PENSIS']), '#ddd', 8);
+      }
     } else p.alerta = Math.max(0, p.alerta - dt * 0.25);
     if (p.alerta < 0.3) p.avisat = false;
   }
   J.parelles = J.parelles.filter(p => !(p.estat === 'espantada' && p.t > 2.2));
-  while (J.parelles.length < 11) J.parelles.push(novaParella(true));
+  omplirParelles();
 
-  // Agents municipals
+  // Agents municipals: et veuen, et disparen, i si et perden de vista et busquen
   for (const a of J.agents) {
     a.pas += dt * 10;
     if (a.glacat > 0) { a.glacat -= dt; continue; }
-    if (a.persegueix > 0 && !invisible) {
-      a.persegueix -= dt;
-      const dx = j.x - a.x, dy = j.y - a.y, d = Math.hypot(dx, dy) || 1;
-      if (Math.random() < dt * 3 || !a.cami.length) a.cami = cami(a.x, a.y, Math.floor(j.x / TS), Math.floor(j.y / TS));
-      if (d < 90 || !a.cami.length) { mou(a, dx / d * 158, dy / d * 158, dt, 12); a.fx = dx / d; a.fy = dy / d; }
-      else segueixCami(a, 158, dt);
-      if (d < 26 && j.invul <= 0) enxampat(a);
-      if (a.persegueix <= 0) { textFlotant(a.x, a.y - 60, 'BAH...', '#7fc3ff', 9); a.cami = []; }
-    } else {
-      if (invisible) a.persegueix = 0;
-      if (!segueixCami(a, 60, dt)) { const [tx, ty] = tria(caselles); a.cami = cami(a.x, a.y, tx, ty).slice(0, 18); }
+    if (a.fuig > 0) {
+      a.fuig -= dt;
+      const dx = a.x - j.x, dy = a.y - j.y, d = Math.hypot(dx, dy) || 1;
+      mou(a, dx / d * 150, dy / d * 150, dt, 12); a.fx = dx / d; a.fy = dy / d;
+      continue;
     }
+    const dx = j.x - a.x, dy = j.y - a.y, d = Math.hypot(dx, dy) || 1;
+    const davant = (dx * a.fx + dy * a.fy) / d > 0.2;
+    a.veu = !invisible && j.invul <= 0 && d < 400 && (davant || d < 140 || a.estat === 'persegueix') && hiHaVista(a.x, a.y - 20, j.x, j.y - 20);
+    if (a.veu) {
+      if (a.estat !== 'persegueix') { so('xiulet'); textFlotant(a.x, a.y - 70, 'ALTO!', '#7fc3ff', 12); a.recTir = 0.7; }
+      a.estat = 'persegueix'; a.perdut = 0; a.ultim = { x: j.x, y: j.y };
+    }
+    if (a.estat === 'persegueix') {
+      if (a.veu) {
+        a.fx = dx / d; a.fy = dy / d;
+        if (d > 210) mou(a, dx / d * 140, dy / d * 140, dt, 12);
+        if ((a.recTir -= dt) <= 0 && d < 420) {
+          a.recTir = 1 + Math.random() * .5; so('tret');
+          const ang = Math.atan2(dy, dx) + (Math.random() - .5) * .16;
+          J.bales.push({ x: a.x + a.fx * 18, y: a.y - 26, vx: Math.cos(ang) * 400, vy: Math.sin(ang) * 400, t: 1.4 });
+        }
+      } else {
+        a.perdut += dt;
+        if (!a.cami.length || Math.random() < dt * 2) a.cami = cami(a.x, a.y, Math.floor(a.ultim.x / TS), Math.floor(a.ultim.y / TS));
+        segueixCami(a, 150, dt);
+        if (a.perdut > 3.5) {
+          a.estat = 'patrulla'; a.cami = [];
+          textFlotant(a.x, a.y - 70, tria(["ON S'HA FICAT?", "L'HE PERDUT...", 'BAH!']), '#7fc3ff', 9);
+          J.punts += 100; J.despistats++; textFlotant(j.x, j.y - 92, 'DESPISTAT! +100', '#2fd38a', 11);
+        }
+      }
+    } else if (!segueixCami(a, 62, dt)) { const [tx, ty] = tria(caselles); a.cami = cami(a.x, a.y, tx, ty).slice(0, 18); }
   }
 
-  // Partícules i textos
-  for (const q of J.particules) { q.t -= dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.g) q.vy += q.g * dt; else { q.vx *= .9; q.vy *= .9; } }
+  // Bales
+  for (const b of J.bales) {
+    b.t -= dt; b.x += b.vx * dt; b.y += b.vy * dt;
+    if (tapaVista(tileA(b.x, b.y + 20))) { b.t = 0; for (let i = 0; i < 4; i++) J.particules.push({ x: b.x, y: b.y, vx: (Math.random() - .5) * 160, vy: (Math.random() - .5) * 160, t: .25, c: '#ddd', m: 3 }); }
+    else if (j.invul <= 0 && Math.hypot(b.x - j.x, b.y - (j.y - 30)) < 22) { b.t = 0; return perdVida("T'HAN DONAT!"); }
+  }
+  J.bales = J.bales.filter(b => b.t > 0);
+
+  // Ones, partícules i textos
+  for (const o of J.ones) o.t -= dt;
+  J.ones = J.ones.filter(o => o.t > 0);
+  for (const q of J.particules) { q.t -= dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.g) q.vy += q.g * dt; else { q.vx *= .92; q.vy *= .92; } }
   J.particules = J.particules.filter(q => q.t > 0);
   for (const t of J.textos) { t.t -= dt; t.y -= 34 * dt; }
   J.textos = J.textos.filter(t => t.t > 0);
 }
 
-function enxampat(a) {
-  J.vides--; so('enxampat'); J.tremolor = .5;
-  textFlotant(a.x, a.y - 60, 'MULTA!', '#7fc3ff', 16);
-  a.persegueix = 0; a.cami = [];
+function perdVida(txt) {
+  J.vides--; so('ferit'); J.tremolor = .5;
+  textFlotant(J.jug.x, J.jug.y - 92, txt, '#ff5c5c', 14);
+  J.bales = [];
+  for (const a of J.agents) { a.estat = 'patrulla'; a.cami = []; }
   if (J.vides <= 0) return final("T'HAN ENXAMPAT!");
-  anunci('MULTA! ET QUEDEN ' + J.vides + (J.vides === 1 ? ' VIDA' : ' VIDES'), 1.8);
-  J.jug.x = 4.5 * TS; J.jug.y = 5.5 * TS; J.jug.invul = 2; J.combo = 1;
+  anunci(txt + ' ET QUEDEN ' + J.vides + (J.vides === 1 ? ' VIDA' : ' VIDES'), 1.8);
+  J.jug.x = 4.5 * TS; J.jug.y = 5.5 * TS; J.jug.invul = 2.5; J.combo = 1;
 }
 
-const RANGS = [[0, 'Aprenent de fantasma'], [1500, 'Ensurtador de barri'], [3500, 'Terror de La Bassa'], [6000, 'Malson del Molí Paperer'], [9000, "Llegenda de l'Abric Romaní"]];
+const RANGS = [[0, 'Aprenent de fantasma'], [2000, 'Ensurtador de barri'], [5000, 'Terror de La Bassa'], [9000, 'Malson del Molí Paperer'], [14000, "Llegenda de l'Abric Romaní"]];
 function final(titol) {
   estat = 'final'; document.body.classList.remove('jugant');
   let millor = 0; try { millor = +localStorage.getItem('ensurts-millor') || 0; if (J.punts > millor) localStorage.setItem('ensurts-millor', J.punts); } catch (e) {}
   document.getElementById('fTitol').textContent = titol;
   document.getElementById('fPunts').textContent = J.punts + ' PUNTS';
   document.getElementById('fRang').textContent = triat.nom.toUpperCase() + ': ' + RANGS.filter(r => J.punts >= r[0]).pop()[1].toUpperCase();
-  document.getElementById('fDetall').innerHTML = J.espantades + ' parelles espantades · combo màxim x' + J.millorCombo.toFixed(1) +
+  document.getElementById('fDetall').innerHTML = J.espantades + ' parelles espantades · ' + J.bodes + (J.bodes === 1 ? ' boda cancel·lada' : ' bodes cancel·lades') +
+    '<br>' + J.despistats + ' municipals despistats · combo màxim x' + J.millorCombo.toFixed(1) +
     '<br>' + (J.punts > millor ? 'NOU RÈCORD!' : 'Rècord: ' + millor);
   document.getElementById('pFinal').classList.remove('amagada');
 }
 
+function tornaAlMenu() {
+  estat = 'menu'; J = null;
+  try { speechSynthesis.cancel(); } catch (e) {}
+  document.body.classList.remove('jugant');
+  document.querySelectorAll('.pantalla').forEach(e => e.classList.add('amagada'));
+  document.getElementById('pInici').classList.remove('amagada');
+}
+
+function pausa(titol) {
+  if (estat !== 'joc') return;
+  estat = 'pausa';
+  document.getElementById('pTitol').textContent = titol;
+  document.getElementById('pPausa').classList.remove('amagada');
+}
+
 // ---------- Dibuix ----------
-function personaPetita(g, x, y, pr, pas, cap, alerta) {
-  const cama = Math.sin(pas) * 3;
-  g.fillStyle = '#333'; g.fillRect(x - 5, y - 10 + cama, 4, 10 - cama); g.fillRect(x + 1, y - 10 - cama, 4, 10 + cama);
-  g.fillStyle = pr.roba; g.fillRect(x - 7, y - 26, 14, 17);
+function personaPetita(g, x, y, pr, pas, cap, assegut) {
+  const cama = assegut ? 0 : Math.sin(pas) * 3;
+  if (pr.nuvia) {
+    g.fillStyle = 'rgba(255,255,255,.7)'; g.beginPath(); g.moveTo(x - 4, y - 38); g.lineTo(x + 4, y - 38); g.lineTo(x + 12, y - 8); g.lineTo(x - 12, y - 8); g.fill();
+    g.fillStyle = '#fff'; g.beginPath(); g.moveTo(x - 6, y - 26); g.lineTo(x + 6, y - 26); g.lineTo(x + 11, y); g.lineTo(x - 11, y); g.fill();
+    g.fillStyle = '#f0f0f0'; g.fillRect(x - 6, y - 27, 12, 6);
+  } else {
+    g.fillStyle = pr.nuvi ? '#111' : '#333';
+    if (assegut) { g.fillRect(x - 5, y - 10, 4, 6); g.fillRect(x + 1, y - 10, 4, 6); }
+    else { g.fillRect(x - 5, y - 10 + cama, 4, 10 - cama); g.fillRect(x + 1, y - 10 - cama, 4, 10 + cama); }
+    g.fillStyle = pr.roba; g.fillRect(x - 7, y - 26, 14, 17);
+    if (pr.nuvi) { g.fillStyle = '#fff'; g.fillRect(x - 2, y - 26, 4, 10); g.fillStyle = '#c92a3a'; g.fillRect(x - 3, y - 26, 6, 3); }
+  }
   g.fillStyle = pr.pell; g.beginPath(); g.arc(x, y - 33, 8, 0, TAU); g.fill();
   g.fillStyle = pr.cabell; g.beginPath(); g.arc(x, y - 35, 8.5, Math.PI * 1.05, TAU * 0.99); g.fill();
   if (pr.llarg) g.fillRect(x - 8, y - 35, 4, 13), g.fillRect(x + 4, y - 35, 4, 13);
-  if (cap) { // cara d'ensurt
+  if (pr.nuvia) { g.fillStyle = '#fff'; g.fillRect(x - 7, y - 44, 14, 4); g.fillStyle = '#ff9ab3'; g.fillRect(x - 2, y - 45, 4, 4); }
+  if (cap) {
     g.fillStyle = '#000'; g.beginPath(); g.arc(x - 3, y - 33, 2, 0, TAU); g.arc(x + 3, y - 33, 2, 0, TAU); g.fill();
     g.beginPath(); g.ellipse(x, y - 28, 2.5, 3, 0, 0, TAU); g.fill();
   }
@@ -516,29 +755,49 @@ function cor(g, x, y, s, color) {
   g.fill();
 }
 
+function dibuixaArc(g, x, y) {
+  g.strokeStyle = '#f4f0e6'; g.lineWidth = 5;
+  g.beginPath(); g.arc(x, y - 30, 34, Math.PI, TAU); g.stroke();
+  g.beginPath(); g.moveTo(x - 34, y - 30); g.lineTo(x - 34, y + 2); g.moveTo(x + 34, y - 30); g.lineTo(x + 34, y + 2); g.stroke();
+  for (let i = 0; i <= 8; i++) {
+    const a = Math.PI + i * Math.PI / 8;
+    g.fillStyle = ['#ff7aa2', '#ffffff', '#ffd23f'][i % 3]; g.beginPath(); g.arc(x + Math.cos(a) * 34, y - 30 + Math.sin(a) * 34, 5, 0, TAU); g.fill();
+  }
+}
+
 function dibuixaParella(g, p) {
   const esp = p.estat === 'espantada';
   const alfa = esp ? Math.max(0, 1 - Math.max(0, p.t - 1.4) / .8) : Math.min(1, p.aparicio);
   g.globalAlpha = alfa;
+  if (p.tipus === 'boda' && !esp) dibuixaArc(g, p.x, p.y - 8);
   const salt = esp && p.t < .35 ? -Math.sin(p.t / .35 * Math.PI) * 26 : 0;
-  const pas = (esp ? p.t * 30 : (p.cami.length && p.pausa <= 0 ? p.cor * 9 : 0));
+  const camina = p.tipus === 'passeja' && p.cami.length && p.pausa <= 0;
+  const pas = esp ? p.t * 30 : camina ? p.cor * 9 : 0;
+  const assegut = p.tipus === 'banc' && !esp;
   g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(p.x, p.y, 22, 7, 0, 0, TAU); g.fill();
-  const sep = esp ? 14 + Math.min(p.t, 1) * 18 : 10;
-  if (!esp) { g.strokeStyle = p.a.pell; g.lineWidth = 3; g.beginPath(); g.moveTo(p.x - sep + 6, p.y - 16); g.lineTo(p.x + sep - 6, p.y - 16); g.stroke(); }
-  personaPetita(g, p.x - sep, p.y + salt, p.a, pas, esp);
-  personaPetita(g, p.x + sep, p.y + salt * 0.8, p.b, pas + 1.5, esp);
-  if (p.glacat > 0) { g.fillStyle = 'rgba(150,220,255,.45)'; g.fillRect(p.x - 24, p.y - 46, 48, 48); }
+  const sep = esp ? 14 + Math.min(p.t, 1) * 18 : p.tipus === 'peto' ? 6 : 10;
+  const baixa = assegut ? 6 : 0;
+  if (!esp && p.tipus !== 'peto') { g.strokeStyle = p.a.pell; g.lineWidth = 3; g.beginPath(); g.moveTo(p.x - sep + 6, p.y - 16 + baixa); g.lineTo(p.x + sep - 6, p.y - 16 + baixa); g.stroke(); }
+  personaPetita(g, p.x - sep, p.y + salt + baixa, p.a, pas, esp, assegut);
+  personaPetita(g, p.x + sep, p.y + salt * 0.8 + baixa, p.b, pas + 1.5, esp, assegut);
+  if (p.tipus === 'boda' && !esp) { // ram de flors
+    g.fillStyle = '#ff7aa2'; g.beginPath(); g.arc(p.x - 4, p.y - 18, 4, 0, TAU); g.fill();
+    g.fillStyle = '#ffd23f'; g.beginPath(); g.arc(p.x - 7, p.y - 20, 3, 0, TAU); g.fill();
+  }
+  if (p.glacat > 0) { g.fillStyle = 'rgba(150,220,255,.45)'; g.fillRect(p.x - 24, p.y - 50, 48, 52); }
   if (!esp) {
     const b = Math.sin(p.cor * 3) * 3;
-    if (p.alerta >= 1) { g.font = '16px "Press Start 2P"'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText('!', p.x, p.y - 52); }
-    else if (p.alerta > 0.05) { g.fillStyle = '#000'; g.fillRect(p.x - 14, p.y - 58, 28, 6); g.fillStyle = '#ffd23f'; g.fillRect(p.x - 13, p.y - 57, 26 * p.alerta, 4); }
-    else cor(g, p.x, p.y - 62 + b, 14, '#ff5c8a');
+    if (p.tipus === 'peto') { for (let i = 0; i < 3; i++) { const k = (p.cor * .8 + i / 3) % 1; g.globalAlpha = alfa * (1 - k); cor(g, p.x + Math.sin(k * 9 + i) * 10, p.y - 46 - k * 34, 10, '#ff5c8a'); } g.globalAlpha = alfa; }
+    else if (p.alerta >= 1) { g.font = '16px "Press Start 2P"'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText('!', p.x, p.y - 56); }
+    else if (p.alerta > 0.05) { g.fillStyle = '#000'; g.fillRect(p.x - 14, p.y - 62, 28, 6); g.fillStyle = '#ffd23f'; g.fillRect(p.x - 13, p.y - 61, 26 * p.alerta, 4); }
+    else cor(g, p.x, p.y - (p.tipus === 'boda' ? 92 : 64) + b, p.tipus === 'boda' ? 18 : 14, '#ff5c8a');
   }
   g.globalAlpha = 1;
 }
 
 function dibuixaAgent(g, a) {
-  const cama = a.glacat > 0 ? 0 : Math.sin(a.pas) * 4;
+  const quiet = a.glacat > 0 || (a.estat === 'persegueix' && a.veu);
+  const cama = quiet ? 0 : Math.sin(a.pas) * 4;
   g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(a.x, a.y, 14, 6, 0, 0, TAU); g.fill();
   g.fillStyle = '#1c2533'; g.fillRect(a.x - 7, a.y - 14 + cama, 6, 14 - cama); g.fillRect(a.x + 1, a.y - 14 - cama, 6, 14 + cama);
   g.fillStyle = '#1f4f8f'; g.fillRect(a.x - 10, a.y - 36, 20, 23);
@@ -546,8 +805,49 @@ function dibuixaAgent(g, a) {
   g.fillStyle = '#e0ac85'; g.beginPath(); g.arc(a.x, a.y - 44, 9, 0, TAU); g.fill();
   g.fillStyle = '#16223a'; g.fillRect(a.x - 11, a.y - 55, 22, 7); g.fillRect(a.x - 8, a.y - 59, 16, 5);
   g.fillStyle = '#e6c84a'; g.fillRect(a.x - 2, a.y - 57, 4, 4);
-  if (a.persegueix > 0) { g.fillStyle = '#ff3b3b'; g.font = '14px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('!', a.x, a.y - 66); }
+  if (a.estat === 'persegueix' && a.glacat <= 0) { // pistola
+    const px = a.x + a.fx * 14, py = a.y - 26 + a.fy * 6;
+    g.fillStyle = '#e0ac85'; g.beginPath(); g.arc(px, py, 3.5, 0, TAU); g.fill();
+    g.strokeStyle = '#111'; g.lineWidth = 4; g.beginPath(); g.moveTo(px, py); g.lineTo(px + a.fx * 12, py + a.fy * 12); g.stroke();
+  }
+  g.font = '14px "Press Start 2P"'; g.textAlign = 'center';
+  if (a.fuig > 0) { g.fillStyle = '#7fd3ff'; g.fillRect(a.x + 10, a.y - 54, 3, 6); g.fillRect(a.x - 13, a.y - 50, 3, 6); }
+  else if (a.estat === 'persegueix' && a.glacat <= 0) { g.fillStyle = a.veu ? '#ff3b3b' : '#ffd23f'; g.fillText(a.veu ? '!' : '?', a.x, a.y - 66); }
   if (a.glacat > 0) { g.fillStyle = 'rgba(150,220,255,.45)'; g.fillRect(a.x - 14, a.y - 62, 28, 62); }
+}
+
+function iconaArma(g, tipus, x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  if (tipus === 'tambor') {
+    g.fillStyle = '#c0392b'; g.fillRect(-12, -8, 24, 16);
+    g.fillStyle = '#f2e6c9'; g.beginPath(); g.ellipse(0, -8, 12, 5, 0, 0, TAU); g.fill();
+    g.strokeStyle = '#f2c230'; g.lineWidth = 2; g.beginPath(); g.moveTo(-12, -4); g.lineTo(-4, 8); g.lineTo(4, -4); g.lineTo(12, 8); g.stroke();
+    g.strokeStyle = '#8a5a2b'; g.lineWidth = 3; g.beginPath(); g.moveTo(-6, -10); g.lineTo(-14, -20); g.moveTo(6, -10); g.lineTo(14, -20); g.stroke();
+  } else if (tipus === 'altaveu') {
+    g.fillStyle = '#d8d8d8'; g.beginPath(); g.moveTo(-10, -4); g.lineTo(10, -13); g.lineTo(10, 13); g.lineTo(-10, 4); g.fill();
+    g.fillStyle = '#e74c3c'; g.fillRect(-15, -5, 7, 10);
+    g.fillStyle = '#333'; g.fillRect(-8, 4, 4, 9);
+    g.strokeStyle = '#ffe14d'; g.lineWidth = 2; g.beginPath(); g.arc(12, 0, 7, -0.8, 0.8); g.stroke(); g.beginPath(); g.arc(12, 0, 12, -0.8, 0.8); g.stroke();
+  } else if (tipus === 'sogres') {
+    g.fillStyle = '#ffd23f'; g.fillRect(-16, -3, 9, 6);
+    const cols = ['#ff5c8a', '#2fd38a', '#4a7bd1'];
+    for (let i = 0; i < 3; i++) { g.strokeStyle = cols[i]; g.lineWidth = 3; g.beginPath(); g.moveTo(-7, -2 + i * 2); g.lineTo(6, -2 + i * 2); g.stroke(); }
+    g.strokeStyle = '#ff5c8a'; g.lineWidth = 4; g.beginPath(); g.arc(8, 6, 7, -Math.PI / 2, Math.PI * 1.2); g.stroke();
+  } else if (tipus === 'motoserra') {
+    g.fillStyle = '#9aa0a6'; g.fillRect(2, -4, 20, 8);
+    g.fillStyle = '#555'; for (let i = 0; i < 6; i++) g.fillRect(3 + i * 3.4, -6, 2, 2), g.fillRect(3 + i * 3.4, 4, 2, 2);
+    g.fillStyle = '#f07f1e'; g.fillRect(-14, -8, 18, 16);
+    g.fillStyle = '#222'; g.fillRect(-12, -12, 12, 4);
+  }
+  g.restore();
+}
+
+function dibuixaArmaTerra(g, a) {
+  const b = Math.sin(a.t * 3) * 4;
+  g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(a.x, a.y + 10, 18, 6, 0, 0, TAU); g.fill();
+  g.strokeStyle = ARMES[a.tipus].color; g.globalAlpha = .5 + Math.sin(a.t * 5) * .3; g.lineWidth = 3;
+  g.beginPath(); g.ellipse(a.x, a.y + 10, 24, 9, 0, 0, TAU); g.stroke(); g.globalAlpha = 1;
+  iconaArma(g, a.tipus, a.x, a.y - 14 + b, 1.4);
 }
 
 function etiqueta(g, x, y, cara, nom) {
@@ -574,13 +874,15 @@ function dibuixaJugador(g) {
   g.fillStyle = '#1a1a1a'; g.fillRect(x - 10, y - 3 + cama, 9, 4); g.fillRect(x + 1, y - 3 - cama, 9, 4);
   g.fillStyle = p.jaqueta; g.fillRect(x - 15, y - 46 - bot, 30, 30);
   g.fillStyle = p.interior; g.fillRect(x - 5, y - 46 - bot, 10, 30);
-  // braços: amunt quan fa BUH
   g.fillStyle = p.jaqueta;
-  if (j.buh > 0) { g.fillRect(x - 25, y - 70, 9, 28); g.fillRect(x + 16, y - 70, 9, 28); g.fillStyle = '#e0ac85'; g.fillRect(x - 26, y - 76, 11, 8); g.fillRect(x + 15, y - 76, 11, 8); }
+  if (j.buh > 0 && !j.arma) { g.fillRect(x - 25, y - 70, 9, 28); g.fillRect(x + 16, y - 70, 9, 28); g.fillStyle = '#e0ac85'; g.fillRect(x - 26, y - 76, 11, 8); g.fillRect(x + 15, y - 76, 11, 8); }
   else { g.fillRect(x - 21, y - 44 - bot - cama * .5, 7, 24); g.fillRect(x + 14, y - 44 - bot + cama * .5, 7, 24); }
-  // cap amb la cara real
   const cw = 56 * gran, ch = cw * cara.height / cara.width;
   g.drawImage(cara, x - cw / 2, y - 44 - bot - ch + 8, cw, ch);
+  if (j.arma) {
+    const tremola = j.buh > 0 ? (Math.random() - .5) * 4 : 0;
+    iconaArma(g, j.arma.tipus, x + 24 + tremola, y - 22 - bot + tremola, 1.1);
+  }
   g.globalAlpha = 1;
   if (!invisible) etiqueta(g, x, y - 44 - ch - 18, cara, p.nom);
   if (j.poder > 0 && p.id === 'mena') { g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 3; for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(x - j.fx * (30 + i * 8) - 10, y - 20 - i * 12); g.lineTo(x - j.fx * (60 + i * 8) - 10, y - 20 - i * 12); g.stroke(); } }
@@ -595,9 +897,9 @@ function dibuixa() {
   const j = J.jug;
   let camX = j.x - W / zoom / 2, camY = j.y - H / zoom / 2;
   camX = Math.max(0, Math.min(MW * TS - W / zoom, camX)); camY = Math.max(-80, Math.min(MH * TS - H / zoom, camY));
-  if (J.tremolor > 0) { camX += (Math.random() - .5) * 14 * J.tremolor; camY += (Math.random() - .5) * 14 * J.tremolor; }
+  J.cam = { x: camX, y: camY, z: zoom / dpr };
+  if (J.tremolor > 0) { camX += (Math.random() - .5) * 16 * J.tremolor; camY += (Math.random() - .5) * 16 * J.tremolor; }
   cx.setTransform(zoom, 0, 0, zoom, -camX * zoom, -camY * zoom);
-  cx.imageSmoothingEnabled = true;
   cx.drawImage(fons, 0, 0);
   // Ànecs de La Bassa
   const t = performance.now() / 1000;
@@ -607,22 +909,46 @@ function dibuixa() {
     cx.fillStyle = '#2f7a3a'; cx.beginPath(); cx.arc(ax + 8, ay - 6, 5, 0, TAU); cx.fill();
     cx.fillStyle = '#f2a33a'; cx.fillRect(ax + 12, ay - 6, 5, 3);
   }
-  // Ona del BUH
-  if (j.buh > 0) {
-    const r = triat.id === 'glaudiri' && j.poder > 0 ? 270 : RADI_BUH, k = 1 - j.buh / .45;
-    cx.strokeStyle = `rgba(255,255,255,${(1 - k) * .8})`; cx.lineWidth = 6; cx.beginPath(); cx.ellipse(j.x, j.y - 10, r * k, r * k * .7, 0, 0, TAU); cx.stroke();
+  // Ones d'ensurt
+  for (const o of J.ones) {
+    const k = 1 - o.t / .5;
+    cx.strokeStyle = o.color; cx.globalAlpha = (1 - k) * .85; cx.lineWidth = 6;
+    cx.beginPath();
+    if (o.con) { const a = Math.atan2(o.con.y, o.con.x); cx.ellipse(o.x, o.y - 10, o.r * k, o.r * k * .7, 0, a - 1.1, a + 1.1); }
+    else cx.ellipse(o.x, o.y - 10, o.r * k, o.r * k * .7, 0, 0, TAU);
+    cx.stroke();
   }
+  cx.globalAlpha = 1;
   if (triat.id === 'sanchez' && j.poder > 0) { cx.fillStyle = `rgba(160,220,255,${j.poder * .3})`; cx.beginPath(); cx.arc(j.x, j.y, 380 * (1 - j.poder / .8), 0, TAU); cx.fill(); }
   // Entitats ordenades per profunditat
   const ents = [];
   const escalat = (e, f) => () => { cx.save(); cx.translate(e.x, e.y); cx.scale(1.35, 1.35); cx.translate(-e.x, -e.y); f(); cx.restore(); };
+  J.armes.forEach(a => ents.push([a.y, () => dibuixaArmaTerra(cx, a)]));
   J.parelles.forEach(p => ents.push([p.y, escalat(p, () => dibuixaParella(cx, p))]));
   J.agents.forEach(a => ents.push([a.y, escalat(a, () => dibuixaAgent(cx, a))]));
   ents.push([j.y, () => dibuixaJugador(cx)]);
   ents.sort((a, b) => a[0] - b[0]).forEach(e => e[1]());
+  // Bales
+  for (const b of J.bales) {
+    const a = Math.atan2(b.vy, b.vx);
+    cx.save(); cx.translate(b.x, b.y); cx.rotate(a);
+    cx.fillStyle = 'rgba(255,230,120,.35)'; cx.fillRect(-22, -2, 18, 4);
+    cx.fillStyle = '#f2c230'; cx.fillRect(-5, -3, 10, 6); cx.fillStyle = '#7a5b10'; cx.fillRect(3, -3, 3, 6);
+    cx.restore();
+  }
+  // Bomba
+  if (J.bomba) {
+    const b = J.bomba, parpelleig = Math.floor(b.t * 8) % 2;
+    cx.fillStyle = 'rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(b.x, b.y + 12, 18, 6, 0, 0, TAU); cx.fill();
+    cx.fillStyle = parpelleig ? '#c0392b' : '#151515'; cx.beginPath(); cx.arc(b.x, b.y - 6, 16, 0, TAU); cx.fill();
+    cx.fillStyle = 'rgba(255,255,255,.35)'; cx.beginPath(); cx.arc(b.x - 5, b.y - 12, 5, 0, TAU); cx.fill();
+    cx.strokeStyle = '#8a6a3a'; cx.lineWidth = 3; cx.beginPath(); cx.moveTo(b.x + 8, b.y - 20); cx.quadraticCurveTo(b.x + 16, b.y - 32, b.x + 10, b.y - 36); cx.stroke();
+    cx.fillStyle = tria(['#fff3a0', '#ffb000', '#ff5c2a']); cx.beginPath(); cx.arc(b.x + 10, b.y - 37, 4 + Math.random() * 3, 0, TAU); cx.fill();
+    cx.font = '14px "Press Start 2P"'; cx.textAlign = 'center'; cx.fillStyle = '#fff'; cx.fillText(Math.ceil(b.t), b.x, b.y - 48);
+  }
   for (const q of J.particules) {
     cx.globalAlpha = Math.min(1, q.t * 2);
-    if (q.cor) { cor(cx, q.x, q.y, 10, q.c); cx.strokeStyle = '#000'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(q.x, q.y + 2); cx.lineTo(q.x + 2, q.y + 5); cx.lineTo(q.x - 1, q.y + 8); cx.stroke(); }
+    if (q.cor) { cor(cx, q.x, q.y, 10, q.c); }
     else { cx.fillStyle = q.c; cx.fillRect(q.x - q.m / 2, q.y - q.m / 2, q.m, q.m); }
   }
   cx.globalAlpha = 1;
@@ -637,8 +963,10 @@ function dibuixa() {
 
 function dibuixaHUD(W, H, dpr) {
   const g = cx; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (J.flash > 0) { g.fillStyle = `rgba(255,240,200,${J.flash * .8})`; g.fillRect(0, 0, W, H); }
   const caixa = (x, y, w, h) => { g.fillStyle = '#000'; g.fillRect(x - 2, y - 2, w + 4, h + 4); g.fillStyle = 'rgba(20,20,20,.92)'; g.fillRect(x, y, w, h); g.strokeStyle = '#2fd38a'; g.lineWidth = 2; g.strokeRect(x + 2, y + 2, w - 4, h - 4); };
-  const petit = W < 600;
+  const petit = W < 600, tactil = document.body.classList.contains('tactil');
+  const j = J.jug;
   // Punts i temps
   caixa(12, 12, 190, 62);
   g.textAlign = 'left'; g.font = '14px "Press Start 2P"'; g.fillStyle = '#fff'; g.fillText(String(J.punts).padStart(6, '0'), 24, 38);
@@ -652,29 +980,54 @@ function dibuixaHUD(W, H, dpr) {
   // Combo
   const cy = petit ? 140 : 100;
   if (J.combo > 1) { g.font = '16px "Press Start 2P"'; g.fillStyle = '#ffd23f'; g.fillText('COMBO x' + J.combo.toFixed(1), 14, cy); g.fillRect(14, cy + 8, 150 * J.tCombo / 4, 4); }
-  // Poder
-  const pw = 170, py = H - 44;
-  if (!document.body.classList.contains('tactil')) {
-    caixa(12, py, pw, 32);
-    g.font = '8px "Press Start 2P"'; g.fillStyle = J.jug.recPoder > 0 ? '#777' : '#2fd38a'; g.fillText('[E] ' + triat.poder, 22, py + 14);
-    g.fillStyle = '#333'; g.fillRect(22, py + 20, pw - 20, 5); g.fillStyle = '#2fd38a'; g.fillRect(22, py + 20, (pw - 20) * (1 - J.jug.recPoder / REC_PODER), 5);
+  // Arma, poder i bomba
+  if (!tactil) {
+    let py = H - 44;
+    const fila = (txt, color, prog) => {
+      caixa(12, py, 230, 32);
+      g.font = '8px "Press Start 2P"'; g.fillStyle = color; g.fillText(txt, 22, py + 14);
+      if (prog !== undefined) { g.fillStyle = '#333'; g.fillRect(22, py + 20, 210, 5); g.fillStyle = color; g.fillRect(22, py + 20, 210 * prog, 5); }
+      py -= 40;
+    };
+    fila('[Q] EXPLOSIÓ PERFECTA' + (J.bombaUsada ? ' - GASTADA' : ' x1'), J.bombaUsada ? '#666' : '#ff9a3d');
+    fila('[E] ' + triat.poder, j.recPoder > 0 ? '#777' : '#2fd38a', 1 - j.recPoder / REC_PODER);
+    if (j.arma) { fila('[ESPAI] ' + ARMES[j.arma.tipus].nom + ' x' + j.arma.usos, ARMES[j.arma.tipus].color); iconaArma(g, j.arma.tipus, 226, py + 56, .9); }
+    else fila('[ESPAI] BUH!', '#fff');
   } else {
-    const b = document.getElementById('bEsp'); b.style.opacity = J.jug.recPoder > 0 ? .45 : 1;
+    document.getElementById('bEsp').style.opacity = j.recPoder > 0 ? .45 : 1;
+    document.getElementById('bBomba').style.opacity = J.bombaUsada ? .3 : 1;
+    const bBuh = document.getElementById('bBuh'), txt = j.arma ? ARMES[j.arma.tipus].curt + ' x' + j.arma.usos : 'BUH!';
+    if (bBuh.textContent !== txt) bBuh.textContent = txt;
+  }
+  // Avís per canviar d'arma
+  const propera = armaPropera();
+  if (propera && j.arma) {
+    const txt = (tactil ? '' : '[F] ') + 'AGAFAR ' + ARMES[propera.tipus].nom + ' (LLENCES ' + ARMES[j.arma.tipus].nom + ')';
+    g.font = (petit ? 7 : 9) + 'px "Press Start 2P"'; g.textAlign = 'center';
+    const w = g.measureText(txt).width + 24, y = H * .72;
+    caixa(W / 2 - w / 2, y - 16, w, 30); g.fillStyle = '#f2c230'; g.fillText(txt, W / 2, y + 3); g.textAlign = 'left';
   }
   // Minimapa
   const mw = petit ? 126 : 168, mh = mw * MH / MW, mx = W - mw - 14, my = 14;
   g.fillStyle = '#000'; g.fillRect(mx - 3, my - 3, mw + 6, mh + 6); g.globalAlpha = .9; g.drawImage(minimapa, mx, my, mw, mh); g.globalAlpha = 1;
   const k = mw / (MW * TS);
-  g.fillStyle = '#ff5c8a'; J.parelles.forEach(p => { if (p.estat !== 'espantada') g.fillRect(mx + p.x * k - 2, my + p.y * k - 2, 4, 4); });
-  g.fillStyle = '#7fc3ff'; J.agents.forEach(a => g.fillRect(mx + a.x * k - 2, my + a.y * k - 2, 5, 5));
-  g.fillStyle = '#fff'; g.fillRect(mx + J.jug.x * k - 3, my + J.jug.y * k - 3, 6, 6);
+  g.fillStyle = '#f2c230'; J.armes.forEach(a => g.fillRect(mx + a.x * k - 2, my + a.y * k - 2, 4, 4));
+  J.parelles.forEach(p => { if (p.estat !== 'espantada') { g.fillStyle = p.tipus === 'boda' ? '#fff' : '#ff5c8a'; g.fillRect(mx + p.x * k - 2, my + p.y * k - 2, 4, 4); } });
+  J.agents.forEach(a => { g.fillStyle = a.estat === 'persegueix' ? '#ff3b3b' : '#7fc3ff'; g.fillRect(mx + a.x * k - 2, my + a.y * k - 2, 5, 5); });
+  g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 1; g.fillRect(mx + j.x * k - 3, my + j.y * k - 3, 6, 6); g.strokeRect(mx + j.x * k - 3, my + j.y * k - 3, 6, 6);
   // Missatge central
   if (J.missatge) {
-    g.textAlign = 'center'; g.font = (petit ? 14 : 22) + 'px "Press Start 2P"';
+    g.textAlign = 'center'; g.font = (petit ? 12 : 22) + 'px "Press Start 2P"';
     g.globalAlpha = Math.min(1, J.missatge.t * 3);
     g.fillStyle = '#000'; g.fillText(J.missatge.txt, W / 2 + 3, H * .3 + 3); g.fillStyle = '#fff'; g.fillText(J.missatge.txt, W / 2, H * .3);
     g.globalAlpha = 1;
   }
+  // Avís de perill
+  if (J.agents.some(a => a.estat === 'persegueix' && a.veu)) {
+    g.textAlign = 'center'; g.font = '10px "Press Start 2P"'; g.fillStyle = Math.floor(performance.now() / 250) % 2 ? '#ff3b3b' : '#fff';
+    g.fillText("T'HAN VIST! AMAGA'T!", W / 2, petit ? 190 : 34);
+  }
+  g.textAlign = 'left';
   // Joystick
   if (joystick.actiu) {
     g.strokeStyle = 'rgba(255,255,255,.4)'; g.lineWidth = 3; g.beginPath(); g.arc(joystick.ox, joystick.oy, 50, 0, TAU); g.stroke();
@@ -686,7 +1039,7 @@ function dibuixaHUD(W, H, dpr) {
 function bucle(t) {
   const dt = Math.min(0.05, (t - ultim) / 1000 || 0); ultim = t;
   if (estat === 'joc') actualitza(dt);
-  if (J) dibuixa();
+  dibuixa();
   requestAnimationFrame(bucle);
 }
 
@@ -697,25 +1050,42 @@ addEventListener('resize', redimensiona); redimensiona();
 addEventListener('keydown', e => {
   tecles[e.code] = true;
   if (estat === 'joc') {
-    if (e.code === 'Space') { fesBuh(RADI_BUH); e.preventDefault(); }
+    if (e.code === 'Space') { accio(); e.preventDefault(); }
     if (e.code === 'KeyE' || e.code === 'ShiftLeft') fesPoder();
-    if (e.code === 'KeyP' || e.code === 'Escape') { estat = 'pausa'; document.getElementById('pPausa').classList.remove('amagada'); }
+    if (e.code === 'KeyF') agafaArma();
+    if (e.code === 'KeyQ') llencaBomba();
+    if (e.code === 'KeyP' || e.code === 'Escape') pausa('PAUSA');
   } else if (estat === 'pausa' && (e.code === 'KeyP' || e.code === 'Escape')) continua();
   else if (estat === 'final' && e.code === 'Enter') comenca(triat);
-  if (e.code.startsWith('Arrow')) e.preventDefault();
+  if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
 });
 addEventListener('keyup', e => { tecles[e.code] = false; });
 addEventListener('blur', () => { for (const k in tecles) tecles[k] = false; });
 
 function continua() { estat = 'joc'; document.getElementById('pPausa').classList.add('amagada'); }
 document.getElementById('bContinuar').onclick = continua;
+document.getElementById('bSortir').onclick = tornaAlMenu;
+document.getElementById('bAcabar').onclick = () => pausa('ACABAR LA PARTIDA?');
 document.getElementById('bRepetir').onclick = () => comenca(triat);
-document.getElementById('bCanviar').onclick = () => { estat = 'menu'; document.getElementById('pFinal').classList.add('amagada'); document.getElementById('pInici').classList.remove('amagada'); };
+document.getElementById('bCanviar').onclick = tornaAlMenu;
+
+// Clicar o tocar una arma del terra que tens a prop la intercanvia
+function clicaMon(clientX, clientY) {
+  if (estat !== 'joc' || !J) return false;
+  const wx = J.cam.x + clientX / J.cam.z, wy = J.cam.y + clientY / J.cam.z;
+  const a = J.armes.find(a => Math.hypot(a.x - wx, a.y - 14 - wy) < 40 && Math.hypot(a.x - J.jug.x, a.y - J.jug.y) < 90);
+  if (a) { agafaArma(a); return true; }
+  return false;
+}
+cv.addEventListener('mousedown', e => clicaMon(e.clientX, e.clientY));
 
 if (matchMedia('(pointer: coarse)').matches) document.body.classList.add('tactil');
 cv.addEventListener('touchstart', e => {
   document.body.classList.add('tactil');
-  for (const t of e.changedTouches) if (!joystick.actiu && t.clientX < innerWidth * .6) { Object.assign(joystick, { actiu: true, id: t.identifier, ox: t.clientX, oy: t.clientY, dx: 0, dy: 0 }); }
+  for (const t of e.changedTouches) {
+    if (clicaMon(t.clientX, t.clientY)) continue;
+    if (!joystick.actiu && t.clientX < innerWidth * .6) Object.assign(joystick, { actiu: true, id: t.identifier, ox: t.clientX, oy: t.clientY, dx: 0, dy: 0 });
+  }
   e.preventDefault();
 }, { passive: false });
 cv.addEventListener('touchmove', e => {
@@ -727,8 +1097,8 @@ cv.addEventListener('touchmove', e => {
 }, { passive: false });
 const finalToc = e => { for (const t of e.changedTouches) if (t.identifier === joystick.id) Object.assign(joystick, { actiu: false, id: null, dx: 0, dy: 0 }); };
 cv.addEventListener('touchend', finalToc); cv.addEventListener('touchcancel', finalToc);
-document.getElementById('bBuh').addEventListener('touchstart', e => { e.preventDefault(); if (estat === 'joc') fesBuh(RADI_BUH); }, { passive: false });
-document.getElementById('bEsp').addEventListener('touchstart', e => { e.preventDefault(); if (estat === 'joc') fesPoder(); }, { passive: false });
+const botoTactil = (id, f) => document.getElementById(id).addEventListener('touchstart', e => { e.preventDefault(); if (estat === 'joc') f(); }, { passive: false });
+botoTactil('bBuh', accio); botoTactil('bEsp', fesPoder); botoTactil('bBomba', llencaBomba); botoTactil('bAgafar', () => agafaArma());
 
 // ---------- Inici ----------
 foto.onload = () => {
@@ -741,8 +1111,6 @@ foto.onload = () => {
     b.onclick = () => comenca(p);
     cont.appendChild(b);
   }
-  // Fons del menú: el mapa de Capellades darrere
-  J = null;
   (document.fonts ? document.fonts.load('13px "Press Start 2P"') : Promise.resolve()).then(pintaRetols, pintaRetols);
   requestAnimationFrame(bucle);
 };
