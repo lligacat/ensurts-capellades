@@ -315,7 +315,8 @@ function so(tipus) {
 
 // Veus gravades («Holaaa, em dic Ramooon» i «Hulaaa»), perquè sonin igual a tots els aparells
 const CLIPS = {}, BYTES = {};
-['ramon', 'hula', 'mentens', 'calent'].forEach(n => fetch(n + '.wav').then(r => r.arrayBuffer()).then(b => { BYTES[n] = b; }).catch(() => {}));
+let fontAtac = null;
+['ramon', 'hula', 'mentens', 'calent', 'atac'].forEach(n => fetch(n + '.wav').then(r => r.arrayBuffer()).then(b => { BYTES[n] = b; }).catch(() => {}));
 function parlaRamon(megafon) { clip('ramon', megafon, 1); } // veu real del vídeo, sense canviar-ne el to
 function clip(nom, megafon, rate, volum = 1.4) {
   try {
@@ -330,6 +331,7 @@ function clip(nom, megafon, rate, volum = 1.4) {
         src.connect(f1); f1.connect(f2); f2.connect(vol);
       } else src.connect(vol);
       vol.connect(ac.destination); src.start();
+      if (nom === 'atac') { if (fontAtac) try { fontAtac.stop(); } catch (e) {} fontAtac = src; } // el crit d'atac no se solapa amb ell mateix
     };
     if (CLIPS[nom]) sona(CLIPS[nom]);
     else if (BYTES[nom]) ac.decodeAudioData(BYTES[nom].slice(0)).then(buf => { CLIPS[nom] = buf; sona(buf); });
@@ -1352,9 +1354,9 @@ function accio() {
     avisaPolicia(j.x, j.y, 420);
     if (j.arma.usos <= 0) { textFlotant(j.x, j.y - 116, d.nom + ' ESGOTAT', '#bbb', 9); j.arma = null; }
   } else {
-    j.recBuh = 0.55; clip('hula', false, 0.85); J.tremolor = 0.18;
+    j.recBuh = 0.55; clip('atac', false, 1, 1.6); J.tremolor = 0.18;
     if (j.cotxe || j.vespa) so('pec');
-    textFlotant(j.x, j.y - 80, 'HULAAA!', '#fff', 16);
+    textFlotant(j.x, j.y - 80, 'HOLAA EM DIC RAMOOON!', '#fff', 13);
     ona(j.x, j.y, RADI_BUH, '#ffffff');
     fesAtac(j.x, j.y, RADI_BUH);
     avisaPolicia(j.x, j.y, 320);
