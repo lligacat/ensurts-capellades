@@ -18,7 +18,7 @@
   :root { --verd: #2fd38a; --fosc: #141414; --rosa: #ff5c8a; --crema: #f6efe2; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; overflow: hidden; background: #1d2a22; color: #fff; font-family: 'Press Start 2P', monospace; touch-action: none; user-select: none; -webkit-user-select: none; }
-  canvas#joc { display: block; width: 100vw; height: 100vh; }
+  canvas#joc { display: block; width: 100vw; height: 100vh; position: relative; z-index: 1; }
   .pantalla { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 22px; padding: 16px; background: rgba(12, 18, 14, .88); overflow-y: auto; z-index: 5; }
   .pantalla.amagada { display: none; }
   /* centrat quan hi cap, però amb scroll fins a dalt de tot quan és llarg */
@@ -364,6 +364,31 @@ function soConduir(actiu, vel) {
   if (!actiu && COND.font) { const font = COND.font; COND.font = null; setTimeout(() => { try { font.stop(); } catch (e) {} }, 1600); }
 }
 
+// Ambient de poble: un fons suau de trànsit llunyà i ocells que piulen de tant en tant
+const AMB = { guany: null, tOcell: 2 };
+function soAmbient(actiu) {
+  if (!ac) return;
+  if (!AMB.guany) {
+    const buf = ac.createBuffer(1, ac.sampleRate * 3, ac.sampleRate), d = buf.getChannelData(0);
+    let ultim = 0; for (let i = 0; i < d.length; i++) { ultim = (ultim + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = ultim * 3.5; } // soroll marró
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    const fl = ac.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = 380;
+    AMB.guany = ac.createGain(); AMB.guany.gain.value = 0;
+    src.connect(fl); fl.connect(AMB.guany); AMB.guany.connect(ac.destination); src.start();
+  }
+  AMB.guany.gain.setTargetAtTime(actiu ? .05 : 0, ac.currentTime, .6);
+  if (actiu && (AMB.tOcell -= 1 / 60) <= 0) {
+    AMB.tOcell = 2 + Math.random() * 5;
+    const t0 = ac.currentTime, n = 2 + Math.floor(Math.random() * 4), base = 2600 + Math.random() * 1600;
+    for (let i = 0; i < n; i++) {
+      const o = ac.createOscillator(), g = ac.createGain(), t = t0 + i * (.09 + Math.random() * .05);
+      o.type = 'sine'; o.frequency.setValueAtTime(base, t); o.frequency.exponentialRampToValueAtTime(base * (1.3 + Math.random() * .4), t + .07);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.025, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + .08);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + .1);
+    }
+  }
+}
+
 // Remor de gent (la Patum, el festival i la rave)
 const REMOR = { guany: null };
 function soRemor(nivell) {
@@ -595,7 +620,7 @@ function pintaArbre(g, X, Y, h, nomesCopa) {
 }
 
 // Voreres, passos de zebra i ombres dels edificis (el sol ve de dalt a l'esquerra)
-function detallsCarrer(g, m) {
+function detallsCarrer(g, m, senseOmbres) {
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
     if (m[y][x] !== C.CARRER) continue;
     const X = x * TS, Y = y * TS, V = 16;
@@ -615,6 +640,7 @@ function detallsCarrer(g, m) {
     if (colV && !filaH && (y % 7 === 2 || y % 7 === 6)) for (let k = 0; k < 5; k++) g.fillRect(X + 6 + k * 11, Y + (y % 7 === 2 ? 8 : 32), 6, 24);
     if (filaH && !colV && y !== 2 && (x % 8 === 2 || x % 8 === 7)) for (let k = 0; k < 5; k++) g.fillRect(X + (x % 8 === 2 ? 8 : 32), Y + 6 + k * 11, 24, 6);
   }
+  if (senseOmbres) return;
   g.fillStyle = 'rgba(10,15,35,.24)';
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
     if (!esEdif(m, x, y)) continue;
@@ -693,7 +719,7 @@ function pintaEdifici(g, m, x, y, t, teulades, facanes) {
   if (!(x > 0 && m[y][x - 1] === t)) { g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(X, Y, 2, baix - Y); }
 }
 
-function pintaMapa(m, ciutat) {
+function pintaMapa(m, ciutat, nomesTerra = false) {
   const fons = document.createElement('canvas'); fons.width = MW * TS; fons.height = MH * TS;
   const mini = document.createElement('canvas'); mini.width = MW * 4; mini.height = MH * 4;
   const g = fons.getContext('2d');
@@ -701,7 +727,8 @@ function pintaMapa(m, ciutat) {
   const facanes = ciutat === 'vic' ? ['#e0d3bc', '#d6c4a4', '#ece2cf', '#cdb998'] : ['#efe3cc', '#e8d6b5', '#f3ead8', '#dccaa8'];
   const fosc = '#1b1530';
   for (const passada of [0, 1]) {
-  if (passada === 1 && !ZONES[ciutat]) detallsCarrer(g, m);
+  if (passada === 1 && !ZONES[ciutat]) detallsCarrer(g, m, nomesTerra);
+  if (passada === 1 && nomesTerra) break;
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
     const t = m[y][x], X = x * TS, Y = y * TS, h = hash(x, y);
     if ((passada === 1) !== EDIFS.has(t)) continue;
@@ -768,7 +795,7 @@ function pintaMapa(m, ciutat) {
   // Arbres i bancs
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
     const X = x * TS + 32, Y = y * TS + 32;
-    if (m[y][x] === C.ARBRE) pintaTronc(g, X, Y);
+    if (m[y][x] === C.ARBRE && !nomesTerra) pintaTronc(g, X, Y);
     if (m[y][x] === C.BANC) {
       g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(X - 22, Y + 6, 46, 6);
       g.fillStyle = '#7a4f2a'; g.fillRect(X - 22, Y - 6, 44, 6); g.fillRect(X - 22, Y + 2, 44, 6);
@@ -787,7 +814,7 @@ function pintaMapa(m, ciutat) {
       for (let k = 0; k < 30; k++) { const x = 3 * TS + k * 1.2 * TS, yy = y + Math.sin(k / 29 * Math.PI) * 25; g.fillStyle = k % 2 ? '#f2c230' : '#d62828'; g.beginPath(); g.moveTo(x, yy); g.lineTo(x + 24, yy); g.lineTo(x + 12, yy + 22); g.fill(); }
     }
   }
-  if (ciutat === 'capellades') {
+  if (ciutat === 'capellades' && !nomesTerra) {
     // Ondes de La Bassa
     g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 2;
     for (let i = 0; i < 26; i++) { const x = 11 * TS + hash(i, 1) * 11.5 * TS, y = 10 * TS + hash(1, i) * 2.6 * TS; g.beginPath(); g.arc(x, y, 8, 0.2, Math.PI - 0.2); g.stroke(); }
@@ -2892,6 +2919,11 @@ function dibuixaPrimera(W, H, dpr) {
   }
   // Bales que volen cap a tu
   for (const b of J.bales) { const rx = b.x / TS - px, ry = b.y / TS - py, tX = invDet * (dy * rx - dx * ry), tY = invDet * (-ply * rx + plx * ry); if (tY > .2) { g.fillStyle = '#f2c230'; g.beginPath(); g.arc((w / 2) * (1 + tX / tY), hor + (K / tY) * .1, Math.max(2, 8 / tY), 0, TAU); g.fill(); } }
+  dibuixaMans(g, w, h, hor);
+}
+
+function dibuixaMans(g, w, h, hor) {
+  const j = J.jug, t = performance.now() / 1000;
   // Les teves mans (i l'arma) a baix de la pantalla
   const jaq = J.festa ? triat.jaquetaFesta : triat.jaqueta, alca = j.buh > 0 ? Math.sin(j.buh / .45 * Math.PI) * 60 : 0;
   const mb = j.mou ? Math.sin(j.pas) * 8 : Math.sin(t * 2) * 3;
@@ -2913,7 +2945,14 @@ function dibuixa() {
   cx.setTransform(1, 0, 0, 1, 0, 0);
   cx.fillStyle = '#1d2a22'; cx.fillRect(0, 0, W, H);
   if (!J) return;
-  if (J.primera) { dibuixaPrimera(W, H, dpr); dibuixaHUD(W / dpr, H / dpr, dpr); return; }
+  if (J.primera) {
+    if (M3D) {
+      cx.clearRect(0, 0, W, H);
+      M3D.dibuixa(W / dpr, H / dpr); dibuixat3d = true;
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0); dibuixaMans(cx, W / dpr, H / dpr, H / dpr / 2);
+    } else dibuixaPrimera(W, H, dpr);
+    dibuixaHUD(W / dpr, H / dpr, dpr); return;
+  }
   const j = J.jug;
   let camX = j.x - W / zoom / 2, camY = j.y - H / zoom / 2;
   camX = Math.max(0, Math.min(MW * TS - W / zoom, camX)); camY = Math.max(-80, Math.min(MH * TS - H / zoom, camY));
@@ -3299,8 +3338,17 @@ function dibuixaHUD(W, H, dpr) {
 }
 
 // ---------- Bucle ----------
+// Motor 3D: es carrega la primera vegada que poses la primera persona
+let M3D = null, carregant3d = false, dibuixat3d = false;
+function carrega3d() {
+  if (M3D || carregant3d) return;
+  carregant3d = true; anunci('CARREGANT EL 3D...', 1.5);
+  import('./primera3d.js').then(m => { M3D = m; }).catch(() => { carregant3d = false; });
+}
+
 function bucle(t) {
   const dt = Math.min(0.05, (t - ultim) / 1000 || 0); ultim = t;
+  dibuixat3d = false;
   if (estat === 'joc') actualitza(dt);
   else if (estat === 'taxi') { actualitzaTaxi(dt); musicaRave(0); }
   else musicaRave(0);
@@ -3308,6 +3356,8 @@ function bucle(t) {
   soConduir(jugant && !!(jj.cotxe || jj.vespa), jj ? (jj.cotxe ? jj.cotxe.vel : jj.mou ? 250 : 0) : 0);
   soRemor(!jugant ? 0 : J.pluja > 0 && !J.zona ? .09 : J.zona === 'patum' ? .1 : (J.ciutat === 'vic' && !J.zona && (dinsFesti(jj) || dinsRave(jj))) ? .05 : 0);
   if (J && (estat === 'taxi' || (estat === 'pausa' && J.abansPausa === 'taxi'))) dibuixaTaxi(); else dibuixa();
+  if (M3D && !dibuixat3d) M3D.amaga();
+  soAmbient(jugant && !J.zona && !J.pluja && !(J.ciutat === 'vic' && (dinsRave(jj) || dinsFesti(jj))));
   requestAnimationFrame(bucle);
 }
 
@@ -3339,6 +3389,7 @@ document.getElementById('bVista').onclick = canviaVista;
 function canviaVista() {
   if (!J) return;
   J.primera = !J.primera; J.jug.ang = Math.atan2(J.jug.fy, J.jug.fx);
+  if (J.primera) carrega3d();
   document.getElementById('bVista').textContent = J.primera ? '3a PERSONA' : '1a PERSONA';
   anunci(J.primera ? 'PRIMERA PERSONA' : 'VISTA DE DALT', 1);
 }
