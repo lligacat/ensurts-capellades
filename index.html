@@ -773,7 +773,7 @@ function poblaCasa() {
 
 function poblaPatum() {
   const pos = () => ({ x: (3.3 + Math.random() * 35.4) * TS, y: (4.6 + Math.random() * 20.6) * TS });
-  for (let i = 0; i < 230; i++) { const p = pos(); if (Math.hypot(p.x - ZONES.patum.inici.x, p.y - ZONES.patum.inici.y) > 90) J.multitud.push(Object.assign(p, { pr: novaPersona(), ball: Math.random() * 6 })); }
+  for (let i = 0; i < 1100; i++) { const p = pos(); if (Math.hypot(p.x - ZONES.patum.inici.x, p.y - ZONES.patum.inici.y) > 90) J.multitud.push(Object.assign(p, { pr: novaPersona(), ball: Math.random() * 6 })); }
   for (let i = 0; i < 14; i++) { const p = pos(); J.parelles.push(Object.assign(parellaA('patum', p.x, p.y), { ball: Math.random() * 6 })); }
   J.gegants = [0, 1, 2, 3].map(i => ({ a: i * TAU / 4, r: 7 * TS, color: ['#c0392b', '#2e86de', '#8e44ad', '#27ae60'][i], cap: ['#f1c7a3', '#8d5a3b', '#f6d2b8', '#e0ac85'][i], x: 0, y: 0, ball: i }));
   J.guita = { x: 8 * TS, y: 14 * TS, dir: 1, t: 0 };
@@ -2118,7 +2118,8 @@ function dibuixa() {
   J.parelles.forEach(p => ents.push([p.y, escalat(p, () => dibuixaParella(cx, p))]));
   if (!J.zona) ents.push([TAXI.y, () => dibuixaTaxiParat(cx)]);
   J.pintors.forEach(p => ents.push([p.y, escalat(p, () => dibuixaPintor(cx, p), 1.3)]));
-  J.multitud.forEach(m => ents.push([m.y, escalat(m, () => personaPetita(cx, m.x, m.y - Math.abs(Math.sin(m.ball)) * 5, m.pr, 0, false, false))]));
+  const vist = e => e.x > camX - 60 && e.x < camX + W / zoom + 60 && e.y > camY - 20 && e.y < camY + H / zoom + 80; // només el que surt a la pantalla
+  J.multitud.forEach(m => vist(m) && ents.push([m.y, escalat(m, () => personaPetita(cx, m.x, m.y - Math.abs(Math.sin(m.ball)) * 5, m.pr, 0, false, false))]));
   J.gegants.forEach(g => ents.push([g.y, () => dibuixaGegant(cx, g)]));
   if (J.guita) ents.push([J.guita.y, () => dibuixaGuita(cx, J.guita)]);
   if (J.ciutat === 'vic' && !J.zona) {
