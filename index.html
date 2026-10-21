@@ -666,9 +666,9 @@ function cami(sx, sy, tx, ty, pot = transitable) {
 
 // ---------- Dificultat ----------
 const DIFICULTATS = {
-  facil:   { nom: 'FÀCIL', desc: '8 vides, la policia gairebé no t\'encerta i tot va més a poc a poc', vides: 8, tir: 2.2, bala: .6, punteria: .55, invul: 4, subi: 5, foc: .5, cop: .75, alerta: .6, policies: 1 },
-  normal:  { nom: 'NORMAL', desc: '3 vides, com sempre', vides: 3, tir: 1, bala: 1, punteria: .16, invul: 2.5, subi: 3, foc: 1, cop: 1, alerta: 1, policies: 2 },
-  dificil: { nom: 'DIFÍCIL', desc: '2 vides, més policia, punteria fina i la gent et veu de seguida', vides: 2, tir: .55, bala: 1.35, punteria: .05, invul: 1.5, subi: 2, foc: 1.7, cop: 1.25, alerta: 1.8, policies: 3 },
+  facil:   { nom: 'FÀCIL', desc: 'Gairebé impossible morir: 10 vides i quasi tot et passa de llarg', vides: 10, tir: 4, bala: .5, punteria: 1.2, invul: 6, subi: 8, foc: .25, cop: .6, alerta: .5, policies: 1, salva: .85 },
+  normal:  { nom: 'NORMAL', desc: '3 vides, com sempre', vides: 3, tir: 1, bala: 1, punteria: .16, invul: 2.5, subi: 3, foc: 1, cop: 1, alerta: 1, policies: 2, salva: 0 },
+  dificil: { nom: 'DIFÍCIL', desc: '2 vides, més policia, punteria fina i la gent et veu de seguida', vides: 2, tir: .55, bala: 1.35, punteria: .05, invul: 1.5, subi: 2, foc: 1.7, cop: 1.25, alerta: 1.8, policies: 3, salva: 0 },
 };
 let dificultat = 'normal';
 try { dificultat = DIFICULTATS[localStorage.getItem('ensurts-dif')] ? localStorage.getItem('ensurts-dif') : 'normal'; } catch (e) {}
@@ -876,7 +876,7 @@ function actualitzaZona(dt) {
       if (fc.fase === 'avis' && fc.t <= 0) { fc.fase = 'foc'; fc.t = 1.5; so('foc'); }
       if (fc.fase === 'foc') {
         if (Math.random() < dt * 30) J.particules.push({ x: fc.x + (Math.random() - .5) * fc.r, y: fc.y, vx: (Math.random() - .5) * 60, vy: -80 - Math.random() * 120, t: .6, c: tria(['#ffb000', '#ff5c2a', '#fff3a0']), m: 5 + Math.random() * 6 });
-        if (j.invul <= 0 && Math.hypot(j.x - fc.x, j.y - fc.y) < fc.r) return perdVida("T'HAS CREMAT!");
+        if (j.invul <= 0 && Math.hypot(j.x - fc.x, j.y - fc.y) < fc.r) return ferit("T'HAS CREMAT!");
       }
     }
     J.focs = J.focs.filter(fc => fc.t > 0);
@@ -1134,6 +1134,7 @@ function encenAltaveu() {
   anunci("ALTAVEU GEGANT CONNECTAT!", 1.8); so('motor');
 }
 
+const DURADA_TAXI = 5;
 const FRASES_TAXI = [
   "M'ENTENS O NO M'ENTENS, NOI?",
   'SI HAGUÉS SABUT QUE ANÀVEM A {DESTI}, HAURIA AGAFAT EL LAMBORGHINI!',
@@ -1148,14 +1149,14 @@ const FRASES_TAXI = [
 ];
 function agafaTaxi() {
   const desti = J.ciutat === 'capellades' ? 'vic' : 'capellades';
-  J.viatge = { t: 15, desti, frase: -1, tFrase: 0, km: 0 };
+  J.viatge = { t: DURADA_TAXI, desti, frase: -1, tFrase: 0, km: 0 };
   J.viatges++; estat = 'taxi'; so('pec');
 }
 function actualitzaTaxi(dt) {
   const V = J.viatge;
   V.t -= dt; V.km += dt; V.tFrase -= dt;
   if (V.tFrase <= 0) {
-    V.frase = (V.frase + 1) % FRASES_TAXI.length; V.tFrase = 2.5;
+    V.frase = (V.frase + 1) % FRASES_TAXI.length; V.tFrase = 1.7;
     if (FRASES_TAXI[V.frase].includes('ENT')) clip('mentens', false, .92 + Math.random() * .12, 1.6);
   }
   if (V.t <= 0) {
@@ -1297,7 +1298,7 @@ function explotaSubineta(s) {
   for (let i = 0; i < 50; i++) { const a = Math.random() * TAU, v = 100 + Math.random() * 400; J.particules.push({ x: s.x, y: s.y - 10, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: .5 + Math.random() * .8, c: tria(['#ffb000', '#ff5c2a', '#333', '#2c5aa0']), m: 6 + Math.random() * 12 }); }
   textFlotant(s.x, s.y - 80, 'BOOOM!', '#ffb000', 20);
   fesAtac(s.x, s.y, 280, { total: true, dany: 3, policia: 'fuig', durPol: 3 });
-  if (Math.hypot(j.x - s.x, j.y - s.y) < 230) perdVida('LA SUBINETA HA EXPLOTAT!');
+  if (Math.hypot(j.x - s.x, j.y - s.y) < 230) ferit('LA SUBINETA HA EXPLOTAT!');
 }
 
 function actualitzaVehicles(dt) {
@@ -1605,7 +1606,7 @@ function actualitza(dt) {
       } else mou(m, m.fx * 150 * DIF().cop, m.fy * 150 * DIF().cop, dt, 12);
     }
     if (Math.random() < dt * .4) textFlotant(m.x, m.y - 80, tria(['ET MATARÉ!', 'VINE, COBARD!', 'ET FARÉ PICADILLO!', 'NO CORRIS!']), '#ff9a9a', 8);
-    if (!j.cotxe && d < 34 && m.recCop <= 0 && j.invul <= 0) { m.recCop = 1; m.cop = 0.3; so('cop'); return perdVida("T'HA ATONYINAT!"); }
+    if (!j.cotxe && d < 34 && m.recCop <= 0 && j.invul <= 0) { m.recCop = 1; m.cop = 0.3; so('cop'); return ferit("T'HA ATONYINAT!"); }
   }
   J.matons = J.matons.filter(m => !(m.caigut && m.ko <= 0));
 
@@ -1659,7 +1660,7 @@ function actualitza(dt) {
     b.t -= dt; b.x += b.vx * dt; b.y += b.vy * dt;
     if (tapaVista(tileA(b.x, b.y + 20))) { b.t = 0; so('rebot'); for (let i = 0; i < 4; i++) J.particules.push({ x: b.x, y: b.y, vx: (Math.random() - .5) * 160, vy: (Math.random() - .5) * 160, t: .25, c: '#ddd', m: 3 }); }
     else if (j.cotxe && Math.hypot(b.x - j.x, b.y - (j.y - 8)) < 36) { b.t = 0; textFlotant(b.x, b.y - 10, 'CLONC!', '#ddd', 8); }
-    else if (!j.cotxe && j.invul <= 0 && Math.hypot(b.x - j.x, b.y - (j.y - 30)) < 22) { b.t = 0; return perdVida("T'HAN DONAT!"); }
+    else if (!j.cotxe && j.invul <= 0 && Math.hypot(b.x - j.x, b.y - (j.y - 30)) < 22) { b.t = 0; return ferit("T'HAN DONAT!"); }
   }
   J.bales = J.bales.filter(b => b.t > 0);
 
@@ -1673,6 +1674,16 @@ function actualitza(dt) {
   J.particules = J.particules.filter(q => q.t > 0);
   for (const t of J.textos) { t.t -= dt; t.y -= 34 * dt; }
   J.textos = J.textos.filter(t => t.t > 0);
+}
+
+// Cada cop que et farien mal: en fàcil, gairebé sempre te'n salves de miracle
+function ferit(txt) {
+  if (Math.random() < DIF().salva) {
+    J.jug.invul = 1.5; so('agafar');
+    textFlotant(J.jug.x, J.jug.y - 100, tria(['DE MIRACLE!', 'PER UN PÈL!', 'NI M\'HA TOCAT!', 'QUINA SORT!']), '#2fd38a', 11);
+    return;
+  }
+  return perdVida(txt);
 }
 
 function perdVida(txt) {
@@ -2350,6 +2361,56 @@ function partirText(g, txt, ampla) {
   if (l) linies.push(l); return linies;
 }
 
+// Coses que es veuen des del taxi (cada una es dibuixa a la vora de la carretera)
+const cartell = (g, x, y, linies, fons, color) => {
+  g.fillStyle = '#5a3b26'; g.fillRect(x + 20, y - 60, 6, 60); g.fillRect(x + 104, y - 60, 6, 60);
+  g.fillStyle = fons; g.fillRect(x, y - 120, 130, 64); g.strokeStyle = '#000'; g.lineWidth = 3; g.strokeRect(x, y - 120, 130, 64);
+  g.fillStyle = color; g.font = '8px "Press Start 2P"'; g.textAlign = 'center';
+  linies.forEach((l, i) => g.fillText(l, x + 65, y - 100 + i * 16));
+};
+const VORA = [
+  (g, x, y, t, desti) => cartell(g, x, y, [desti, 'A ' + Math.max(1, Math.ceil(J.viatge ? J.viatge.t : 1)) + ' KM', "M'ENTENS?"], '#2a7de1', '#fff'),
+  (g, x, y, t) => { // vaca amb ulleres de sol
+    g.fillStyle = '#fff'; rodaRect(g, x, y - 44, 70, 32, 10); g.fill();
+    g.fillStyle = '#111'; g.beginPath(); g.arc(x + 20, y - 34, 8, 0, TAU); g.arc(x + 46, y - 24, 6, 0, TAU); g.fill();
+    for (const lx of [6, 20, 46, 60]) g.fillRect(x + lx, y - 14, 6, 14);
+    g.fillStyle = '#fff'; rodaRect(g, x + 62, y - 58, 30, 24, 8); g.fill(); g.fillStyle = '#f4a6b8'; g.fillRect(x + 80, y - 44, 14, 9);
+    g.fillStyle = '#111'; g.fillRect(x + 66, y - 54, 22, 6);
+    g.fillStyle = '#fff'; g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; if (Math.sin(t * 4) > 0) g.fillText('MUUU!', x + 78, y - 66);
+  },
+  (g, x, y) => cartell(g, x, y, ['PROHIBIT', 'ESPANTAR', 'PARELLES'], '#fff', '#d62828'),
+  (g, x, y, t) => { // la Subineta espatllada a la cuneta
+    g.fillStyle = '#2c5aa0'; rodaRect(g, x, y - 48, 110, 40, 6); g.fill(); g.fillStyle = '#9fb7c9'; g.fillRect(x + 82, y - 42, 22, 16);
+    g.fillStyle = '#111'; g.beginPath(); g.arc(x + 24, y - 8, 10, 0, TAU); g.arc(x + 88, y - 8, 10, 0, TAU); g.fill();
+    for (let i = 0; i < 4; i++) { g.fillStyle = 'rgba(80,80,80,' + (.5 - i * .1) + ')'; g.beginPath(); g.arc(x + 60 + Math.sin(t * 3 + i) * 8, y - 60 - i * 18 - (t * 30) % 18, 10 + i * 4, 0, TAU); g.fill(); }
+    g.fillStyle = '#fff'; g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('SUBINETA', x + 55, y - 26);
+  },
+  (g, x, y) => cartell(g, x, y, ['ES VEN', 'LAMBORGHINI', '(GAIREBÉ NOU)'], '#f2c230', '#111'),
+  (g, x, y, t) => { // un gegant fent autoestop
+    g.fillStyle = '#8e44ad'; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14, y - 80); g.lineTo(x + 40, y - 80); g.lineTo(x + 54, y); g.fill();
+    g.fillStyle = '#f1c7a3'; g.beginPath(); g.arc(x + 27, y - 98, 18, 0, TAU); g.fill();
+    g.fillStyle = '#f2c230'; g.fillRect(x + 13, y - 122, 28, 8);
+    g.strokeStyle = '#f1c7a3'; g.lineWidth = 6; g.beginPath(); g.moveTo(x + 40, y - 70); g.lineTo(x + 66, y - 86 + Math.sin(t * 6) * 4); g.stroke();
+    g.fillStyle = '#fff'; g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('A BERGA?', x + 27, y - 132);
+  },
+  (g, x, y, t) => { // un ovni que s'emporta una parella
+    const oy = y - 190 + Math.sin(t * 3) * 6;
+    g.fillStyle = 'rgba(180,255,180,.25)'; g.beginPath(); g.moveTo(x + 30, oy + 10); g.lineTo(x + 90, oy + 10); g.lineTo(x + 110, y); g.lineTo(x + 10, y); g.fill();
+    g.fillStyle = '#aab'; g.beginPath(); g.ellipse(x + 60, oy, 60, 14, 0, 0, TAU); g.fill(); g.fillStyle = '#7fd3ff'; g.beginPath(); g.ellipse(x + 60, oy - 10, 24, 14, 0, Math.PI, TAU); g.fill();
+    const py = y - 30 - ((t * 40) % 60);
+    personaPetita(g, x + 50, py, { pell: '#f1c7a3', cabell: '#5a3a22', roba: '#e85d75', llarg: true }, 0, true, false);
+    personaPetita(g, x + 70, py, { pell: '#e0ac85', cabell: '#111', roba: '#4a7bd1', llarg: false }, 0, true, false);
+  },
+  (g, x, y) => cartell(g, x, y, ['FUET DE VIC', 'EL MILLOR', 'DEL MÓN'], '#c0392b', '#fff'),
+  (g, x, y, t) => { // la policia amagada darrere d'un arbust
+    g.fillStyle = '#2f6e36'; g.beginPath(); g.arc(x + 30, y - 24, 30, 0, TAU); g.arc(x + 70, y - 22, 26, 0, TAU); g.fill();
+    g.fillStyle = '#e0ac85'; g.beginPath(); g.arc(x + 50, y - 50, 10, 0, TAU); g.fill();
+    g.fillStyle = '#16223a'; g.fillRect(x + 39, y - 64, 22, 7);
+    g.fillStyle = '#111'; g.fillRect(x + 60, y - 52, 18, 6);
+    g.fillStyle = '#fff'; g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('PSST...', x + 50, y - 76);
+  },
+];
+
 // Escena del viatge en taxi entre Capellades i Vic
 function dibuixaTaxi() {
   const W = cv.width, H = cv.height, dpr = window.devicePixelRatio || 1, V = J.viatge;
@@ -2370,9 +2431,8 @@ function dibuixaTaxi() {
   g.fillStyle = '#eee'; for (let x = -((km * 600) % 80); x < w; x += 80) g.fillRect(x, ry + h * .1 - 2, 40, 4);
   // Pals i un rètol de Vic
   for (let x = -((km * 400) % 260); x < w; x += 260) { g.fillStyle = '#6b4a2f'; g.fillRect(x, ry - 70, 5, 70); }
-  const rx = w - ((km * 400) % (w + 400));
-  g.fillStyle = '#2a7de1'; g.fillRect(rx, ry - 90, 120, 40); g.fillStyle = '#fff'; g.font = '11px "Press Start 2P"'; g.textAlign = 'center';
-  g.fillText((V ? V.desti : 'vic').toUpperCase() + ' ' + Math.max(1, Math.ceil(V ? V.t : 1)) + ' KM', rx + 60, ry - 64); g.fillStyle = '#555'; g.fillRect(rx + 56, ry - 50, 6, 50);
+  const desti = (V ? V.desti : 'vic').toUpperCase();
+  VORA.forEach((coses, i) => { const x = w * .55 + i * 280 - km * 600; if (x > -260 && x < w + 260) coses(g, x, ry, t, desti); });
   // El taxi
   const tx = w * .38, ty = ry + h * .06, bot = Math.sin(t * 20) * 1.5, k = Math.min(1.4, w / 700);
   g.save(); g.translate(tx, ty + bot); g.scale(k, k);
@@ -2402,7 +2462,7 @@ function dibuixaTaxi() {
     g.fillStyle = '#111'; linies.forEach((l, i) => g.fillText(l, bx + 14, by + 22 + mida * .7 + i * (mida + 10)));
   }
   // Barra de progrés
-  const pw = Math.min(420, w - 40), px = w / 2 - pw / 2, prog = V ? 1 - V.t / 15 : 1;
+  const pw = Math.min(420, w - 40), px = w / 2 - pw / 2, prog = V ? 1 - V.t / DURADA_TAXI : 1;
   g.fillStyle = '#000'; g.fillRect(px - 3, 17, pw + 6, 34); g.fillStyle = '#141414'; g.fillRect(px, 20, pw, 28);
   g.fillStyle = '#f2c230'; g.fillRect(px + 4, 24, (pw - 8) * prog, 20);
   g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#fff';
