@@ -19,8 +19,11 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; overflow: hidden; background: #1d2a22; color: #fff; font-family: 'Press Start 2P', monospace; touch-action: none; user-select: none; -webkit-user-select: none; }
   canvas#joc { display: block; width: 100vw; height: 100vh; }
-  .pantalla { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 16px; background: rgba(12, 18, 14, .88); overflow-y: auto; z-index: 5; }
+  .pantalla { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 22px; padding: 16px; background: rgba(12, 18, 14, .88); overflow-y: auto; z-index: 5; }
   .pantalla.amagada { display: none; }
+  /* centrat quan hi cap, però amb scroll fins a dalt de tot quan és llarg */
+  .pantalla > :first-child { margin-top: auto; }
+  .pantalla > :last-child { margin-bottom: auto; }
   h1 { font-size: clamp(18px, 4.4vw, 40px); text-align: center; line-height: 1.35; color: var(--crema); text-shadow: 4px 4px 0 #000; }
   h1 em { font-style: normal; color: var(--rosa); }
   .sub { font-size: clamp(9px, 1.5vw, 12px); color: #b9c9be; text-align: center; line-height: 1.9; max-width: 640px; }
@@ -60,6 +63,8 @@
   .fila { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
   #bAcabar { position: fixed; right: 14px; top: 150px; z-index: 3; display: none; font-family: inherit; font-size: 9px; padding: 9px 12px; color: #fff; background: #141414; border: 2px solid var(--verd); box-shadow: 0 0 0 2px #000; cursor: pointer; }
   body.jugant #bAcabar { display: block; }
+  #bVista { position: fixed; right: 14px; top: 190px; z-index: 3; display: none; font-family: inherit; font-size: 9px; padding: 9px 12px; color: #000; background: #ffd23f; border: 2px solid #000; box-shadow: 0 0 0 2px #000; cursor: pointer; }
+  body.jugant #bVista { display: block; }
   #tactil { position: fixed; right: 14px; bottom: 18px; display: none; grid-template-columns: auto auto; gap: 12px; align-items: end; justify-items: center; z-index: 3; }
   #tactil button { width: 70px; height: 70px; border-radius: 50%; border: 4px solid #000; font-family: inherit; font-size: 9px; color: #fff; background: #2c8d63; box-shadow: 4px 4px 0 #000; }
   #tactil button#bBuh { width: 92px; height: 92px; background: var(--rosa); font-size: 11px; }
@@ -71,6 +76,7 @@
     .cartes { grid-template-columns: repeat(2, minmax(0, 170px)); }
     .controls.teclat { display: none; }
     #bAcabar { top: 118px; }
+    #bVista { top: 156px; }
   }
 </style>
 </head>
@@ -121,6 +127,7 @@
 </div>
 
 <button id="bAcabar">ACABAR</button>
+<button id="bVista">1a PERSONA</button>
 <div id="tactil">
   <button id="bAgafar">AGAFAR</button><button id="bBomba">EXPLO<br>SIÓ</button>
   <button id="bEsp">PODER</button><button id="bBuh">HULAAA!</button>
@@ -1719,6 +1726,10 @@ function actualitza(dt) {
   if (tecles.ArrowLeft || tecles.KeyA) ix--; if (tecles.ArrowRight || tecles.KeyD) ix++;
   if (tecles.ArrowUp || tecles.KeyW) iy--; if (tecles.ArrowDown || tecles.KeyS) iy++;
   if (joystick.actiu) { ix = joystick.dx; iy = joystick.dy; }
+  if (J.primera) {
+    j.ang = (j.ang ?? Math.atan2(j.fy, j.fx)) + ix * 2.6 * dt;
+    const endavant = -iy; ix = Math.cos(j.ang) * endavant; iy = Math.sin(j.ang) * endavant;
+  }
   const m = Math.hypot(ix, iy);
   j.mou = m > 0.1;
   if (j.cotxe) { // conduint el Vilamovil
@@ -1759,6 +1770,7 @@ function actualitza(dt) {
     textFlotant(j.x, j.y - 110, tria(['ON SÓN LES PARELLES?', 'HEHEHE...', 'AVUI ESPANTO A TOTHOM', 'QUIN DIA MÉS BO', 'SHHH...', 'ON HE APARCAT?', 'HULA, HULA...']), '#fff', 9);
   }
   for (const p of J.pintors) p.t += dt;
+  if (J.primera) { j.fx = Math.cos(j.ang); j.fy = Math.sin(j.ang); if (j.cotxe) { j.cotxe.fx = j.fx; j.cotxe.fy = j.fy; } }
   const invisible = j.poder > 0 && triat.id === 'escola';
 
   // Armes al terra: si no en portes cap, l'agafes trepitjant-la
@@ -2006,6 +2018,8 @@ function final(titol) {
 }
 
 function tornaAlMenu() {
+  document.getElementById('bVista').textContent = '1a PERSONA';
+  setTimeout(() => { document.getElementById('pInici').scrollTop = 0; }, 0);
   if (J && !J.cobrat) { J.cobrat = true; moneder.suma(J.punts); }
   pintaBotiga();
   estat = 'menu'; J = null;
@@ -2507,12 +2521,187 @@ function dibuixaJugador(g) {
   if (j.poder > 0 && p.id === 'mena') { g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 3; for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(x - j.fx * (30 + i * 8) - 10, y - 20 - i * 12); g.lineTo(x - j.fx * (60 + i * 8) - 10, y - 20 - i * 12); g.stroke(); } }
 }
 
+const ALT_PARET = 2.4, ULL = .55, PLA = .72;
+const esParetFP = t => t !== C.ARBRE && t !== C.AIGUA && !transitable(t);
+const TEX = {};
+function texturaParet(t, variant) {
+  const c = document.createElement('canvas'); c.width = 64; c.height = 154;
+  const g = c.getContext('2d'), h = 154;
+  const fac = ['#efe3cc', '#e8d6b5', '#f3ead8', '#dccaa8', '#e0d3bc', '#d6c4a4'][variant % 6];
+  const ombra = (x, y, w, hh) => { g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(x + 2, y + 2, w, hh); };
+  if (t === C.EDIF || t === C.ESGL || t === C.MOLI) {
+    g.fillStyle = t === C.ESGL ? '#cdbf9f' : t === C.MOLI ? '#d9c7a1' : fac; g.fillRect(0, 0, 64, h);
+    gra(g, 0, 0, 64, h, ['rgba(0,0,0,.05)', 'rgba(255,255,255,.08)'], 60, 2, variant * 31 + t);
+    g.fillStyle = '#8a3b26'; g.fillRect(0, 0, 64, 10); g.fillStyle = 'rgba(0,0,0,.3)'; g.fillRect(0, 10, 64, 3);
+    for (let pis = 0; pis < 3; pis++) {
+      const y = 22 + pis * 34;
+      if (t === C.ESGL && pis === 2) break;
+      for (const x of [10, 38]) {
+        ombra(x, y, 16, 22); g.fillStyle = '#efe9dc'; g.fillRect(x - 2, y - 2, 20, 26);
+        g.fillStyle = '#3d5466'; g.fillRect(x, y, 16, 22); g.fillStyle = 'rgba(255,255,255,.3)'; g.fillRect(x + 2, y + 2, 4, 16);
+        g.fillStyle = t === C.MOLI ? '#6b4a2f' : '#3f6b45'; g.fillRect(x - 7, y - 1, 5, 24); g.fillRect(x + 18, y - 1, 5, 24);
+        if ((variant + pis) % 3 === 0) { g.strokeStyle = '#2a2a2a'; g.lineWidth = 1.5; g.strokeRect(x - 4, y + 16, 24, 9); }
+      }
+    }
+    if (t === C.ESGL) { g.fillStyle = '#5a3b26'; g.beginPath(); g.moveTo(20, h); g.lineTo(20, h - 34); g.arc(32, h - 34, 12, Math.PI, 0); g.lineTo(44, h); g.fill(); }
+    else if (variant % 3 === 0) { const tc = ['#c0392b', '#2e86de', '#27ae60'][variant % 3 === 0 ? (variant / 3) % 3 : 0]; for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? '#f4f1ea' : tc; g.fillRect(i * 8, h - 44, 8, 10); } g.fillStyle = '#86b9d8'; g.fillRect(6, h - 32, 34, 32); g.fillStyle = '#5a3b26'; g.fillRect(46, h - 34, 14, 34); }
+    else { g.fillStyle = '#5a3b26'; g.fillRect(22, h - 36, 20, 36); g.fillStyle = '#d4a017'; g.fillRect(37, h - 18, 2, 3); }
+    g.fillStyle = 'rgba(0,0,0,.15)'; g.fillRect(0, h - 6, 64, 6);
+  } else if (t === C.GARATGE) {
+    g.fillStyle = '#cfd2d6'; g.fillRect(0, 0, 64, h); g.fillStyle = '#6d7177'; g.fillRect(0, 0, 64, 10);
+    g.fillStyle = '#9aa0a6'; g.fillRect(4, h - 70, 56, 70); g.fillStyle = '#7d838a'; for (let i = 0; i < 70; i += 5) g.fillRect(4, h - 70 + i, 56, 2);
+    g.fillStyle = '#f2c230'; g.fillRect(8, 30, 48, 18); g.fillStyle = '#111'; g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('TAXI', 32, 44);
+  } else if (t === C.ROCA) {
+    g.fillStyle = '#9a7b5c'; g.fillRect(0, 0, 64, h); gra(g, 0, 0, 64, h, ['#86694c', '#a88a68', '#7a5f45'], 160, 6, variant * 7);
+  } else if (t === C.TANCA || t === C.PORTA) {
+    g.fillStyle = '#1b1530'; g.fillRect(0, 0, 64, h);
+    g.strokeStyle = '#9aa5b1'; g.lineWidth = 1.5; for (let i = -h; i < 64 + h; i += 10) { g.beginPath(); g.moveTo(i, h - 60); g.lineTo(i + 60, h); g.moveTo(i + 60, h - 60); g.lineTo(i, h); g.stroke(); }
+    g.fillStyle = '#5b6570'; g.fillRect(0, h - 64, 64, 4); g.fillRect(30, h - 64, 4, 64);
+    if (t === C.PORTA) for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? '#f2c230' : '#111'; g.fillRect(i * 8, h - 40, 8, 12); }
+    g.clearRect(0, 0, 64, h - 66);
+  } else if (t === C.PARET) {
+    g.fillStyle = '#e9dcc4'; g.fillRect(0, 0, 64, h); g.fillStyle = 'rgba(180,120,80,.15)'; for (let x = 0; x < 64; x += 16) g.fillRect(x, 0, 8, h);
+    g.fillStyle = '#8a5a2b'; g.fillRect(0, h - 10, 64, 10);
+    if (variant % 2) { g.fillStyle = '#5a3b26'; g.fillRect(14, 40, 36, 28); g.fillStyle = tria(['#2e86de', '#c0392b', '#27ae60']); g.fillRect(17, 43, 30, 22); }
+  } else if (t === C.BOSC) {
+    g.fillStyle = '#24502a'; g.fillRect(0, 0, 64, h);
+    for (let i = 0; i < 26; i++) { g.fillStyle = ['#2f6e36', '#3d7a36', '#1d4422'][i % 3]; g.beginPath(); g.arc(hash(i, variant) * 64, hash(variant, i) * h, 8 + hash(i * 3, 1) * 10, 0, TAU); g.fill(); }
+    g.fillStyle = '#5b3d25'; g.fillRect(28, h - 40, 8, 40);
+  } else if (t === C.ALTAVEU) {
+    g.fillStyle = '#111'; g.fillRect(0, h - 90, 64, 90); g.clearRect(0, 0, 64, h - 90);
+    for (const y of [h - 66, h - 26]) { g.fillStyle = '#2b2b2b'; g.beginPath(); g.arc(32, y, 20, 0, TAU); g.fill(); g.fillStyle = '#555'; g.beginPath(); g.arc(32, y, 8, 0, TAU); g.fill(); }
+  } else if (t === C.ESCENARI) {
+    g.clearRect(0, 0, 64, h); g.fillStyle = '#3a2a1f'; g.fillRect(0, h - 30, 64, 30); g.fillStyle = '#9aa0a6'; g.fillRect(4, 0, 4, h - 30); g.fillRect(56, 0, 4, h - 30);
+  } else { g.fillStyle = '#0d0f0e'; g.fillRect(0, 0, 64, h); }
+  return c;
+}
+function texParet(t, x, y) {
+  const v = Math.floor(hash(x, y) * 6), clau = t + '-' + v;
+  return TEX[clau] || (TEX[clau] = texturaParet(t, v));
+}
+
+// Dibuixa una cosa del món (parella, policia, arbre...) com si fos un cartell dret davant la càmera
+function cotxeDeFront(g, c) {
+  const col = c.tipus === 'policia' ? '#f4f6fa' : c.tipus === 'subineta' ? '#2c5aa0' : c.tipus === 'vilamovil' ? '#f7f7f2' : c.color;
+  g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(c.x, c.y, 46, 8, 0, 0, TAU); g.fill();
+  g.fillStyle = '#111'; g.fillRect(c.x - 40, c.y - 14, 14, 14); g.fillRect(c.x + 26, c.y - 14, 14, 14);
+  rodaRect(g, c.x - 44, c.y - 40, 88, 30, 8); g.fillStyle = col; g.fill();
+  rodaRect(g, c.x - 32, c.y - 62, 64, 26, 8); g.fill();
+  g.fillStyle = '#9fd3f0'; g.fillRect(c.x - 26, c.y - 58, 52, 18);
+  g.fillStyle = '#fff3a0'; g.fillRect(c.x - 40, c.y - 32, 12, 7); g.fillRect(c.x + 28, c.y - 32, 12, 7);
+  if (c.tipus === 'policia') { const on = Math.floor(performance.now() / 160) % 2; g.fillStyle = on ? '#ff2d2d' : '#2d6bff'; g.fillRect(c.x - 14, c.y - 70, 28, 8); }
+  if (c.tipus === 'vilamovil') { g.fillStyle = '#2a7de1'; g.fillRect(c.x - 44, c.y - 24, 88, 5); rotul(g, 'VILAMOVIL', c.x, c.y - 80, '#2a7de1', 8); }
+  if (c.tipus === 'subineta') { rotul(g, 'SUBINETA', c.x, c.y - 80, '#ff3b3b', 8); if (c.estat === 'compte') { g.font = '28px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#ff3b3b'; g.fillText(Math.ceil(c.compte), c.x, c.y - 100); } }
+}
+
+function dibuixaPrimera(W, H, dpr) {
+  const g = cx, j = J.jug, w = W / dpr, h = H / dpr, t = performance.now() / 1000;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const px = j.x / TS, py = j.y / TS, dx = Math.cos(j.ang ?? 0), dy = Math.sin(j.ang ?? 0), plx = -dy * PLA, ply = dx * PLA;
+  const bob = j.mou ? Math.sin(j.pas) * 4 : 0, sac = J.tremolor > 0 ? (Math.random() - .5) * 14 * J.tremolor : 0;
+  const hor = h * .5 + bob + sac, K = h * .78;
+  // Cel i terra
+  const interior = J.zona === 'casa';
+  const cel = g.createLinearGradient(0, 0, 0, hor);
+  if (interior) { cel.addColorStop(0, '#d8cdb8'); cel.addColorStop(1, '#efe6d4'); }
+  else if (J.zona === 'patum' || (dinsRave(j) && J.ciutat === 'vic' && !J.zona)) { cel.addColorStop(0, '#0b0820'); cel.addColorStop(1, '#2a1e4a'); }
+  else if (J.ciutat === 'vic') { cel.addColorStop(0, '#9fb0bd'); cel.addColorStop(1, '#dfe5ea'); }
+  else { cel.addColorStop(0, '#4f8fd0'); cel.addColorStop(1, '#cfe4f2'); }
+  g.fillStyle = cel; g.fillRect(0, 0, w, hor);
+  if (!interior) for (let i = 0; i < 5; i++) { // núvols
+    const nx = ((i * 260 - (j.ang ?? 0) * 300 + t * 6) % (w + 400) + w + 400) % (w + 400) - 200;
+    g.fillStyle = 'rgba(255,255,255,.75)'; g.beginPath(); g.ellipse(nx, hor * (.2 + (i % 3) * .15), 70, 18, 0, 0, TAU); g.ellipse(nx + 40, hor * (.2 + (i % 3) * .15) - 8, 46, 16, 0, 0, TAU); g.fill();
+  }
+  const terra = g.createLinearGradient(0, hor, 0, h);
+  const tc = interior ? ['#9c7046', '#c49a68'] : J.zona === 'muntanya' ? ['#6a5034', '#a07850'] : J.zona === 'patum' ? ['#8f826c', '#c4b49a'] : ['#45484c', '#6a6d72'];
+  terra.addColorStop(0, tc[0]); terra.addColorStop(1, tc[1]); g.fillStyle = terra; g.fillRect(0, hor, w, h - hor);
+  // Parets: un raig per columna
+  const colW = w < 600 ? 3 : 2, ncol = Math.ceil(w / colW), zbuf = new Float32Array(ncol);
+  for (let c = 0; c < ncol; c++) {
+    const camX = 2 * c / ncol - 1, rx = dx + plx * camX, ry = dy + ply * camX;
+    let mx = Math.floor(px), my = Math.floor(py);
+    const ddx = Math.abs(1 / rx), ddy = Math.abs(1 / ry);
+    const sx = rx < 0 ? -1 : 1, sy = ry < 0 ? -1 : 1;
+    let sdx = (rx < 0 ? px - mx : mx + 1 - px) * ddx, sdy = (ry < 0 ? py - my : my + 1 - py) * ddy, costat = 0, tile = C.BUIT, n = 0;
+    while (n++ < 64) {
+      if (sdx < sdy) { sdx += ddx; mx += sx; costat = 0; } else { sdy += ddy; my += sy; costat = 1; }
+      if (mx < 0 || my < 0 || mx >= MW || my >= MH) { tile = C.EDIF; break; }
+      if (esParetFP(mapa[my][mx])) { tile = mapa[my][mx]; break; }
+    }
+    const d = Math.max(.05, costat === 0 ? sdx - ddx : sdy - ddy);
+    zbuf[c] = d;
+    const P = K / d, peu = hor + P * ULL, alt = P * ALT_PARET;
+    let wx = costat === 0 ? py + d * ry : px + d * rx; wx -= Math.floor(wx);
+    if ((costat === 0 && rx > 0) || (costat === 1 && ry < 0)) wx = 1 - wx;
+    const tex = texParet(tile, mx, my);
+    g.drawImage(tex, Math.min(63, Math.floor(wx * 64)), 0, 1, tex.height, c * colW, peu - alt, colW + .5, alt);
+    const boira = Math.min(.85, d / 22) + (costat ? .12 : 0);
+    g.fillStyle = (J.ciutat === 'vic' && !J.zona ? 'rgba(200,208,215,' : 'rgba(10,14,22,') + boira + ')';
+    g.fillRect(c * colW, peu - alt, colW + .5, alt);
+  }
+  // Coses del món com a cartells (de lluny a prop), tapades per les parets que tenen davant
+  const invDet = 1 / (plx * dy - dx * ply), coses = [];
+  const afegeix = (e, k, fn) => {
+    const rx = e.x / TS - px, ry = e.y / TS - py, tX = invDet * (dy * rx - dx * ry), tY = invDet * (-ply * rx + plx * ry);
+    if (tY < .25 || tY > 26) return;
+    coses.push({ e, k, fn, tY, sx: (w / 2) * (1 + tX / tY) });
+  };
+  const persona = 1.35;
+  J.parelles.forEach(p => afegeix(p, persona, () => dibuixaParella(g, p)));
+  J.agents.forEach(a => afegeix(a, persona, () => dibuixaAgent(g, a)));
+  J.matons.forEach(m => afegeix(m, 1.6, () => dibuixaMaton(g, m)));
+  J.control.forEach(c => !J.zona && J.ciutat === 'vic' && afegeix(c, persona, () => dibuixaControl(g, c)));
+  J.pintors.forEach(p => afegeix(p, 1.3, () => dibuixaPintor(g, p)));
+  J.armes.forEach(a => afegeix(a, 1, () => dibuixaArmaTerra(g, a)));
+  J.vespes.forEach(v => !v.ocupada && afegeix(v, persona, () => dibuixaVespa(g, v)));
+  [...J.cotxes, J.vila, J.subi].forEach(c => c && c !== j.cotxe && afegeix(c, 1.1, () => cotxeDeFront(g, c)));
+  arbres.forEach(a => afegeix(a, 1.7, () => pintaArbre(g, a.x, a.y, a.h)));
+  if (J.ciutat === 'vic' && !J.zona) J.tendes.forEach(tn => afegeix(tn, 1.2, () => dibuixaTenda(g, tn)));
+  if (!J.zona) afegeix(TAXI, 1.1, () => cotxeDeFront(g, { x: TAXI.x, y: TAXI.y, tipus: 'taxi', color: '#f2c230' }));
+  J.gegants.forEach(ge => afegeix(ge, 1, () => dibuixaGegant(g, ge)));
+  if (J.guita) afegeix(J.guita, 1, () => dibuixaGuita(g, J.guita));
+  const aprop = J.multitud.filter(m => Math.abs(m.x - j.x) < 900 && Math.abs(m.y - j.y) < 900);
+  aprop.forEach(m => afegeix(m, persona, () => personaPetita(g, m.x, m.y - Math.abs(Math.sin(m.ball)) * 5, m.pr, 0, false, false)));
+  J.focs.forEach(fc => afegeix(fc, 1, () => dibuixaFoc(g, fc)));
+  coses.sort((a, b) => b.tY - a.tY);
+  for (const o of coses) {
+    const P = K / o.tY, esc = P / TS * o.k, peu = hor + P * ULL, mig = Math.max(40, 70 * esc);
+    const c0 = Math.max(0, Math.floor((o.sx - mig) / colW)), c1 = Math.min(ncol - 1, Math.ceil((o.sx + mig) / colW));
+    g.save(); g.beginPath(); let obert = -1;
+    for (let c = c0; c <= c1 + 1; c++) {
+      const visible = c <= c1 && zbuf[c] > o.tY;
+      if (visible && obert < 0) obert = c;
+      if (!visible && obert >= 0) { g.rect(obert * colW, 0, (c - obert) * colW + .5, h); obert = -1; }
+    }
+    g.clip();
+    g.translate(o.sx, peu); g.scale(esc, esc); g.translate(-o.e.x, -o.e.y);
+    o.fn();
+    g.restore();
+  }
+  // Bales que volen cap a tu
+  for (const b of J.bales) { const rx = b.x / TS - px, ry = b.y / TS - py, tX = invDet * (dy * rx - dx * ry), tY = invDet * (-ply * rx + plx * ry); if (tY > .2) { g.fillStyle = '#f2c230'; g.beginPath(); g.arc((w / 2) * (1 + tX / tY), hor + (K / tY) * .1, Math.max(2, 8 / tY), 0, TAU); g.fill(); } }
+  // Les teves mans (i l'arma) a baix de la pantalla
+  const jaq = J.festa ? triat.jaquetaFesta : triat.jaqueta, alca = j.buh > 0 ? Math.sin(j.buh / .45 * Math.PI) * 60 : 0;
+  const mb = j.mou ? Math.sin(j.pas) * 8 : Math.sin(t * 2) * 3;
+  for (const k of [-1, 1]) {
+    const hx = w / 2 + k * Math.min(160, w * .2), hy = h - 30 + mb * k - alca;
+    g.fillStyle = jaq; g.beginPath(); g.moveTo(hx - 34, h + 10); g.lineTo(hx - 18, hy + 10); g.lineTo(hx + 18, hy + 10); g.lineTo(hx + 34, h + 10); g.fill();
+    g.fillStyle = '#e0ac85'; g.beginPath(); g.ellipse(hx, hy, 24, 20, 0, 0, TAU); g.fill();
+    g.fillStyle = 'rgba(0,0,0,.15)'; g.beginPath(); g.ellipse(hx + 6, hy + 4, 16, 12, 0, 0, TAU); g.fill();
+  }
+  if (j.arma) iconaArma(g, j.arma.tipus, w / 2 + Math.min(160, w * .2) - 10, h - 90 + mb - alca, 3.2);
+  if (j.cotxe || j.vespa) { g.fillStyle = '#151515'; g.fillRect(0, h - 70, w, 70); g.strokeStyle = '#333'; g.lineWidth = 14; g.beginPath(); g.arc(w / 2, h + 40, 110, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); }
+  // Punt de mira
+  g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 2; g.beginPath(); g.moveTo(w / 2 - 8, hor); g.lineTo(w / 2 + 8, hor); g.moveTo(w / 2, hor - 8); g.lineTo(w / 2, hor + 8); g.stroke();
+}
+
 function dibuixa() {
   const W = cv.width, H = cv.height, dpr = window.devicePixelRatio || 1;
   const zoom = Math.max(0.6, Math.min(1.15, Math.min(W, H) / dpr / 720)) * dpr;
   cx.setTransform(1, 0, 0, 1, 0, 0);
   cx.fillStyle = '#1d2a22'; cx.fillRect(0, 0, W, H);
   if (!J) return;
+  if (J.primera) { dibuixaPrimera(W, H, dpr); dibuixaHUD(W / dpr, H / dpr, dpr); return; }
   const j = J.jug;
   let camX = j.x - W / zoom / 2, camY = j.y - H / zoom / 2;
   camX = Math.max(0, Math.min(MW * TS - W / zoom, camX)); camY = Math.max(-80, Math.min(MH * TS - H / zoom, camY));
@@ -2916,6 +3105,7 @@ addEventListener('keydown', e => {
     if (e.code === 'KeyE' || e.code === 'ShiftLeft') fesPoder();
     if (e.code === 'KeyF') accioF();
     if (e.code === 'KeyQ') llencaBomba();
+    if (e.code === 'KeyV') canviaVista();
     if (e.code === 'KeyP' || e.code === 'Escape') pausa('PAUSA');
   } else if (estat === 'pausa' && (e.code === 'KeyP' || e.code === 'Escape')) continua();
   else if (estat === 'final' && e.code === 'Enter') comenca(triat);
@@ -2928,6 +3118,13 @@ function continua() { estat = (J && J.abansPausa) || 'joc'; document.getElementB
 document.getElementById('bContinuar').onclick = continua;
 document.getElementById('bSortir').onclick = tornaAlMenu;
 document.getElementById('bAcabar').onclick = () => pausa('ACABAR LA PARTIDA?');
+document.getElementById('bVista').onclick = canviaVista;
+function canviaVista() {
+  if (!J) return;
+  J.primera = !J.primera; J.jug.ang = Math.atan2(J.jug.fy, J.jug.fx);
+  document.getElementById('bVista').textContent = J.primera ? '3a PERSONA' : '1a PERSONA';
+  anunci(J.primera ? 'PRIMERA PERSONA' : 'VISTA DE DALT', 1);
+}
 document.getElementById('bRepetir').onclick = () => comenca(triat);
 document.getElementById('bCanviar').onclick = tornaAlMenu;
 
