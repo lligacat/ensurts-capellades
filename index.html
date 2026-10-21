@@ -458,7 +458,7 @@ function soAmbient(actiu) {
 }
 
 const MUSICA = { bytes: null, buffer: null, font: null, guany: null, desxifrant: false };
-fetch('conduir.m4a').then(r => r.ok ? r.arrayBuffer() : null).then(b => { MUSICA.bytes = b; }).catch(() => {}); // la mateixa cançó del cotxe
+fetch('musica.m4a').then(r => r.ok ? r.arrayBuffer() : null).then(b => { MUSICA.bytes = b; }).catch(() => {});
 function soMusica(actiu) {
   if (!ac || !MUSICA.bytes) return;
   if (!MUSICA.guany) { MUSICA.guany = ac.createGain(); MUSICA.guany.gain.value = 0; MUSICA.guany.connect(ac.destination); }
