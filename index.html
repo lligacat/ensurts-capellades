@@ -116,12 +116,16 @@ const cv = document.getElementById('joc'), cx = cv.getContext('2d');
 // ---------- Personatges (retalls de la foto original, en píxels de 1448×1086) ----------
 const PERSONATGES = [
   { id: 'mena', nom: 'mena', cara: { x: 168, y: 388, rx: 142, ry: 190 }, jaqueta: '#1f3557', interior: '#22408a', pantalo: '#2b2b33',
+    festa: { x: 185, y: 395, rx: 150, ry: 200 }, jaquetaFesta: '#ff3fa4', interiorFesta: '#ff7ac4',
     poder: 'ESPRINT', desc: 'Corre com un llamp durant 3 segons' },
   { id: 'glaudiri', nom: 'glaudiri', cara: { x: 468, y: 440, rx: 140, ry: 215 }, jaqueta: '#1b1b1b', interior: '#c23a2c', pantalo: '#2a2a2a',
+    festa: { x: 470, y: 405, rx: 138, ry: 172 }, jaquetaFesta: '#7b3fbf', interiorFesta: '#f2c230',
     poder: 'RUGIT BARBUT', desc: 'Un HULAAA tan gran que espanta tot el barri' },
   { id: 'sanchez', nom: 'sanchez', cara: { x: 868, y: 448, rx: 168, ry: 190 }, jaqueta: '#d2452b', interior: '#4fa3a8', pantalo: '#26262c',
+    festa: { x: 862, y: 450, rx: 165, ry: 185 }, jaquetaFesta: '#c8ff3a', interiorFesta: '#8fd12a',
     poder: 'MIRADA BOJA', desc: 'Deixa tothom glaçat 3 segons' },
   { id: 'escola', nom: 'escolá', cara: { x: 1205, y: 428, rx: 165, ry: 198 }, jaqueta: '#4a5233', interior: '#1d1d1d', pantalo: '#2a2a2a',
+    festa: { x: 1228, y: 425, rx: 190, ry: 228 }, jaquetaFesta: '#2a6b5f', interiorFesta: '#ff7ac4',
     poder: 'MODE NINJA', desc: 'Invisible 4 segons: ningú et veu venir' },
 ];
 
@@ -137,15 +141,20 @@ const TIPUS_ARMES = Object.keys(ARMES);
 const foto = new Image();
 foto.src = 'colla.webp';
 
-function retallaCara(p, amplada) {
-  const s = foto.naturalWidth / 1448, f = p.cara;
+const fotoFesta = new Image();
+fotoFesta.src = 'colla-festa.webp';
+const caresFesta = {};
+fotoFesta.onload = () => { for (const p of PERSONATGES) caresFesta[p.id] = retallaCara(p, 160, fotoFesta, p.festa); };
+
+function retallaCara(p, amplada, img = foto, f = p.cara) {
+  const s = img.naturalWidth / 1448;
   const c = document.createElement('canvas');
   c.width = amplada; c.height = Math.round(amplada * f.ry / f.rx);
   const x = c.getContext('2d');
   x.beginPath();
   x.ellipse(c.width / 2, c.height / 2, c.width / 2 - 3, c.height / 2 - 3, 0, 0, TAU);
   x.save(); x.clip();
-  x.drawImage(foto, (f.x - f.rx) * s, (f.y - f.ry) * s, 2 * f.rx * s, 2 * f.ry * s, 0, 0, c.width, c.height);
+  x.drawImage(img, (f.x - f.rx) * s, (f.y - f.ry) * s, 2 * f.rx * s, 2 * f.ry * s, 0, 0, c.width, c.height);
   x.restore();
   x.lineWidth = 5; x.strokeStyle = '#111'; x.stroke();
   return c;
@@ -579,6 +588,9 @@ activaCiutat('capellades');
 const tileA = (px, py) => { const x = Math.floor(px / TS), y = Math.floor(py / TS); return (x < 0 || y < 0 || x >= MW || y >= MH) ? C.EDIF : mapa[y][x]; };
 const lliure = (px, py, r) => transitable(tileA(px - r, py - r)) && transitable(tileA(px + r, py - r)) && transitable(tileA(px - r, py + r)) && transitable(tileA(px + r, py + r));
 const esCarrer = t => t === C.CARRER;
+const dinsFesti = e => e.x >= FESTI.x0 * TS && e.x <= (FESTI.x1 + 1) * TS && e.y >= 16 * TS && e.y <= (FESTI.y1 + 1) * TS;
+const deFesta = () => !!J && (J.zona === 'patum' || (!J.zona && J.ciutat === 'vic' && (dinsRave(J.jug) || dinsFesti(J.jug))));
+const caraJug = () => (J && J.festa && caresFesta[triat.id]) || cares[triat.id];
 const dinsRave = e => e.x >= RAVE.x0 * TS && e.x <= (RAVE.x1 + 1) * TS && e.y >= RAVE.y0 * TS && e.y <= (RAVE.y1 + 1) * TS;
 
 function hiHaVista(x0, y0, x1, y1) {
@@ -1387,6 +1399,13 @@ function actualitza(dt) {
   const bF = document.getElementById('bAgafar'), ap = accioPropera(), etF = ap ? ap.boto : 'AGAFAR';
   if (bF.textContent !== etF) bF.textContent = etF;
   bF.classList.toggle('visible', !!ap);
+  // Transformació en entrar o sortir de la festa
+  const festa = deFesta();
+  if (festa !== !!J.festa) {
+    J.festa = festa; so(festa ? 'poder' : 'agafar');
+    textFlotant(j.x, j.y - 110, festa ? 'MODE FESTA!' : 'TORNA A LA NORMALITAT', festa ? '#ff2bd6' : '#2fd38a', 12);
+    for (let i = 0; i < 30; i++) { const a = Math.random() * TAU; J.particules.push({ x: j.x, y: j.y - 40, vx: Math.cos(a) * 200, vy: Math.sin(a) * 200, t: .7, c: festa ? tria(NEO) : '#fff', m: 6 }); }
+  }
   if (J.zona) { musicaRave(0); if (actualitzaZona(dt) !== undefined || estat !== 'joc') return; }
   else if (J.ciutat === 'vic') actualitzaVic(dt);
   else musicaRave(0);
@@ -1847,7 +1866,7 @@ function dibuixaCotxe(g, c) {
   if (c.tipus === 'policia') { g.globalAlpha = .25; g.fillStyle = Math.floor(performance.now() / 160) % 2 ? '#ff2d2d' : '#2d6bff'; g.beginPath(); g.arc(c.x, c.y - 4, 34, 0, TAU); g.fill(); g.globalAlpha = 1; }
   if (c.tipus === 'vilamovil') {
     if (c === J.jug.cotxe) { // el teu personatge treu el cap pel sostre
-      const cara = cares[triat.id], cw = 40 * (1 + (J.jug.buh > 0 ? Math.sin(J.jug.buh / .45 * Math.PI) * .4 : 0)), ch = cw * cara.height / cara.width;
+      const cara = caraJug(), cw = 40 * (1 + (J.jug.buh > 0 ? Math.sin(J.jug.buh / .45 * Math.PI) * .4 : 0)), ch = cw * cara.height / cara.width;
       g.fillStyle = triat.jaqueta; g.fillRect(c.x - 12, c.y - 26, 24, 16);
       if (J.jug.buh > 0) { g.fillRect(c.x - 22, c.y - 46, 7, 24); g.fillRect(c.x + 15, c.y - 46, 7, 24); }
       g.drawImage(cara, c.x - cw / 2, c.y - 22 - ch, cw, ch);
@@ -2045,7 +2064,7 @@ function etiqueta(g, x, y, cara, nom) {
 }
 
 function dibuixaJugador(g) {
-  const j = J.jug, p = triat, cara = cares[p.id];
+  const j = J.jug, p = J.festa ? Object.assign({}, triat, { jaqueta: triat.jaquetaFesta, interior: triat.interiorFesta }) : triat, cara = caraJug();
   if (j.cotxe) return; // es dibuixa dins del Vilamovil
   if (j.vespa) { g.save(); g.translate(j.x, j.y); g.scale(1.35, 1.35); g.translate(-j.x, -j.y); dibuixaVespa(g, j.vespa); g.restore(); }
   if (J.zona === 'muntanya') { g.save(); g.translate(j.x, j.y); g.scale(1.5, 1.5); g.translate(-j.x, -j.y); dibuixaBici(g, j.x, j.y + 2, j.fx >= 0 ? 1 : -1); g.restore(); }
@@ -2290,7 +2309,7 @@ function dibuixaHUD(W, H, dpr) {
     g.fillStyle = J.festiEnces ? '#2fd38a' : '#ff9a3d'; g.fillText((J.festiEnces ? '[OK] ' : '[  ] ') + "CABRÓ ROCK: ENCÉN L'ALTAVEU", 14, oy + 16);
   }
   // Vides (caretes)
-  const cara = cares[triat.id];
+  const cara = caraJug();
   const vx = petit ? 14 : 214, vy = petit ? 84 : 18;
   const mv = J.videsMax > 3 ? 18 : 26, ev = J.videsMax > 3 ? 20 : 30;
   for (let i = 0; i < J.videsMax; i++) { g.globalAlpha = i < J.vides ? 1 : .2; g.drawImage(cara, vx + i * ev, vy, mv, mv * cara.height / cara.width); }
