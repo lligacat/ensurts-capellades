@@ -97,7 +97,7 @@ const mat = (o) => new THREE.MeshStandardMaterial(Object.assign({ roughness: .9,
 
 function construeix(nom) {
   const m = mapa, sc = new THREE.Scene(), zona = ZONES[nom];
-  const nit = nom === 'patum', interior = nom === 'casa', vic = nom === 'vic';
+  const nit = nom === 'patum' || nom === 'cabra', interior = nom === 'casa' || nom === 'cabra' || nom === 'lliga', vic = nom === 'vic';
   const horitzo = interior ? 0xe8dcc6 : nit ? 0x1a1430 : vic ? 0xc9d2da : 0xcfe2ee;
   sc.fog = new THREE.Fog(horitzo, interior ? 6 : vic ? 4 : 8, interior ? 30 : vic ? 26 : 42);
   sc.background = new THREE.Color(horitzo);
@@ -126,7 +126,7 @@ function construeix(nom) {
   Object.assign(sun.shadow.camera, { left: -13, right: 13, top: 13, bottom: -13, near: 1, far: 60 });
   sun.shadow.bias = -.0006; sun.shadow.normalBias = .02;
   sc.add(sun); sc.add(sun.target); sc.userData.sun = sun;
-  if (interior) for (const [x, y] of [[12.5, 9.5], [20.5, 9.5], [28.5, 9.5], [12.5, 16.5], [20.5, 16.5], [28.5, 16.5]]) { const l = new THREE.PointLight(0xffe2b0, 6, 8, 1.6); l.position.set(x, 1.15, y); sc.add(l); }
+  if (interior) for (const [x, y] of [[12.5, 9.5], [20.5, 9.5], [28.5, 9.5], [12.5, 16.5], [20.5, 16.5], [28.5, 16.5]]) { const l = new THREE.PointLight(nom === 'cabra' ? [0xff2bd6, 0x2bf0ff, 0xb6ff2b][Math.floor(x) % 3] : 0xffe2b0, nom === 'cabra' ? 9 : 6, 8, 1.6); l.position.set(x, 1.15, y); sc.add(l); }
 
   // Materials compartits
   const persianes = ['#3f6b45', '#3f6b45', '#2f5a6b', '#6b4a2f'];
@@ -377,14 +377,14 @@ export function dibuixa(w, h) {
   }
   if (E.aigua) E.aigua.map.offset.set(t * .02, t * .013);
   // Cotxes
-  const llista = [...J.cotxes, J.vila, J.subi, J.carro].filter(c => c && c !== j.cotxe);
+  const llista = [...J.cotxes, J.vila, J.subi, J.carro, J.bestia, J.guillem && Object.assign(J.guillem, { tipus: 'guillem' })].filter(c => c && c !== j.cotxe);
   if (!J.zona) llista.push({ x: TAXI.x, y: TAXI.y, ang: 0, tipus: 'taxi', color: '#f2c230' });
   while (E.cotxes.length < llista.length) { const c = cotxe3d(); E.sc.add(c); E.cotxes.push(c); }
   E.cotxes.forEach((m, i) => {
     const c = llista[i]; m.visible = !!c; if (!c) return;
     m.position.set(c.x / TS, 0, c.y / TS); m.rotation.y = -(c.ang || 0);
-    const col = c.tipus === 'policia' ? '#f4f6fa' : c.tipus === 'subineta' ? '#2c5aa0' : c.tipus === 'vilamovil' ? '#f7f7f2' : c.tipus === 'carromato' ? '#0d0d10' : c.color;
-    m.userData.cos.color.set(col); m.scale.setScalar(c.tipus === 'subineta' ? 1.25 : 1);
+    const col = c.tipus === 'policia' ? '#f4f6fa' : c.tipus === 'subineta' ? '#2c5aa0' : c.tipus === 'vilamovil' ? '#f7f7f2' : c.tipus === 'carromato' ? '#0d0d10' : c.tipus === 'bestia' ? '#f4f4f2' : c.tipus === 'guillem' ? '#2f4a2a' : c.color;
+    m.userData.cos.color.set(col); m.scale.setScalar(c.tipus === 'subineta' || c.tipus === 'guillem' ? 1.3 : 1);
     m.userData.llum.visible = c.tipus === 'policia'; if (c.tipus === 'policia') m.userData.llum.material.color.set(Math.floor(t * 6) % 2 ? 0xff2d2d : 0x2d6bff), m.userData.llum.material.emissive.copy(m.userData.llum.material.color);
   });
   // Gent i coses: les més properes que es veuen, com a cartells drets
@@ -399,6 +399,7 @@ export function dibuixa(w, h) {
   if (J.ciutat === 'vic' && !J.zona) { J.control.forEach(c => posa(c, 2.3, g => dibuixaControl(g, c))); J.tendes.forEach(tn => posa(tn, 1.4, g => dibuixaTenda(g, tn))); }
   J.gegants.forEach(ge => posa(ge, 1, g => dibuixaGegant(g, ge)));
   if (J.guita) posa(J.guita, 1, g => dibuixaGuita(g, J.guita));
+  for (const x of extres()) posa(x.e, x.k3, g => x.fn(g));
   J.multitud.forEach(mu => posa(mu, 2.3, g => personaPetita(g, mu.x, mu.y - Math.abs(Math.sin(mu.ball)) * 5, mu.pr, 0, false, false)));
   J.focs.forEach(fc => posa(fc, 1.2, g => dibuixaFoc(g, fc)));
   J.sorpreses.forEach(s => SORPRESES[s.tipus].dibuixa && posa(s, s.tipus === 'gallina' || s.tipus === 'gat' ? 2.4 : 1.6, g => SORPRESES[s.tipus].dibuixa(g, s)));
