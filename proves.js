@@ -87,7 +87,7 @@ export async function executa() {
   prova('Des de casa es pot arribar a peu a tots els pobles i a la comissaria', () => {
     const vist = new Uint8Array(MW * MH), cua = [Math.floor(CASA_LLOC.y / TS) * MW + Math.floor(CASA_LLOC.x / TS)]; vist[cua[0]] = 1;
     for (let k = 0; k < cua.length; k++) { const i = cua[k], x = i % MW, y = (i / MW) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= MW || ny >= MH) continue; const n = ny * MW + nx; if (!vist[n] && transitable(mapa[ny][nx])) { vist[n] = 1; cua.push(n); } } }
-    const llocs = POBLES.map(p => [p.nom, p.x + 8 * Math.floor(p.w / 16), p.y + 7 * Math.floor(p.h / 14)]).concat([['COMISSARIA', COMISSARIA.porta, COMISSARIA.y0 + 2]]);
+    const llocs = POBLES.map(p => [p.nom, p.x + 8 * Math.floor(p.w / 16), p.y + 7 * Math.floor(p.h / 14)]).concat([['COMISSARIA', COMISSARIA.porta, COMISSARIA.y0 + 2], ['LLOGUER DE BICIS', Math.floor(LLOGUER_BICIS.x / TS), Math.floor(LLOGUER_BICIS.y / TS) + 1], ['TELECADIRA', Math.floor(TELECADIRA.baix.x / TS), Math.floor(TELECADIRA.baix.y / TS)]], GASOLINERES.map((g, i) => ['GASOLINERA ' + i, g.x + 1, g.y + 2]));
     const no = llocs.filter(([, x, y]) => ![0, 1].some(a => [0, 1].some(b => vist[(y + b) * MW + x + a]))).map(l => l[0]);
     return no.length === 0 || 'no hi arribes: ' + no.join(', ');
   });
@@ -110,6 +110,50 @@ export async function executa() {
     return (J.guanyat && estat === 'final') || 'kos ' + (J.batalla && J.batalla.kos) + ', estat ' + estat;
   });
   tornaAlMenu();
+
+  // --- Policia, detenció i calabós ---
+  comenca(PERSONATGES[0]);
+  prova('La policia no et persegueix fins que no la lies', () => {
+    const j = J.jug; j.invul = 0; const a = Object.assign(nouAgent(), { x: j.x - 80, y: j.y, fx: 1, fy: 0 }); J.agents = [a];
+    for (let i = 0; i < 10; i++) actualitza(.05);
+    return (!J.liada && a.estat !== 'persegueix') || 'liada ' + J.liada + ', estat ' + a.estat;
+  });
+  prova('Sense fer res greu, la policia et deté i acabes al calabós', () => {
+    const j = J.jug; J.liada = true; J.gravetat = 0; j.invul = 0; const a = Object.assign(nouAgent(), { x: j.x + 50, y: j.y, fx: -1, fy: 0 }); J.agents = [a];
+    for (let i = 0; i < 20 && estat === 'joc'; i++) actualitza(.05);
+    if (estat !== 'video') return 'no hi ha detenció (estat ' + estat + ')';
+    acabaVideo();
+    return (J.zona === 'presso' && mapa[10][16] === C.TANCA) || 'zona ' + J.zona;
+  });
+  prova("Espantant el guàrdia s'obre la cel·la i per la sortida et fuges", () => {
+    const g = J.agents[0]; g.x = 17 * TS; g.y = 12 * TS; J.jug.x = 17.5 * TS; J.jug.y = 9.4 * TS; J.jug.recBuh = 0; accio(); // arrambat als barrots
+    if (mapa[10][16] === C.TANCA) return 'la cel·la segueix tancada';
+    J.agents.forEach(a => a.glacat = 99); J.jug.x = 20.5 * TS; J.jug.y = 26.6 * TS; const ap = accioPropera(); if (ap) ap.fer();
+    return (!J.zona && Math.abs(J.jug.x - (COMISSARIA.porta + 1) * TS) < 2) || 'zona ' + J.zona;
+  });
+  prova('Espantar el benziner: benzina gratis però avisa la policia', () => {
+    const gs = GASOLINERES[0], b = J.benziners[0], j = J.jug;
+    const v = J.aparcats.find(v => v.tipus === 'carromato'); j.x = v.x; j.y = v.y; pujaVila(); const c = j.cotxe; c.benzina = 10;
+    c.x = j.x = sortidorDe(gs).x; c.y = j.y = sortidorDe(gs).y + 40; J.liada = false;
+    fesAtac(b.x, b.y, 80, {}); const ap = accioPropera(); if (!ap) return 'no surt cap acció';
+    ap.fer();
+    return (c.benzina === 100 && J.liada && J.gravetat >= 1 && ap.boto === 'GRATIS') || ap.text + ' · benzina ' + c.benzina;
+  });
+  prova('Un míssil rebenta els edificis de prop', () => {
+    baixaVila(); const p = POBLES[1]; let x = 0, y = 0;
+    for (let yy = p.y; yy < p.y + p.h && !x; yy++) for (let xx = p.x; xx < p.x + p.w; xx++) if (mapa[yy][xx] === C.EDIF) { x = xx; y = yy; break; }
+    if (!x) return 'no hi ha cap edifici';
+    explosioMissil({ x: (x + .5) * TS, y: (y + .5) * TS, t: 0 });
+    return mapa[y][x] === C.RUNA || 'casella ' + mapa[y][x];
+  });
+  prova("Amb una bici, el telecadira et puja a les pistes d'Arinsal", () => {
+    const j = J.jug; J.punts = 1000; j.x = LLOGUER_BICIS.x; j.y = LLOGUER_BICIS.y + 60; accioPropera().fer();
+    if (!j.bici || J.punts !== 600) return 'bici ' + j.bici + ', punts ' + J.punts;
+    j.x = TELECADIRA.baix.x; j.y = TELECADIRA.baix.y + 30; accioPropera().fer();
+    for (let i = 0; i < 70 && J.zona !== 'arinsal'; i++) actualitza(.1);
+    return J.zona === 'arinsal' || 'zona ' + J.zona;
+  });
+  J.cobrat = true; tornaAlMenu();
 
   // --- Mode història ---
   prova('Mode història: sense temps, i agafar la pistola completa la primera missió', () => {

@@ -390,7 +390,7 @@ export function dibuixa(w, h) {
   }
   if (E.aigua) E.aigua.map.offset.set(t * .02, t * .013);
   // Cotxes
-  const llista = [...J.cotxes, J.vila, J.subi, J.carro, J.bestia, J.guillem && Object.assign(J.guillem, { tipus: 'guillem' })].filter(c => c && c !== j.cotxe);
+  const llista = [...J.cotxes, J.vila, J.subi, J.carro, J.bestia, ...aparcatsActius().filter(c => Math.hypot(c.x - j.x, c.y - j.y) < 40 * TS), J.guillem && Object.assign(J.guillem, { tipus: 'guillem' })].filter(c => c && c !== j.cotxe);
   if (!J.zona) llista.push({ x: TAXI.x, y: TAXI.y, ang: 0, tipus: 'taxi', color: '#f2c230' });
   while (E.cotxes.length < llista.length) { const c = cotxe3d(); E.sc.add(c); E.cotxes.push(c); }
   E.cotxes.forEach((m, i) => {
