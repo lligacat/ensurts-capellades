@@ -1,7 +1,7 @@
 // Proves automàtiques del joc. Obre la pàgina amb ?proves al final de l'adreça i els resultats surten a la pantalla i a la consola.
 // Fan servir les funcions i l'estat globals del joc, i deixen el moneder i la botiga tal com estaven.
 
-const CLAUS = ['ensurts-moneder', 'ensurts-skins', 'ensurts-explosions', 'ensurts-missions'];
+const CLAUS = ['ensurts-moneder', 'ensurts-skins', 'ensurts-explosions', 'ensurts-missions', 'ensurts-historia', 'ensurts-mode'];
 
 export async function executa() {
   const resultats = [], guardat = Object.fromEntries(CLAUS.map(k => [k, localStorage.getItem(k)]));
@@ -79,6 +79,53 @@ export async function executa() {
     return (J.ciutat === 'vic' && J.autostopOk && J.punts - abans === 2500) || 'ciutat ' + J.ciutat + ', punts +' + (J.punts - abans);
   });
   J.cobrat = true; tornaAlMenu();
+
+  // --- El món gran ---
+  const modeAbans = modeJoc; modeJoc = 'arcade';
+  comenca(PERSONATGES[0]);
+  prova('El món fa 640x480 i comences a casa del Ramon', () => (MW === 640 && MH === 480 && Math.hypot(J.jug.x - CASA_LLOC.x, J.jug.y - CASA_LLOC.y) < 1) || MW + 'x' + MH + ' a ' + [J.jug.x / TS, J.jug.y / TS]);
+  prova('Des de casa es pot arribar a peu a tots els pobles i a la comissaria', () => {
+    const vist = new Uint8Array(MW * MH), cua = [Math.floor(CASA_LLOC.y / TS) * MW + Math.floor(CASA_LLOC.x / TS)]; vist[cua[0]] = 1;
+    for (let k = 0; k < cua.length; k++) { const i = cua[k], x = i % MW, y = (i / MW) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= MW || ny >= MH) continue; const n = ny * MW + nx; if (!vist[n] && transitable(mapa[ny][nx])) { vist[n] = 1; cua.push(n); } } }
+    const llocs = POBLES.map(p => [p.nom, p.x + 8 * Math.floor(p.w / 16), p.y + 7 * Math.floor(p.h / 14)]).concat([['COMISSARIA', COMISSARIA.porta, COMISSARIA.y0 + 2]]);
+    const no = llocs.filter(([, x, y]) => ![0, 1].some(a => [0, 1].some(b => vist[(y + b) * MW + x + a]))).map(l => l[0]);
+    return no.length === 0 || 'no hi arribes: ' + no.join(', ');
+  });
+
+  // --- Pistola ---
+  prova("La pistola s'agafa a la caixa de casa i deixa K.O. un policia", () => {
+    const j = J.jug; j.x = PISTOLA_LLOC.x; j.y = PISTOLA_LLOC.y + 20; actualitzaPistola(.016);
+    if (!j.pistola) return 'no has agafat la pistola';
+    j.y += 300; // lluny de la caixa, que si no recarrega
+    const a = Object.assign(nouAgent(), { x: j.x + 160, y: j.y }); J.agents = [a];
+    disparaPistola(); for (let i = 0; i < 20 && !(a.ko > 0); i++) actualitzaPistola(.016);
+    return (a.ko > 0 && j.pistola.bales === BALES_MAX - 1) || 'ko ' + a.ko + ', bales ' + j.pistola.bales;
+  });
+  prova("Entrar a la comissaria comença l'assalt i 40 mossos K.O. et fan guanyar", () => {
+    const j = J.jug; j.x = (COMISSARIA.porta + 1) * TS; j.y = (COMISSARIA.y0 + 5) * TS; j.invul = 99;
+    actualitzaBatalla(.016);
+    if (!J.batalla || J.agents.filter(a => a.mosso).length < 8) return 'no ha començat';
+    for (let i = 0; i < 40; i++) { const m = J.agents.find(a => a.mosso && !(a.ko > 0)) || (J.agents.push(nouMosso()), J.agents[J.agents.length - 1]); koAgent(m); }
+    J.cobrat = true; actualitzaBatalla(.016); actualitzaBatalla(8);
+    return (J.guanyat && estat === 'final') || 'kos ' + (J.batalla && J.batalla.kos) + ', estat ' + estat;
+  });
+  tornaAlMenu();
+
+  // --- Mode història ---
+  prova('Mode història: sense temps, i agafar la pistola completa la primera missió', () => {
+    localStorage.removeItem('ensurts-historia'); modeJoc = 'historia';
+    comenca(PERSONATGES[0]);
+    if (J.temps !== Infinity || !J.historia) return 'no és mode història';
+    J.jug.pistola = { bales: 30 }; actualitzaHistoria(.016);
+    return (J.historia.i === 1 && progresHistoria.get() === 1) || 'missió ' + J.historia.i;
+  });
+  prova('Les missions de comptar (5 parelles) només compten des que comencen', () => {
+    preparaMissio(); const H = J.historia; J.espantades += 4; actualitzaHistoria(.016);
+    if (H.i !== 1) return 'massa aviat';
+    J.espantades += 1; actualitzaHistoria(.016);
+    return H.i === 2 || 'missió ' + H.i;
+  });
+  J.cobrat = true; tornaAlMenu(); modeJoc = modeAbans;
 
   // Tot com estava
   neteja(); for (const [k, v] of Object.entries(guardat)) if (v !== null) localStorage.setItem(k, v);

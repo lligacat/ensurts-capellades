@@ -95,6 +95,7 @@ function preparaTextures() { Object.assign(TEXTURES, { paret: texParetCasa(), ta
 // ---------- Construcció d'una escena per a cada mapa ----------
 const mat = (o) => new THREE.MeshStandardMaterial(Object.assign({ roughness: .9, metalness: 0 }, o));
 
+let R = { x0: 0, y0: 0, x1: 42, y1: 30 }; // regió del mapa que té l'escena actual
 function construeix(nom) {
   const m = mapa, sc = new THREE.Scene(), zona = ZONES[nom];
   const nit = nom === 'patum' || nom === 'cabra', interior = nom === 'casa' || nom === 'cabra' || nom === 'lliga', vic = nom === 'vic';
@@ -102,10 +103,10 @@ function construeix(nom) {
   sc.fog = new THREE.Fog(horitzo, interior ? 6 : vic ? 4 : 8, interior ? 30 : vic ? 26 : 42);
   sc.background = new THREE.Color(horitzo);
   // Terra: el mateix mapa dibuixat, però sense edificis ni arbres
-  const terra = terraReduida(nom);
+  const terra = terraReduida(nom, R);
   const tt = textura(terra); tt.repeat.set(1, 1); tt.wrapS = tt.wrapT = THREE.ClampToEdgeWrapping;
-  const sol = new THREE.Mesh(new THREE.PlaneGeometry(MW, MH), mat({ map: tt, roughness: .95 }));
-  sol.rotation.x = -Math.PI / 2; sol.position.set(MW / 2, 0, MH / 2); sol.receiveShadow = true; sc.add(sol);
+  const sol = new THREE.Mesh(new THREE.PlaneGeometry(R.x1 - R.x0, R.y1 - R.y0), mat({ map: tt, roughness: .95 }));
+  sol.rotation.x = -Math.PI / 2; sol.position.set((R.x0 + R.x1) / 2, 0, (R.y0 + R.y1) / 2); sol.receiveShadow = true; sc.add(sol);
   // Cel
   if (!interior) {
     const geo = new THREE.SphereGeometry(120, 32, 16);
@@ -139,9 +140,9 @@ function construeix(nom) {
   // Edificis: cada bloc de caselles iguals es fa amb una sola caixa
   const vist = Array.from({ length: MH }, () => Array(MW).fill(false));
   M.rocaMat = mat({ map: textura(pedra, 1, 2), color: 0xd8b48a, roughness: 1, flatShading: true });
-  const solids = new Set([C.EDIF, C.GARATGE, C.ESGL, C.MOLI, C.ROCA, C.PARET, C.TANCA, C.ALTAVEU, C.ESCENARI, C.PORTA, C.BUIT, C.SAGRADA, C.GLORIES, C.PEDRERA, C.ESTADI, C.MONESTIR, C.BOSC]);
+  const solids = new Set([C.EDIF, C.GARATGE, C.ESGL, C.MOLI, C.ROCA, C.PARET, C.TANCA, C.ALTAVEU, C.ESCENARI, C.PORTA, C.BUIT, C.SAGRADA, C.GLORIES, C.PEDRERA, C.ESTADI, C.MONESTIR, C.BOSC, C.COMISSARIA]);
   // Montserrat: agulles de roca altes, una per casella, en lloc d'un bloc pla
-  if (nom === 'capellades') for (let y = 30; y < MH; y++) for (let x = 0; x < MW; x++) {
+  if (nom === 'capellades') for (let y = Math.max(30, R.y0); y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) {
     if (m[y][x] !== C.ROCA) continue;
     vist[y][x] = true;
     const alt = 1.6 + hash(x * 5, y * 3) * 4.5, r = .45 + hash(y, x) * .25;
@@ -149,18 +150,18 @@ function construeix(nom) {
     M.cubells.get(M.rocaMat).geos.push(new THREE.CylinderGeometry(r * .55, r, alt, 7).translate(x + .5, alt / 2, y + .5));
     M.cubells.get(M.rocaMat).geos.push(new THREE.SphereGeometry(r * .58, 7, 5).translate(x + .5, alt, y + .5));
   }
-  for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
+  for (let y = R.y0; y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) {
     const t = m[y][x]; if (vist[y][x] || !solids.has(t)) continue;
     // rectangle més gran possible del mateix tipus a partir d'aquí
-    let w = 1; while (x + w < MW && m[y][x + w] === t && !vist[y][x + w]) w++;
-    let h = 1; while (y + h < MH && [...Array(w)].every((_, k) => m[y + h][x + k] === t && !vist[y + h][x + k])) h++;
+    let w = 1; while (x + w < R.x1 && m[y][x + w] === t && !vist[y][x + w]) w++;
+    let h = 1; while (y + h < R.y1 && [...Array(w)].every((_, k) => m[y + h][x + k] === t && !vist[y + h][x + k])) h++;
     for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) vist[yy][xx] = true;
     afegeixBloc(sc, t, x, y, w, h, M);
   }
   buidaCubells(sc, M.cubells);
   // Arbres
   const tronc = mat({ color: 0x5b3d25 });
-  const llocsArbre = []; for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) if (m[y][x] === C.ARBRE) llocsArbre.push({ x: x + .5, z: y + .5, s: 1.1 + hash(x, y) * .5, h: hash(x, y) });
+  const llocsArbre = []; for (let y = R.y0; y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) if (m[y][x] === C.ARBRE) llocsArbre.push({ x: x + .5, z: y + .5, s: 1.1 + hash(x, y) * .5, h: hash(x, y) });
   const boles = [];
   llocsArbre.forEach((a, k) => { for (let i = 0; i < 5; i++) boles.push({ a, r: .32 + hash(i, k * 7) * .22, ox: (hash(i, k) - .5) * .5, oy: .95 + hash(k, i) * .55, oz: (hash(k + i, 3) - .5) * .5 }); });
   const fullesM = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), mat({ map: textura(texFulles('#4c8f3e')), roughness: .85, flatShading: true }), Math.max(1, boles.length));
@@ -173,7 +174,7 @@ function construeix(nom) {
   const arbresG = { fullesM, boles };
   // Bosc del circuit: pins
   if (nom === 'muntanya') {
-    const pins = []; for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) if (m[y][x] === C.BOSC) pins.push([x + .2 + hash(x, y) * .6, y + .2 + hash(y, x) * .6, .8 + hash(x * 3, y) * .8]);
+    const pins = []; for (let y = R.y0; y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) if (m[y][x] === C.BOSC) pins.push([x + .2 + hash(x, y) * .6, y + .2 + hash(y, x) * .6, .8 + hash(x * 3, y) * .8]);
     const cono = new THREE.InstancedMesh(new THREE.ConeGeometry(.45, 1.6, 7), mat({ color: 0x24502a, flatShading: true }), pins.length);
     const pal = new THREE.InstancedMesh(new THREE.CylinderGeometry(.06, .08, .5, 5), tronc, pins.length);
     const mm = new THREE.Matrix4();
@@ -182,7 +183,7 @@ function construeix(nom) {
   }
   // Aigua
   let aigua = null;
-  const aig = []; for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) if (m[y][x] === C.AIGUA || m[y][x] === C.MAR) aig.push([x, y]);
+  const aig = []; for (let y = R.y0; y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) if (m[y][x] === C.AIGUA || m[y][x] === C.MAR) aig.push([x, y]);
   if (aig.length) {
     const to = textura(texOnes(), 1, 1);
     aigua = mat({ map: to, color: 0x8fc0e0, roughness: .08, metalness: .35, transparent: true, opacity: .92 });
@@ -199,7 +200,7 @@ function construeix(nom) {
   // Fanals al llarg de les voreres
   if (!zona) {
     const llocs = [];
-    for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
+    for (let y = R.y0; y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) {
       if (m[y][x] !== C.CARRER || (x + y) % 4) continue;
       for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) if (m[y + dy] && EDIFS.has(m[y + dy][x + dx])) { llocs.push([x + .5 + dx * .38, y + .5 + dy * .38]); break; }
     }
@@ -277,6 +278,10 @@ function afegeixBloc(sc, t, x, y, w, h, M) {
         posa(new THREE.ConeGeometry(.62, .9, 4).rotateY(Math.PI / 4).translate(cx0, top + 2.85, cz - .2), MAT_PUNXA);
       }
     }
+  } else if (t === C.COMISSARIA) { // caserna dels Mossos: vidre blau i franja vermella
+    M.mossos = M.mossos || llenç(256, 256, (g) => { g.fillStyle = '#9fb3c8'; g.fillRect(0, 0, 256, 256); for (let y = 20; y < 256; y += 60) for (let x = 14; x < 256; x += 60) { const v = g.createLinearGradient(x, y, x + 44, y + 44); v.addColorStop(0, '#8fc3e8'); v.addColorStop(1, '#1d3f6a'); g.fillStyle = v; g.fillRect(x, y, 44, 44); } g.fillStyle = '#d62828'; g.fillRect(0, 0, 256, 10); });
+    caixa(3.2, matDe(M.mossos), 0, 4);
+    posa(new THREE.BoxGeometry(w + .1, .25, h + .1).translate(cx0, 3.3, cz), MAT_ESTADI);
   } else if (t === C.ROCA) { caixa(3.5, matDe(M.pedra), 0, 3);
   } else if (t === C.PARET) { caixa(1.3, matDe(M.paret));
     if (!M.sostre) { M.sostre = true; const s = new THREE.Mesh(new THREE.PlaneGeometry(MW, MH), mat({ color: 0xf4efe6, side: THREE.DoubleSide })); s.rotation.x = Math.PI / 2; s.position.set(MW / 2, 1.3, MH / 2); sc.add(s); }
@@ -348,7 +353,8 @@ export function inicia() {
   preparaTextures();
 }
 
-export function invalida(nom) { const e = escenes.get(nom); if (e) { escenes.delete(nom); setTimeout(() => e.sc.traverse(o => { if (o.geometry) o.geometry.dispose(); }), 0); } }
+function allibera(e) { setTimeout(() => e.sc.traverse(o => { if (o.geometry) o.geometry.dispose(); }), 0); }
+export function invalida(nom) { for (const [k, e] of escenes) if (k.startsWith(nom + ':')) { escenes.delete(k); allibera(e); } }
 
 export function amaga() { if (canvas3d) canvas3d.style.display = 'none'; }
 
@@ -356,8 +362,15 @@ export function dibuixa(w, h) {
   if (!renderer) inicia();
   canvas3d.style.display = 'block';
   if (canvas3d.width !== Math.round(w * renderer.getPixelRatio())) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
-  const clau = J.zona || J.ciutat;
-  if (!escenes.has(clau)) escenes.set(clau, construeix(clau));
+  // Als mapes grans, l'escena cobreix 192×192 caselles al voltant del jugador i es refà quan te n'allunyes
+  const nomMapa = J.zona || J.ciutat, gran = MW * MH > 20000, MIDA = 192, PAS = 64;
+  const rx = gran ? Math.max(0, Math.min(MW - MIDA, Math.round(J.jug.x / TS / PAS) * PAS - MIDA / 2)) : 0, ry = gran ? Math.max(0, Math.min(MH - MIDA, Math.round(J.jug.y / TS / PAS) * PAS - MIDA / 2)) : 0;
+  const clau = nomMapa + ':' + rx + ',' + ry;
+  if (!escenes.has(clau)) {
+    for (const [k, e] of escenes) if (k.startsWith(nomMapa + ':')) { escenes.delete(k); allibera(e); } // fora l'escena vella del mateix mapa
+    R = gran ? { x0: rx, y0: ry, x1: Math.min(MW, rx + MIDA), y1: Math.min(MH, ry + MIDA) } : { x0: 0, y0: 0, x1: MW, y1: MH };
+    escenes.set(clau, construeix(nomMapa));
+  }
   actual = escenes.get(clau);
   const E = actual, j = J.jug, t = performance.now() / 1000;
   // Càmera als ulls del personatge
