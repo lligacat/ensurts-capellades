@@ -158,13 +158,43 @@ export async function executa() {
 
   // --- Coses a l'estil GTA ---
   comenca(PERSONATGES[0]);
-  prova('Es pot robar un cotxe del trànsit i conduir-lo', () => {
-    const j = J.jug, c = J.cotxes.find(c => c.tipus === 'normal'); j.x = c.x + 40; j.y = c.y;
-    const ap = accioPropera(); if (!ap || ap.boto !== 'ROBAR') return 'acció: ' + (ap && ap.text);
-    ap.fer(); return (j.cotxe === c && c.tipus === 'robat' && J.liada && !J.cotxes.includes(c)) || 'no condueixes el cotxe robat';
+  prova('Una ramonada fa fugir el conductor i et pots endur el cotxe', () => {
+    const j = J.jug, c = J.cotxes.find(c => c.tipus === 'normal'); j.x = c.x + 40; j.y = c.y; j.recBuh = 0; accio();
+    if (J.cotxes.includes(c) || c.tipus !== 'robat') return 'el conductor no ha fugit';
+    const ap = accioPropera(); if (!ap || ap.boto !== 'PUJAR') return 'acció: ' + (ap && ap.text);
+    ap.fer(); return (j.cotxe === c && J.liada) || 'no condueixes el cotxe';
+  });
+  prova('Cap vehicle passa dels 150 km/h', () => {
+    const j = J.jug, v = j.cotxe; tecles.KeyD = true; v.fx = 1; v.fy = 0; v.va = 0; let max = 0;
+    for (let i = 0; i < 80; i++) { actualitza(.05); max = Math.max(max, v.va); } tecles.KeyD = false;
+    return (Math.round(max / KMH) <= 150 && max > 0) || 'velocitat ' + Math.round(max / KMH) + ' km/h';
+  });
+  prova("Si et quedes davant un cotxe gaire estona, t'atropella", () => {
+    baixaVila(); const j = J.jug; J.vides = 3; j.invul = 0; const c = nouCotxe('normal', 300); c.estat = 'roda'; c.fx = 1; c.fy = 0; c.ang = 0; c.cami = [{ x: c.x + 999, y: c.y }]; J.cotxes = [c]; j.x = c.x + 70; j.y = c.y;
+    const v0 = J.vides; for (let i = 0; i < 90 && J.vides === v0; i++) actualitzaVehicles(.1);
+    return J.vides < v0 || 'espera ' + c.espera;
+  });
+  prova("A l'armeria es poden comprar armes de foc", () => {
+    const j = J.jug; J.punts = 6000; const l = LOCALS.capellades.find(l => l.tipus === 'armeria'); j.x = l.x * TS; j.y = l.y * TS + 30; localProper().fer();
+    if (J.zona !== 'armeria') return 'no has entrat';
+    j.x = VITRINES[2].x; j.y = VITRINES[2].y + 40; accioPropera().fer();
+    const ok = j.pistola && j.pistola.tipus === 'uzi' && J.punts === 3500; sortirZona(); return ok || 'arma ' + (j.pistola && j.pistola.tipus) + ', punts ' + J.punts;
+  });
+  prova('Un míssil al bosc hi cala foc i venen els bombers', () => {
+    const j = J.jug; let pos = null; for (let y = 60; y < 200 && !pos; y++) for (let x = 150; x < 300; x++) if (mapa[y][x] === C.ARBRE && mapa[y][x + 1] === C.ARBRE) { pos = [x, y]; break; }
+    j.x = (pos[0] + 12) * TS; j.y = pos[1] * TS; j.invul = 999; explosioMissil({ x: (pos[0] + .5) * TS, y: (pos[1] + .5) * TS, t: 0 });
+    if (!J.focsBosc.size) return 'no hi ha foc';
+    for (let i = 0; i < 80 && !J.bombers; i++) actualitzaFocs(.1);
+    return !!J.bombers || 'no han vingut els bombers';
+  });
+  prova('La patrulla para i en baixen dos policies', () => {
+    const j = J.jug; J.liada = true; const c = nouCotxe('policia', 300); c.aPeu = true; c.x = j.x + 150; c.y = j.y; J.cotxes = [c]; const n0 = J.agents.length;
+    actualitzaVehicles(.05);
+    return (c.buit && J.agents.length === n0 + 2) || 'agents ' + (J.agents.length - n0);
   });
   prova('Passar per una rampa a tota velocitat fa saltar el cotxe', () => {
-    const j = J.jug, v = j.cotxe, r = RAMPES[0]; Object.assign(v, { x: r.x - 10, y: r.y, fx: 1, fy: 0, vel: 500, salt: 0 }); j.x = v.x; j.y = v.y;
+    const j = J.jug; if (!j.cotxe) { const a = J.aparcats.find(v => v.tipus === 'carromato'); j.x = a.x; j.y = a.y; pujaVila(); }
+    const v = j.cotxe, r = RAMPES[0]; Object.assign(v, { x: r.x - 10, y: r.y, fx: 1, fy: 0, vel: 500, salt: 0 }); j.x = v.x; j.y = v.y;
     const p0 = J.punts; actualitzaRampes(.016);
     return (v.salt > 0 && J.punts - p0 === 1000) || 'salt ' + v.salt + ', punts +' + (J.punts - p0);
   });

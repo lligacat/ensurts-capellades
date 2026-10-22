@@ -83,8 +83,9 @@
   #pAjustos button { font-family: inherit; font-size: 9px; padding: 10px 12px; color: #000; background: #ffd23f; border: 2px solid #000; cursor: pointer; }
   #pAjustos button.sec { background: #555; color: #fff; }
   #pAjustos.amagat, #pMapa.amagat { display: none; }
-  #pMapa { position: fixed; inset: 0; z-index: 8; background: rgba(5, 8, 6, .94); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
-  #pMapa canvas { max-width: 96vw; max-height: 86vh; border: 3px solid var(--verd); box-shadow: 0 0 0 3px #000; image-rendering: pixelated; }
+  #pMapa { position: fixed; inset: 0; z-index: 8; background: rgba(5, 8, 6, .94); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+  #pMapa .boto { padding: 10px 16px; font-size: 12px; }
+  #pMapa canvas { touch-action: none; cursor: grab; width: 94vw; height: 72vh; border: 3px solid var(--verd); box-shadow: 0 0 0 3px #000; image-rendering: pixelated; }
   #pMapa p { font-size: 9px; color: #9fb0a5; }
   #tactil { position: fixed; right: 14px; bottom: 18px; display: none; grid-template-columns: auto auto; gap: 12px; align-items: end; justify-items: center; z-index: 3; }
   #tactil button { width: 70px; height: 70px; border-radius: 50%; border: 4px solid #000; font-family: inherit; font-size: 9px; color: #fff; background: #2c8d63; box-shadow: 4px 4px 0 #000; }
@@ -94,6 +95,8 @@
   #tactil button#bAgafar.visible { visibility: visible; }
   #tactil button#bPistola { background: #3a3f45; font-size: 8px; line-height: 1.5; display: none; grid-column: 1 / span 2; justify-self: end; }
   #tactil button#bPistola.visible { display: block; }
+  #tactil button#bCanvia { background: #555; font-size: 7px; line-height: 1.5; display: none; width: 60px; height: 60px; }
+  #tactil button#bCanvia.visible { display: block; }
   body.tactil.jugant #tactil { display: grid; }
   @media (max-width: 760px) {
     .cartes { grid-template-columns: repeat(2, minmax(0, 170px)); }
@@ -169,7 +172,7 @@
 </div>
 
 <button id="bAcabar">ACABAR</button>
-<button id="bVista">1a PERSONA</button>
+<button id="bVista">VISTA 3D</button>
 <button id="bAjustos" title="Ajustos" aria-label="Ajustos">⚙</button>
 <div id="pAjustos" class="amagat">
   <b>AJUSTOS</b>
@@ -179,9 +182,11 @@
   <span id="aPaquets"></span>
   <button id="bTancaAjustos" class="sec">TANCA</button>
 </div>
-<div id="pMapa" class="amagat"><canvas id="cvMapa"></canvas><p>TOCA O PREM [M] PER TORNAR AL JOC</p></div>
+<div id="pMapa" class="amagat"><canvas id="cvMapa"></canvas>
+  <div class="fila"><button class="boto" id="bMapaMes">+</button><button class="boto" id="bMapaMenys">−</button><button class="boto" id="bMapaJo">ON SÓC</button><button class="boto sec" id="bMapaTanca">TORNAR AL JOC</button></div>
+  <p>ROSSEGA PER MOURE'T · RODA O PESSIC PER FER ZOOM · [M] PER TANCAR</p></div>
 <div id="tactil">
-  <button id="bPistola">PIS<br>TOLA</button><button id="bAgafar">AGAFAR</button><button id="bBomba">EXPLO<br>SIÓ</button>
+  <button id="bCanvia">CANVIA<br>ARMA</button><button id="bPistola">PIS<br>TOLA</button><button id="bAgafar">AGAFAR</button><button id="bBomba">EXPLO<br>SIÓ</button>
   <button id="bEsp">PODER</button><button id="bBuh">HULAAA!</button>
 </div>
 
@@ -386,6 +391,19 @@ function retallaCara(p, amplada, img = foto, f = p.cara) {
 
 // ---------- So ----------
 let ac = null;
+// Un crit: veu amb formants d'"A", el to puja de cop i tremola
+function critVeu(dona = Math.random() < .5, vol = .16) {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const t = ac.currentTime, dur = .55 + Math.random() * .35, f0 = (dona ? 560 : 290) * (.85 + Math.random() * .3);
+    const o = ac.createOscillator(), vib = ac.createOscillator(), vg = ac.createGain(), sortida = ac.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(f0 * .7, t); o.frequency.exponentialRampToValueAtTime(f0 * 1.35, t + .12); o.frequency.exponentialRampToValueAtTime(f0 * .8, t + dur);
+    vib.frequency.value = 7 + Math.random() * 4; vg.gain.value = f0 * .04; vib.connect(vg); vg.connect(o.frequency);
+    sortida.gain.setValueAtTime(.0001, t); sortida.gain.exponentialRampToValueAtTime(vol, t + .05); sortida.gain.setValueAtTime(vol, t + dur * .7); sortida.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    for (const [fr, q, g] of [[dona ? 950 : 750, 6, 1], [dona ? 1500 : 1150, 8, .6], [2700, 10, .25]]) { const bp = ac.createBiquadFilter(), gg = ac.createGain(); bp.type = 'bandpass'; bp.frequency.value = fr; bp.Q.value = q; gg.gain.value = g; o.connect(bp); bp.connect(gg); gg.connect(sortida); }
+    sortida.connect(ac.destination); o.start(t); vib.start(t); o.stop(t + dur + .05); vib.stop(t + dur + .05);
+  } catch (e) {}
+}
 function so(tipus) {
   try {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
@@ -398,7 +416,7 @@ function so(tipus) {
       o.start(t); o.stop(t + dur);
     };
     if (tipus === 'buh') osc('sawtooth', 160, 55, 0.45, 0.18);
-    if (tipus === 'crit') osc('square', 900 + Math.random() * 300, 1800, 0.35, 0.07);
+    if (tipus === 'crit') { critVeu(); return; }
     if (tipus === 'xiulet') osc('square', 2200, 2400, 0.5, 0.05);
     if (tipus === 'tret') osc('square', 600, 90, 0.12, 0.08);
     if (tipus === 'ferit') osc('triangle', 400, 80, 0.7, 0.2);
@@ -608,6 +626,7 @@ const ZONES = {
   cabra: { nom: 'DISCOTECA LA CABRA', curt: 'LA CABRA', inici: { x: 12.5 * TS, y: 22.2 * TS }, sortides: [{ x: 12.5 * TS, y: 23.4 * TS }] },
   lliga: { nom: 'OFICINES DE LLIGA.CAT', curt: 'LLIGA.CAT', inici: { x: 20.5 * TS, y: 20.2 * TS }, sortides: [{ x: 20.5 * TS, y: 21.4 * TS }] },
   arinsal: { nom: 'PISTES DE DESCENS DE PAL ARINSAL', curt: 'ARINSAL', inici: { x: 5.5 * TS, y: 4.5 * TS }, sortides: [{ x: 3.6 * TS, y: 4.5 * TS }, { x: 37.5 * TS, y: 56.5 * TS }] },
+  armeria: { nom: 'ARMERIA EL BOOM', curt: 'ARMERIA', inici: { x: 20.5 * TS, y: 19.6 * TS }, sortides: [{ x: 20.5 * TS, y: 21.4 * TS }] },
   presso: { nom: 'CALABOSSOS DELS MOSSOS', curt: 'CALABÓS', inici: { x: 17.5 * TS, y: 7.5 * TS }, sortides: [{ x: 20.5 * TS, y: 26.8 * TS }] },
   patum: { nom: 'LA PATUM', curt: 'PATUM', inici: { x: 20.5 * TS, y: 25.6 * TS }, sortides: [{ x: 20.5 * TS, y: 26.6 * TS }] },
 };
@@ -652,6 +671,10 @@ function generaZona(z) {
     const trams = [4, 14, 24, 34, 44, 55];
     trams.forEach((y, i) => { omple(3, y - 1, 38, y + 1, C.NEU); if (i < trams.length - 1) { const x = i % 2 ? 3 : 36; omple(x, y - 1, x + 2, trams[i + 1] + 1, C.NEU); } });
   }
+  if (z === 'armeria') { // una sala amb el taulell i les armes a la paret
+    omple(8, 6, 33, 21, C.PARET); omple(9, 7, 32, 20, C.PARQUET); m[21][20] = m[21][21] = C.PARQUET;
+    omple(11, 9, 30, 9, C.ESCENARI); // el taulell
+  }
   if (z === 'presso') { // quatre cel·les amb barrots, passadís, sala de proves, sala de guàrdia i la sortida
     omple(4, 3, 37, 28, C.PARET);
     for (let i = 0; i < 4; i++) { omple(6 + i * 8, 5, 11 + i * 8, 9, C.PLACA); omple(6 + i * 8, 10, 11 + i * 8, 10, C.TANCA); }
@@ -676,7 +699,8 @@ const LLOGUER_BICIS = { x: 481.5 * TS, y: 47.6 * TS };
 const REVOLTS = [[456, 18], [456, 27], [500, 27], [500, 31], [461, 31], [461, 35], [494, 35], [494, 41]];
 
 // Gasolineres (en caselles: cantonada de dalt a l'esquerra, 6x4), a tocar de les autopistes
-const GASOLINERES = [{ x: 200, y: 18 }, { x: 360, y: 18 }, { x: 470, y: 18 }, { x: 600, y: 18 }, { x: 230, y: 76 }, { x: 420, y: 76 }, { x: 68, y: 150 }, { x: 68, y: 300 }, { x: 504, y: 120 }];
+const GASOLINERES = [{ x: 200, y: 18 }, { x: 360, y: 18 }, { x: 470, y: 18 }, { x: 600, y: 18 }, { x: 230, y: 76 }, { x: 420, y: 76 }, { x: 68, y: 150 }, { x: 68, y: 300 }, { x: 504, y: 120 },
+  { x: 68, y: 220 }, { x: 68, y: 400 }, { x: 150, y: 236 }, { x: 214, y: 236 }, { x: 430, y: 154 }, { x: 540, y: 154 }, { x: 304, y: 44 }, { x: 304, y: 100 }];
 // Pàrquing de cada poble: una illa de cases convertida en aparcament
 const parquingDe = p => ({ x0: p.x + 10, y0: p.y + 2, x1: p.x + 15, y1: p.y + 6 });
 
@@ -840,6 +864,29 @@ function generaMon(m) {
     }
     for (let i = 0; i < REVOLTS.length - 1; i++) { const [ax, ay] = REVOLTS[i], [bx, by] = REVOLTS[i + 1]; omple(Math.min(ax, bx), Math.min(ay, by), Math.max(ax, bx) + 1, Math.max(ay, by) + 1, C.CARRER); }
     omple(469, 40, 471, 41, C.EDIF); omple(489, 52, 491, 53, C.EDIF); omple(497, 44, 499, 45, C.EDIF); } // xalets
+  // Carreteres secundàries (no passen pel mar, ni per la comissaria, ni per Arinsal, ni per Barcelona)
+  { const prohibit = (x, y) => esMar(x, y) || (x >= COMISSARIA.x0 - 1 && x <= COMISSARIA.x1 + 1 && y >= COMISSARIA.y0 - 1 && y <= COMISSARIA.y1 + 1) || alcadaT(x, y) > 0 || (x >= BCN.x0 && x <= BCN.x1 && y >= BCN.y0 && y <= BCN.y1) || (x >= 42 && x <= 51 && y >= 17 && y <= 25);
+    const traca = (ax, ay, bx, by, primerH) => {
+      const pts = []; let x = ax, y = ay;
+      const pas = (tx, ty) => { while (x !== tx || y !== ty) { if (x !== tx) x += Math.sign(tx - x); else y += Math.sign(ty - y); pts.push([x, y]); } };
+      if (primerH) { pas(bx, ay); pas(bx, by); } else { pas(ax, by); pas(bx, by); }
+      return pts.every(([px, py]) => px > 1 && py > 1 && px < MW - 2 && py < MH - 2 && !prohibit(px, py) && !prohibit(px + 1, py + 1)) ? pts : null;
+    };
+    const carretera = pts => { for (const [x, y] of pts) for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) if (!(m.auto && m.auto[y + dy] && m.auto[y + dy][x + dx])) m[y + dy][x + dx] = C.CARRER; };
+    const centre = p => [p.x + 8 * Math.floor(p.w / 16), p.y + 7 * Math.floor(p.h / 14)];
+    const fetes = new Set();
+    for (const p of POBLES) {
+      const [ax, ay] = centre(p);
+      const veins = POBLES.filter(q => q !== p).sort((a, b) => Math.hypot(...centre(a).map((v, i) => v - [ax, ay][i])) - Math.hypot(...centre(b).map((v, i) => v - [ax, ay][i]))).slice(0, 2);
+      for (const q of veins) { const k = [p.nom, q.nom].sort().join('-'); if (fetes.has(k)) continue; fetes.add(k); const [bx, by] = centre(q); const pts = traca(ax, ay, bx, by, true) || traca(ax, ay, bx, by, false); if (pts) carretera(pts); }
+    }
+    // camins rurals des de les autopistes cap a masies i llogarets
+    for (let i = 0; i < 26; i++) {
+      const ax = 20 + Math.floor(hash(i, 91) * (MW - 40)), ay = 20 + Math.floor(hash(91, i) * (MH - 40)), bx = ax + Math.round((hash(i, 5) - .5) * 70), by = ay + Math.round((hash(5, i) - .5) * 70);
+      const pts = traca(ax, ay, bx, by, hash(i, 7) < .5); if (!pts || pts.length < 20) continue;
+      carretera(pts); omple(Math.max(1, bx - 1), Math.max(1, by + 2), Math.min(MW - 2, bx + 1), Math.min(MH - 2, by + 3), C.EDIF); // una masia al final
+    }
+  }
   // Pàrquings i gasolineres
   for (const p of POBLES) { const q = parquingDe(p); omple(q.x0, q.y0, q.x1, q.y1, C.PARQUING); }
   for (const gs of GASOLINERES) { omple(gs.x, gs.y, gs.x + 5, gs.y + 3, C.PLACA); omple(gs.x + 4, gs.y, gs.x + 5, gs.y + 1, C.EDIF); }
@@ -1489,7 +1536,7 @@ function construeixCiutat(nom) {
 }
 
 let mapa, caselles, bancs, carrers, minimapa, arbres, aigues, ciutatActiva = 'capellades';
-const CIUTATS = { capellades: construeixCiutat('capellades'), vic: construeixCiutat('vic'), casa: construeixCiutat('casa'), muntanya: construeixCiutat('muntanya'), patum: construeixCiutat('patum'), cabra: construeixCiutat('cabra'), lliga: construeixCiutat('lliga'), presso: construeixCiutat('presso'), arinsal: construeixCiutat('arinsal') };
+const CIUTATS = { capellades: construeixCiutat('capellades'), vic: construeixCiutat('vic'), casa: construeixCiutat('casa'), muntanya: construeixCiutat('muntanya'), patum: construeixCiutat('patum'), cabra: construeixCiutat('cabra'), lliga: construeixCiutat('lliga'), presso: construeixCiutat('presso'), arinsal: construeixCiutat('arinsal'), armeria: construeixCiutat('armeria') };
 function activaCiutat(nom) { ciutatActiva = nom; ({ mapa, caselles, bancs, carrers, minimapa, arbres, aigues } = CIUTATS[nom]); MW = CIUTATS[nom].mw; MH = CIUTATS[nom].mh; }
 activaCiutat('capellades');
 
@@ -1648,7 +1695,7 @@ function comenca(p) {
   estat = 'joc'; so('poder'); document.body.classList.add('jugant');
   // Les explosions comprades a la botiga s'equipen en aquesta partida
   const extra = explosionsGuardades(); if (extra) { J.bombes += extra; desaExplosions(0); }
-  posaAparcats(); posaVenedors(); J.jug.bici = false;
+  posaAparcats(); posaVenedors(); J.jug.bici = false; J.jug.armesFoc = {};
   if (modeJoc === 'historia') { J.temps = Infinity; iniciaHistoria(); }
   anunci(extra ? 'ESPANTA PARELLES! (+' + extra + ' EXPLOSIONS PERFECTES)' : 'ESPANTA PARELLES!', 2);
 }
@@ -1834,6 +1881,41 @@ function dibuixaVenedor(g, v) {
 function dibuixaPista(g) { // peralts i salts de la zona
   for (const p of PERALTS) { g.save(); g.translate(p.x, p.y); g.strokeStyle = '#d62828'; g.lineWidth = 14; g.setLineDash([22, 18]); g.beginPath(); g.arc(0, 0, 120, 0, TAU); g.stroke(); g.restore(); }
   for (const sl of SALTS) { g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(sl.x - 18, sl.y - 70, 46, 150); g.fillStyle = '#c99a6a'; g.fillRect(sl.x - 22, sl.y - 80, 40, 160); g.fillStyle = '#a07850'; for (let k = 0; k < 160; k += 20) g.fillRect(sl.x - 22, sl.y - 80 + k, 40, 4); g.fillStyle = '#ffd23f'; g.fillRect(sl.x + 14, sl.y - 80, 6, 160); }
+}
+
+// ---- Armeria ----
+const VITRINES = ['pistola', 'escopeta', 'uzi', 'rifle', 'flames', 'bazuca'].map((t, i) => ({ tipus: t, x: (12.5 + i * 3.4) * TS, y: 11.4 * TS }));
+function vitrinaPropera() { return J.zona === 'armeria' && VITRINES.find(v => Math.hypot(v.x - J.jug.x, v.y - J.jug.y) < 75); }
+function compraArmaFoc(t) {
+  const j = J.jug, A = ARMES_FOC[t], teva = j.armesFoc && j.armesFoc[t], preu = teva ? Math.max(100, Math.round(A.preu / 3)) : A.preu;
+  if (J.punts < preu) { anunci('NECESSITES ' + formatPunts(preu) + ' PUNTS', 1.6); so('rebot'); return; }
+  J.punts -= preu; afegeixArmaFoc(t); so('punts'); so('agafar');
+  anunci(teva ? 'MUNICIÓ PLENA: ' + A.nom : 'HAS COMPRAT: ' + A.nom + '!', 2); textFlotant(j.x, j.y - 100, '-' + formatPunts(preu), '#ff9a9a', 11);
+}
+function dibuixaArmaFoc(g, t, x, y, k = 1) {
+  g.save(); g.translate(x, y); g.scale(k, k);
+  const fosc = '#1d1f22', metall = '#4a4f55', fusta = '#6b4a2a';
+  if (t === 'pistola') { g.fillStyle = fosc; g.fillRect(-14, -6, 26, 8); g.fillRect(-12, 0, 8, 13); g.fillStyle = fusta; g.fillRect(-11, 3, 6, 9); }
+  if (t === 'escopeta') { g.fillStyle = metall; g.fillRect(-26, -5, 44, 4); g.fillRect(-26, -1, 44, 3); g.fillStyle = fusta; g.fillRect(14, -5, 16, 9); g.fillRect(-6, -2, 10, 6); }
+  if (t === 'uzi') { g.fillStyle = fosc; g.fillRect(-14, -6, 28, 9); g.fillRect(-4, 2, 6, 16); g.fillRect(14, -3, 8, 3); g.fillStyle = metall; g.fillRect(-20, -4, 6, 3); }
+  if (t === 'rifle') { g.fillStyle = '#2b3317'; g.fillRect(-32, -3, 60, 5); g.fillRect(14, -4, 18, 9); g.fillStyle = fosc; g.fillRect(-8, -11, 22, 6); g.fillStyle = '#8fc3e8'; g.fillRect(-6, -10, 4, 4); }
+  if (t === 'flames') { g.fillStyle = '#c62828'; g.beginPath(); g.ellipse(10, 0, 12, 9, 0, 0, TAU); g.fill(); g.fillStyle = metall; g.fillRect(-26, -3, 30, 5); g.fillStyle = '#ff9a3d'; g.beginPath(); g.arc(-30, -1, 4, 0, TAU); g.fill(); }
+  if (t === 'bazuca') { g.fillStyle = '#3d4a2a'; g.fillRect(-30, -6, 60, 12); g.fillStyle = fosc; g.fillRect(-34, -7, 6, 14); g.fillRect(-2, 6, 6, 10); g.fillStyle = '#c62828'; g.fillRect(26, -4, 6, 8); }
+  g.restore();
+}
+function dibuixaArmeria(g) {
+  const t = performance.now() / 1000;
+  g.fillStyle = '#2a1a10'; g.fillRect(9 * TS, 7 * TS, 24 * TS, 1.6 * TS); // la paret de les armes
+  g.fillStyle = '#d62828'; g.font = 'bold 34px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('ARMERIA EL BOOM', 21 * TS, 7.9 * TS);
+  personaPetita(g, 21 * TS, 8.9 * TS, { pell: '#e0ac85', cabell: '#111', roba: '#3d4a2a' }, 0, false, false); // el botiguer, amb samarreta de camuflatge
+  for (const v of VITRINES) {
+    const A = ARMES_FOC[v.tipus], teva = J.jug.armesFoc && J.jug.armesFoc[v.tipus];
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(v.x - 46, v.y + 6, 92, 10);
+    g.fillStyle = '#5a5a5a'; g.fillRect(v.x - 44, v.y - 40, 88, 50); g.fillStyle = 'rgba(160,210,255,.35)'; g.fillRect(v.x - 40, v.y - 36, 80, 30);
+    dibuixaArmaFoc(g, v.tipus, v.x, v.y - 22 + Math.sin(t * 2 + v.x) * 2, 1.2);
+    g.font = '8px "Press Start 2P"'; g.fillStyle = A.color; g.fillText(A.curt, v.x, v.y + 28); g.fillStyle = teva ? '#2fd38a' : '#ffd23f'; g.fillText(teva ? 'MUNICIÓ ' + formatPunts(Math.max(100, Math.round(A.preu / 3))) : A.preu ? formatPunts(A.preu) + ' P' : 'GRATIS A CASA', v.x, v.y + 42);
+  }
+  g.textAlign = 'left';
 }
 
 // ---- Calabós ----
@@ -2222,14 +2304,15 @@ function fesAtac(ox, oy, radi, o = {}) {
     for (let i = 0; i < (p.tipus === 'boda' ? 22 : 10); i++) J.particules.push({ x: p.x, y: p.y - 40, vx: (Math.random() - .5) * 260, vy: -Math.random() * 260, t: .9, c: p.tipus === 'boda' ? tria(['#ff5c8a', '#fff', '#ffd23f']) : '#ff5c8a', m: 6, cor: true, g: 500 });
     setTimeout(() => so('crit'), 60 + Math.random() * 140);
   }
-  for (const v of (!J.zona && J.venedors) || []) if (v.fuig <= 18 && dins(v)) { v.fuig = 30; textFlotant(v.x, v.y - 70, tria(['LES BICIS NO!', 'SOCORS!', 'QUIN SUSTO!']), '#ff9a3d', 10); J.punts += 80; }
+  for (const v of (!J.zona && J.venedors) || []) if (v.fuig <= 18 && dins(v)) { v.fuig = 30; critVeu(); textFlotant(v.x, v.y - 70, tria(['LES BICIS NO!', 'SOCORS!', 'QUIN SUSTO!']), '#ff9a3d', 10); J.punts += 80; }
+  for (const c of (!J.zona && J.ciutat === 'capellades' && granMon() && J.cotxes) || []) if (c.tipus === 'normal' && dins(c)) abandonaCotxe(c);
   // Els benziners també s'espanten (i deixen el sortidor sol)
-  for (const b of (!J.zona && J.benziners) || []) if (b.fuig <= 20 && dins(b)) { b.fuig = 32; textFlotant(b.x, b.y - 70, tria(['ELS DINERS NO!', 'AAAH! UN BOIG!', 'EM PIRO!']), '#ff9a3d', 10); J.punts += 80; }
+  for (const b of (!J.zona && J.benziners) || []) if (b.fuig <= 20 && dins(b)) { b.fuig = 32; critVeu(false); textFlotant(b.x, b.y - 70, tria(['ELS DINERS NO!', 'AAAH! UN BOIG!', 'EM PIRO!']), '#ff9a3d', 10); J.punts += 80; }
   // Les armes també espanten els municipals
   if (o.policia) for (const a of J.agents) {
     const dx = a.x - ox, dy = a.y - oy, d = Math.hypot(dx, dy);
     if (d > radi || (o.con && d > 40 && (dx * o.con.x + dy * o.con.y) / d < 0.45)) continue;
-    if (o.policia === 'fuig') { a.fuig = o.durPol; a.estat = 'patrulla'; a.cami = []; textFlotant(a.x, a.y - 70, 'MARE MEVA!', '#7fc3ff', 10); }
+    if (o.policia === 'fuig') { if (Math.random() < .5) critVeu(false, .1); a.fuig = o.durPol; a.estat = 'patrulla'; a.cami = []; textFlotant(a.x, a.y - 70, 'MARE MEVA!', '#7fc3ff', 10); }
     else { a.glacat = o.durPol; textFlotant(a.x, a.y - 70, 'GLUPS!', '#7fc3ff', 10); }
     J.punts += 50; textFlotant(a.x, a.y - 50, '+50', '#7fc3ff', 11);
   }
@@ -2249,18 +2332,39 @@ function fesAtac(ox, oy, radi, o = {}) {
 // ---------- La pistola (arma secundària): s'agafa a casa del Ramon ----------
 const PISTOLA_LLOC = { x: 45.2 * TS, y: 22.4 * TS }, BALES_MAX = 30;
 const pistolaACasa = () => J.ciutat === 'capellades' && !J.zona && granMon();
+// Les armes de foc: la pistola de casa i les que compres a l'armeria
+const ARMES_FOC = {
+  pistola: { nom: 'PISTOLA', curt: 'PISTOLA', rec: .26, bales: 30, preu: 0, disp: .06, n: 1, vel: 1500, vida: .55, color: '#e6e6e6' },
+  escopeta: { nom: 'ESCOPETA DE CANONS', curt: 'ESCOPETA', rec: .75, bales: 16, preu: 1500, disp: .42, n: 7, vel: 1300, vida: .3, color: '#c99a6a' },
+  uzi: { nom: 'METRALLADORA UZI', curt: 'UZI', rec: .07, bales: 150, preu: 2500, disp: .16, n: 1, vel: 1600, vida: .5, color: '#7fc3ff' },
+  rifle: { nom: 'FUSELL DE PRECISIÓ', curt: 'FUSELL', rec: 1, bales: 12, preu: 3000, disp: 0, n: 1, vel: 3200, vida: 1, dany: 3, abast: 1500, color: '#2fd38a' },
+  flames: { nom: 'LLANÇAFLAMES', curt: 'FLAMES', rec: .05, bales: 220, preu: 4000, flama: true, color: '#ff9a3d' },
+  bazuca: { nom: 'BAZUCA', curt: 'BAZUCA', rec: 1.2, bales: 8, preu: 5000, coet: true, color: '#ff3b3b' },
+};
+const ORDRE_ARMES = ['pistola', 'escopeta', 'uzi', 'rifle', 'flames', 'bazuca'];
+function afegeixArmaFoc(tipus) {
+  const j = J.jug; j.armesFoc = j.armesFoc || {};
+  j.armesFoc[tipus] = j.armesFoc[tipus] || { tipus, bales: 0 }; j.armesFoc[tipus].bales = ARMES_FOC[tipus].bales; j.pistola = j.armesFoc[tipus];
+}
+function canviaArmaFoc() {
+  const j = J.jug, meves = ORDRE_ARMES.filter(t => j.armesFoc && j.armesFoc[t]); if (meves.length < 2) return;
+  const i = meves.indexOf((j.pistola && j.pistola.tipus) || 'pistola'); j.pistola = j.armesFoc[meves[(i + 1) % meves.length]];
+  so('agafar'); textFlotant(j.x, j.y - 100, ARMES_FOC[j.pistola.tipus].nom, ARMES_FOC[j.pistola.tipus].color, 10);
+}
 function disparaPistola() {
   const j = J.jug, p = j.pistola;
   if (!p || j.cotxe || (j.recPis || 0) > 0) return;
-  if (p.bales <= 0) { j.recPis = .5; so('rebot'); textFlotant(j.x, j.y - 100, 'SENSE BALES! TORNA A CASA', '#bbb', 9); return; }
-  p.bales--; liala(); j.recPis = J.batalla ? .16 : .26; so('tret'); J.tremolor = Math.max(J.tremolor, .12);
+  const A = ARMES_FOC[p.tipus || 'pistola'];
+  if (p.bales <= 0) { j.recPis = .5; so('rebot'); textFlotant(j.x, j.y - 100, 'SENSE BALES! VES A L\'ARMERIA', '#bbb', 9); return; }
+  p.bales--; liala(); j.recPis = A.rec * (J.batalla && p.tipus !== 'bazuca' ? .65 : 1); so(A.coet ? 'missil' : A.flama ? 'foc' : 'tret'); J.tremolor = Math.max(J.tremolor, A.coet ? .35 : A.n > 1 ? .25 : .12);
+  if (A.flama) { const a = Math.atan2(j.fy, j.fx) + (Math.random() - .5) * .25, v = 520 + Math.random() * 120; (J.flames = J.flames || []).push({ x: j.x + j.fx * 24, y: j.y - 24 + j.fy * 24, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: .55 }); avisaPolicia(j.x, j.y, 500); return; }
   // apunta sol al policia més proper que tens a la vista
-  const viu = a => !(a.ko > 0) && Math.hypot(a.x - j.x, a.y - j.y) < 720 && hiHaVista(j.x, j.y - 20, a.x, a.y - 20);
+  const viu = a => !(a.ko > 0) && Math.hypot(a.x - j.x, a.y - j.y) < (A.abast || 720) && hiHaVista(j.x, j.y - 20, a.x, a.y - 20);
   const obj = J.agents.filter(viu).sort((a, b) => dist(a, j) - dist(b, j))[0] || (J.batalla && !J.batalla.heli.mort && dist(J.batalla.heli, j) < 520 ? { x: J.batalla.heli.x, y: J.batalla.heli.y + 50 } : null) || J.cotxes.filter(c => c.tipus === 'policia' && dist(c, j) < 620).sort((a, b) => dist(a, j) - dist(b, j))[0];
   let ang = obj ? Math.atan2(obj.y - 24 - (j.y - 26), obj.x - j.x) : Math.atan2(j.fy, j.fx);
   if (obj) { j.fx = Math.cos(ang); j.fy = Math.sin(ang); }
-  ang += (Math.random() - .5) * .06;
-  J.trets.push({ x: j.x + Math.cos(ang) * 22, y: j.y - 26 + Math.sin(ang) * 22, vx: Math.cos(ang) * 1500, vy: Math.sin(ang) * 1500, t: .55 });
+  if (A.coet) { J.missils.push({ x: j.x + Math.cos(ang) * 30, y: j.y + Math.sin(ang) * 30, vx: Math.cos(ang) * 950, vy: Math.sin(ang) * 950, t: 1.1 }); avisaPolicia(j.x, j.y, 800); J.cerca = Math.min(5, J.cerca + .3); return; }
+  for (let k = 0; k < A.n; k++) { const a2 = ang + (Math.random() - .5) * A.disp; J.trets.push({ x: j.x + Math.cos(a2) * 22, y: j.y - 26 + Math.sin(a2) * 22, vx: Math.cos(a2) * A.vel, vy: Math.sin(a2) * A.vel, t: A.vida * (.85 + Math.random() * .3), dany: A.dany || 1 }); }
   for (let i = 0; i < 6; i++) J.particules.push({ x: j.x + Math.cos(ang) * 26, y: j.y - 26 + Math.sin(ang) * 26, vx: Math.cos(ang + (Math.random() - .5)) * 260, vy: Math.sin(ang + (Math.random() - .5)) * 260, t: .12, c: tria(['#fff3a0', '#ffb000']), m: 5 });
   avisaPolicia(j.x, j.y, 650); J.cerca = Math.min(5, J.cerca + .12);
 }
@@ -2274,18 +2378,21 @@ function koAgent(a, txt = 'K.O.!') {
   if (J.batalla && a.mosso) J.batalla.kos++;
 }
 // Pujant una muntanya, el cotxe va més lent; baixant, més ràpid (la definició real és a la part de la muntanya)
+// Velocitat punta de cada vehicle (px/s). 4,2 px/s = 1 km/h, així el més ràpid fa 150 km/h
+const VMAX = { carromato: 630, bestia: 610, robat: 590, policia: 600, vilamovil: 520 }, KMH = 4.2;
 function pendent(v, dx, dy) { return typeof alcada === 'function' && !J.zona && J.ciutat === 'capellades' ? 1 - Math.max(-.35, Math.min(.6, (alcada(v.x + dx * 40, v.y + dy * 40) - alcada(v.x, v.y)) * 28)) : 1; }
 function actualitzaPistola(dt) {
   const j = J.jug;
-  actualitzaBenziners(dt); actualitzaPaquets(); actualitzaRampes(dt);
+  actualitzaBenziners(dt);
+  if ((tecles.KeyR || J.ratxa) && j.pistola && ARMES_FOC[j.pistola.tipus || 'pistola'].rec < .1) disparaPistola(); actualitzaPaquets(); actualitzaRampes(dt); actualitzaLlaunes(dt); actualitzaControls(dt); actualitzaFocs(dt); actualitzaPoliciaPeu(dt);
   for (const cd of J.conductors || []) { cd.t -= dt; cd.pas += dt * 14; mou(cd, cd.vx, cd.vy, dt, 10); } if (J.conductors) J.conductors = J.conductors.filter(cd => cd.t > 0);
   if (!J.zona && J.ciutat === 'capellades' && granMon()) actualitzaArinsal(dt);
   if (J.zona === 'arinsal') actualitzaPista(dt);
-  if (J.zona === 'presso' && J.pistolaRequisada && Math.hypot(CAIXA_PROVES.x - j.x, CAIXA_PROVES.y - j.y) < 50) { j.pistola = J.pistolaRequisada; J.pistolaRequisada = null; so('agafar'); anunci('HAS RECUPERAT LA PISTOLA!', 2); }
+  if (J.zona === 'presso' && J.pistolaRequisada && Math.hypot(CAIXA_PROVES.x - j.x, CAIXA_PROVES.y - j.y) < 50) { const R2 = J.pistolaRequisada; if (R2.actual) { j.pistola = R2.actual; j.armesFoc = R2.totes; } else j.pistola = R2; J.pistolaRequisada = null; so('agafar'); anunci('HAS RECUPERAT LA PISTOLA!', 2); }
   j.recPis = Math.max(0, (j.recPis || 0) - dt);
   if (pistolaACasa() && !j.cotxe && Math.hypot(PISTOLA_LLOC.x - j.x, PISTOLA_LLOC.y - j.y) < 60) {
-    if (!j.pistola) { j.pistola = { bales: BALES_MAX }; so('agafar'); anunci('TENS UNA PISTOLA! [R] PER DISPARAR', 2.4); textFlotant(j.x, j.y - 100, 'PISTOLA!', '#ffd23f', 14); }
-    else if (j.pistola.bales < BALES_MAX) { j.pistola.bales = BALES_MAX; so('agafar'); textFlotant(j.x, j.y - 100, 'MUNICIÓ PLENA', '#ffd23f', 11); }
+    if (!j.armesFoc || !j.armesFoc.pistola) { afegeixArmaFoc('pistola'); so('agafar'); anunci('TENS UNA PISTOLA! [R] PER DISPARAR', 2.4); textFlotant(j.x, j.y - 100, 'PISTOLA!', '#ffd23f', 14); }
+    else if (j.armesFoc.pistola.bales < BALES_MAX) { j.armesFoc.pistola.bales = BALES_MAX; so('agafar'); textFlotant(j.x, j.y - 100, 'MUNICIÓ PLENA', '#ffd23f', 11); }
   }
   for (const b of J.trets) {
     const pas = Math.max(1, Math.ceil(Math.hypot(b.vx, b.vy) * dt / 20));
@@ -2295,7 +2402,7 @@ function actualitzaPistola(dt) {
       if (tretHeli(b)) { b.t = 0; break; }
       const a = J.agents.find(a => !(a.ko > 0) && Math.hypot(a.x - b.x, a.y - 26 - b.y) < 24);
       if (a) {
-        b.t = 0; a.vida = (a.vida || 1) - 1;
+        b.t = 0; a.vida = (a.vida || 1) - (b.dany || 1);
         for (let i = 0; i < 6; i++) J.particules.push({ x: b.x, y: b.y, vx: (Math.random() - .5) * 160, vy: (Math.random() - .5) * 160, t: .3, c: '#fff', m: 4 });
         if (a.vida <= 0) koAgent(a); else { a.glacat = .25; textFlotant(a.x, a.y - 70, 'AU!', '#ff9a9a', 10); }
         break;
@@ -2310,6 +2417,14 @@ function actualitzaPistola(dt) {
     b.t -= dt;
   }
   J.trets = J.trets.filter(b => b.t > 0);
+  for (const fl of J.flames || []) {
+    fl.t -= dt; fl.x += fl.vx * dt; fl.y += fl.vy * dt; fl.vx *= .96; fl.vy *= .96;
+    if (Math.random() < .3) fesAtac(fl.x, fl.y + 20, 40, { mult: .5, dany: 1, policia: 'fuig', durPol: 3 });
+    for (const a of J.agents) if (!(a.ko > 0) && Math.hypot(a.x - fl.x, a.y - 20 - fl.y) < 30 && Math.random() < .08) koAgent(a, 'CREMAT! K.O.');
+    const tt = tileA(fl.x, fl.y + 20); if ((tt === C.ARBRE || tt === C.BOSC) && typeof encen === 'function') encen(Math.floor(fl.x / TS), Math.floor((fl.y + 20) / TS));
+    if (tapaVista(tt)) fl.t = 0;
+  }
+  if (J.flames) J.flames = J.flames.filter(fl => fl.t > 0);
   for (const fm of J.fums) fm.t -= dt; J.fums = J.fums.filter(fm => fm.t > 0);
   actualitzaBatalla(dt);
   actualitzaHistoria(dt);
@@ -2720,6 +2835,7 @@ function actualitzaBatalla(dt) {
 }
 // Un tret de pistola que toca l'helicòpter
 function tretHeli(b) {
+  const hp = J.heliPoli; if (hp && !hp.mort && Math.hypot(hp.x - b.x, hp.y - b.y) < 46) { hp.vida--; textFlotant(hp.x, hp.y - 40, 'CLANC!', '#ddd', 9); if (hp.vida <= 0) { hp.mort = true; J.punts += 3000; so('boom'); J.flash = .8; ona(hp.x, hp.y, 220, '#ff9a3d'); anunci('HELICÒPTER ABATUT! +3000', 2.2); J.cerca = Math.max(0, J.cerca - 1.5); } return true; }
   const B = J.batalla; if (!B || B.heli.mort) return false;
   const h = B.heli; if (Math.hypot(h.x - b.x, h.y - b.y) > 46) return false;
   h.vida--; textFlotant(h.x, h.y - 40, 'CLANC!', '#ddd', 9);
@@ -2769,7 +2885,7 @@ function detencio() {
   if (j.cotxe) baixaVila(); if (j.vespa) baixaVespa();
   J.detencions++; J.cerca = 0; J.bales = [];
   for (const a of J.agents) { a.estat = 'patrulla'; a.cami = []; baixaAgentVespa(a); }
-  J.pistolaRequisada = j.pistola || J.pistolaRequisada || null; j.pistola = null;
+  if (j.pistola) { J.pistolaRequisada = { actual: j.pistola, totes: j.armesFoc || {} }; j.pistola = null; j.armesFoc = {}; }
   so('xiulet'); pantallaGTA('BUSTED', '#6ec1ff', 1600); estat = 'busted';
   J.continuaDetencio = () => { if (J && estat === 'busted') mostraVideo(() => { estat = 'joc'; entraPresso(); }, VIDEO_DETENCIO()); };
   setTimeout(() => J && J.continuaDetencio && J.continuaDetencio(), 1600);
@@ -2892,13 +3008,13 @@ function accioPropera() {
   if (j.cotxe && (j.cotxe.benzina ?? 100) < 99) { const gs = gasolineraPropera(); if (gs) { const b = J.benziners.find(b => b.gs === gs); return b && b.fuig > 0 ? { boto: 'GRATIS', text: 'POSAR BENZINA GRATIS (EL BENZINER HA FUGIT)', fer: () => posaBenzina(true) } : { boto: 'BENZINA', text: 'POSAR BENZINA (300 PUNTS)', fer: () => posaBenzina(false) }; } }
   if (j.cotxe) { const lt = localProper(); if (lt) return lt; return { boto: 'BAIXAR', text: 'BAIXAR DEL ' + nomCotxe(j.cotxe), fer: baixaVila }; }
   if (j.vespa) return { boto: 'BAIXAR', text: 'BAIXAR DE LA VESPA', fer: baixaVespa };
+  const vt = vitrinaPropera(); if (vt) { const A = ARMES_FOC[vt.tipus], teva = j.armesFoc && j.armesFoc[vt.tipus]; if (vt.tipus === 'pistola' && !teva) return { boto: 'CASA', text: 'LA PISTOLA LA TENS A LA CAIXA DE CASA', fer: () => {} }; return { boto: teva ? 'MUNICIÓ' : 'COMPRAR', text: (teva ? 'MUNICIÓ PER ' : 'COMPRAR ') + A.nom + ' (' + formatPunts(teva ? Math.max(100, Math.round(A.preu / 3)) : A.preu) + ' PUNTS)', fer: () => compraArmaFoc(vt.tipus) }; }
   if (!J.zona && J.ciutat === 'capellades' && granMon()) {
     if (!j.bici && prop(LLOGUER_BICIS, 130)) return venedorsFora() ? { boto: 'ROBAR', text: 'ROBAR UNA BICI (ELS VENEDORS HAN FUGIT)', fer: () => agafaBici(true) } : { boto: 'LLOGAR', text: 'LLOGAR UNA BICI (400 PUNTS)', fer: () => agafaBici(false) };
     if (prop(TELECADIRA.baix, 130) && !J.telecadira) return j.bici ? { boto: 'PUJAR', text: 'PUJAR AL TELECADIRA AMB LA BICI', fer: pujaTelecadira } : { boto: 'BICI?', text: 'PER BAIXAR LES PISTES NECESSITES UNA BICI', fer: () => anunci('LLOGA O ROBA UNA BICI AL COSTAT!', 2) };
   }
   const vv = vilaPropera(); if (vv) return { boto: 'PUJAR', text: 'PUJAR AL ' + nomCotxe(vv), fer: pujaVila };
-  const cr = !j.cotxe && !j.vespa && !J.zona && J.ciutat === 'capellades' && granMon() && J.cotxes.find(c => c.tipus === 'normal' && dist(c, j) < 80);
-  if (cr) return { boto: 'ROBAR', text: 'ROBAR EL COTXE', fer: () => robaCotxe(cr) };
+
   const lo = localProper(); if (lo) return lo;
   if (sortidaPropera()) return { boto: 'SORTIR', text: 'SORTIR AL CARRER', fer: sortirZona };
   const pt = portalProper();
@@ -2979,6 +3095,8 @@ const LOCALS = {
   ],
   vic: [{ tipus: 'bar', x: 4.5, y: 14.45 }, { tipus: 'disfresses', x: 12.5, y: 28.45 }],
 };
+// armeries també als pobles grans
+for (const nom of ['IGUALADA', 'MANRESA', 'LLEIDA', 'GIRONA', 'TARRAGONA', 'REUS']) { const p = POBLES.find(q => q.nom === nom); LOCALS.capellades.push({ tipus: 'armeria', x: p.x + 20.5, y: p.y + 6.45 }); }
 const TIPUS_LOCAL = {
   armeria: { nom: 'ARMERIA', color: '#d62828', preu: 300 },
   bar: { nom: 'BAR LA PARELLA FELIÇ', color: '#f2c230', preu: 400 },
@@ -2992,6 +3110,7 @@ function localProper() {
   const T = TIPUS_LOCAL[l.tipus], preu = ' (' + T.preu + ' PUNTS)';
   if (l.tipus === 'taller') return j.cotxe ? { boto: 'PINTAR', text: 'PINTAR EL COTXE I ESQUIVAR LA POLICIA' + preu, fer: () => compraLocal(l) } : null;
   if (j.cotxe) return null;
+  if (l.tipus === 'armeria') return { boto: 'ENTRAR', text: "ENTRAR A L'ARMERIA (ARMES DE FOC)", fer: () => entraZona('armeria', { x: l.x * TS, y: l.y * TS + 34 }) };
   const text = { armeria: 'COMPRAR UNA ARMA', bar: 'PRENDRE UN CAFÈ (+1 VIDA)', disfresses: J.disfressa ? 'TREURE LA DISFRESSA' : 'POSAR-SE UNA DISFRESSA' }[l.tipus];
   return { boto: { armeria: 'COMPRAR', bar: 'CAFÈ', disfresses: 'DISFRESSA' }[l.tipus], text: text + preu, fer: () => compraLocal(l) };
 }
@@ -3017,7 +3136,7 @@ function dibuixaLocals(g) {
     const T = TIPUS_LOCAL[l.tipus], x = l.x * TS, y = l.y * TS;
     g.fillStyle = '#2a1a10'; g.fillRect(x - 16, y - 58, 32, 30); g.fillStyle = T.color; g.fillRect(x - 13, y - 55, 26, 3);
     rotul(g, T.nom, x, y - 70, T.color, 7);
-    if (l.tipus === 'armeria') iconaArma(g, 'motoserra', x + 30, y - 40, .8);
+    if (l.tipus === 'armeria') dibuixaArmaFoc(g, 'uzi', x + 34, y - 44, 1);
   }
 }
 
@@ -3304,7 +3423,7 @@ function dibuixaBenziner(g, b) {
 }
 function vilaPropera() {
   if (J.jug.cotxe || J.jug.vespa) return null;
-  return [J.vila, J.carro, J.bestia, ...aparcatsActius().filter(pujable)].find(v => v && v.estat !== 'espatllat' && Math.hypot(v.x - J.jug.x, v.y - J.jug.y) < 85) || null;
+  return [J.vila, J.carro, J.bestia, ...aparcatsActius().filter(pujable), ...J.cotxes.filter(c => c.buit && c.tipus === 'policia')].find(v => v && v.estat !== 'espatllat' && Math.hypot(v.x - J.jug.x, v.y - J.jug.y) < 85) || null;
 }
 function pujaVila() {
   const v = vilaPropera(); if (!v) return;
@@ -3312,8 +3431,17 @@ function pujaVila() {
   J.jug.cotxe = v; v.cami = []; v.estat = 'conduit'; J.jug.x = v.x; J.jug.y = v.y; J.tPoliCotxe = 3;
   so('motor'); anunci(v.tipus === 'carromato' ? 'CARROMATO! ESPAI PER LLANÇAR MÍSSILS' : 'AL VILAMOVIL!', 1.8);
 }
-const nomCotxe = v => v && v.tipus === 'carromato' ? 'CARROMATO' : v && v.tipus === 'bestia' ? 'LA BÈSTIA' : v && v.tipus === 'robat' ? 'COTXE' : 'VILAMOVIL';
-const pujable = c => c && (c.tipus === 'vilamovil' || c.tipus === 'carromato' || c.tipus === 'bestia' || c.tipus === 'robat');
+const nomCotxe = v => v && v.tipus === 'carromato' ? 'CARROMATO' : v && v.tipus === 'bestia' ? 'LA BÈSTIA' : v && v.tipus === 'robat' ? 'COTXE (ROBAT)' : v && v.tipus === 'policia' ? 'COTXE DE POLICIA' : 'VILAMOVIL';
+const pujable = c => c && (c.tipus === 'vilamovil' || c.tipus === 'carromato' || c.tipus === 'bestia' || c.tipus === 'robat' || (c.tipus === 'policia' && c.buit));
+// El conductor surt corrent cridant i el cotxe queda aturat amb la porta oberta
+function abandonaCotxe(c) {
+  J.cotxes = J.cotxes.filter(x => x !== c);
+  Object.assign(c, { tipus: 'robat', estat: 'aparcat', t: -9999, cami: [], benzina: 40 + Math.random() * 50, marxa: 0, va: 0, vel: 0, espera: 0 });
+  (J.aparcats = J.aparcats || []).push(c);
+  const an = Math.random() * TAU; (J.conductors = J.conductors || []).push({ x: c.x - 40, y: c.y + 30, pr: novaPersona(), t: 4, vx: Math.cos(an) * 190, vy: Math.sin(an) * 190, pas: 0 });
+  critVeu(Math.random() < .5); J.punts += 100;
+  textFlotant(c.x, c.y - 70, tria(['AAAAH! EL MEU COTXE!', 'SOCORS!', 'MAMAAAA!', 'QUE ACABO DE FER LA ITV!']), '#ff9a9a', 10);
+}
 // Com al GTA: obres la porta, treus el conductor i te l'emportes
 function robaCotxe(c) {
   const j = J.jug;
@@ -3424,7 +3552,8 @@ function destrossa(px, py, radi, remot) {
       canviaCasella(x, y, C.RUNA); n++;
       J.fums.push({ x: (x + .5) * TS, y: (y + .5) * TS, t: 8 + Math.random() * 6, foc: Math.random() < .6 });
       for (let i = 0; i < 10; i++) { const a = Math.random() * TAU, v = 100 + Math.random() * 300; J.particules.push({ x: (x + .5) * TS, y: (y + .5) * TS - 20, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, t: .8 + Math.random() * .6, c: tria(['#8d867c', '#a59d90', '#b5543a', '#e8d6b5', '#555']), m: 5 + Math.random() * 9, g: 600 }); }
-    } else if (t === C.ARBRE || t === C.TANCA || t === C.BANC) { canviaCasella(x, y, t === C.TANCA ? C.TERRA : C.GESPA); J.fums.push({ x: (x + .5) * TS, y: (y + .5) * TS, t: 5, foc: true }); }
+    } else if (t === C.ARBRE || t === C.BOSC) { if (!remot) encen(x, y); } // els arbres s'encenen i el foc s'escampa pel bosc
+    else if (t === C.TANCA || t === C.BANC) { canviaCasella(x, y, t === C.TANCA ? C.TERRA : C.GESPA); J.fums.push({ x: (x + .5) * TS, y: (y + .5) * TS, t: 5, foc: true }); }
   }
   if (n && remot) { J.tremolor = Math.max(J.tremolor, .5); }
   else if (n) { J.gravetat++; J.punts += n * 120; textFlotant(px, py - 90, 'EDIFICI A TERRA! +' + n * 120, '#ff9a3d', 12); setTimeout(() => so('boom'), 180); J.tremolor = Math.max(J.tremolor, 1); J.edificisRebentats = (J.edificisRebentats || 0) + n; }
@@ -3441,6 +3570,7 @@ function explosioMissil(mi) {
   fesAtac(mi.x, mi.y, R, { total: true, policia: 'fuig', durPol: 4, dany: 99 });
   for (const a of J.agents) if (Math.hypot(a.x - mi.x, a.y - mi.y) < R * .8) koAgent(a, 'BOOM! K.O.');
   if (J.batalla && !J.batalla.heli.mort && Math.hypot(J.batalla.heli.x - mi.x, J.batalla.heli.y - mi.y) < R) helicopterAbatut();
+  if (J.heliPoli && !J.heliPoli.mort && Math.hypot(J.heliPoli.x - mi.x, J.heliPoli.y - mi.y) < R) { J.heliPoli.mort = true; J.punts += 3000; anunci('HELICÒPTER ABATUT! +3000', 2.2); J.cerca = Math.max(0, J.cerca - 1.5); }
   // Cotxes que salten pels aires
   const tocats = J.cotxes.filter(c => Math.hypot(c.x - mi.x, c.y - mi.y) < R);
   for (const c of tocats) { textFlotant(c.x, c.y - 50, c.tipus === 'policia' ? 'POLICIA FORA! +300' : 'BOOM! +150', '#ff9a3d', 11); J.punts += c.tipus === 'policia' ? 300 : 150; for (let i = 0; i < 16; i++) J.particules.push({ x: c.x, y: c.y, vx: (Math.random() - .5) * 400, vy: (Math.random() - .5) * 400, t: .8, c: c.tipus === 'policia' ? '#f4f6fa' : c.color, m: 8 }); }
@@ -3513,7 +3643,13 @@ function actualitzaVehicles(dt) {
     else if (c.estat === 'aparcat') { /* t'espera */ }
     else if (c.tipus === 'policia' && c.estat !== 'marxa') {
       const v = j.cotxe;
-      if (!v) c.estat = 'marxa';
+      if (!v && c.aPeu) { // va cap a tu, s'atura i en baixen dos agents
+        const dx = j.x - c.x, dy = j.y - c.y, d = Math.hypot(dx, dy) || 1;
+        if (d < 230) {
+          c.estat = 'aparcat'; c.buit = true; c.t = 0; so('porta'); textFlotant(c.x, c.y - 60, tria(['BAIXEM!', 'ARA ET TENIM!', 'MANS ENLAIRE!']), '#7fc3ff', 10);
+          for (const k of [-1, 1]) { const a = nouAgent(); Object.assign(a, { x: c.x - Math.sin(c.ang) * 40 * k, y: c.y + Math.cos(c.ang) * 40 * k, estat: 'persegueix', ultim: { x: j.x, y: j.y }, perdut: 0, recTir: 1 }); if (!lliure(a.x, a.y, 12)) { a.x = c.x; a.y = c.y + 50; } J.agents.push(a); }
+        } else { if (!c.cami.length || Math.random() < dt * 1.5) c.cami = cami(c.x, c.y, Math.floor(j.x / TS), Math.floor(j.y / TS)); if (!segueixCami(c, 330, dt)) { mou(c, dx / d * 260, dy / d * 260, dt, 16); c.fx = dx / d; c.fy = dy / d; } }
+      } else if (!v) c.estat = 'marxa';
       else {
         const dx = v.x - c.x, dy = v.y - c.y, d = Math.hypot(dx, dy) || 1;
         const sc = J.mentida > 0 ? -1 : 1;
@@ -3526,8 +3662,13 @@ function actualitzaVehicles(dt) {
       if (c.tipus === 'policia') c.marxa += dt;
       const obst = [...J.parelles, ...J.agents, ...J.matons]; if (!j.cotxe) obst.push(j);
       const davant = obst.some(o => { const dx = o.x - c.x, dy = o.y - c.y, d = Math.hypot(dx, dy); return d < 80 && (dx * c.fx + dy * c.fy) / (d || 1) > .55; });
-      if (davant) { if ((c.pec -= dt) <= 0) { c.pec = 1.6; so('pec'); textFlotant(c.x, c.y - 50, 'PEC PEC!', '#fff', 9); } }
-      else if (!segueixCami(c, c.tipus === 'policia' ? 250 : esAutopista(c) ? 230 : 115, dt)) rutaCotxe(c);
+      const tuDavant = !j.cotxe && c.tipus === 'normal' && (() => { const dx = j.x - c.x, dy = j.y - c.y, d = Math.hypot(dx, dy); return d < 90 && (dx * c.fx + dy * c.fy) / (d || 1) > .55; })();
+      c.espera = tuDavant ? (c.espera || 0) + dt : 0;
+      if (tuDavant && c.espera > 6) { // ja n'està fart: accelera i t'atropella
+        mou(c, c.fx * 260, c.fy * 260, dt, 4);
+        if (Math.hypot(j.x - c.x, j.y - c.y) < 42 && j.invul <= 0) { c.espera = 0; textFlotant(c.x, c.y - 70, 'ET HE AVISAT!', '#ff5c5c', 11); return ferit("T'HA ATROPELLAT!"); }
+      } else if (davant) { if ((c.pec -= dt) <= 0) { c.pec = 1.6; so('pec'); textFlotant(c.x, c.y - 50, c.espera > 4 ? "APARTA'T O ET XAFO!" : c.espera > 2 ? 'APARTA!' : 'PEC PEC!', c.espera > 4 ? '#ff9a9a' : '#fff', 9); } }
+      else if (!segueixCami(c, c.tipus === 'policia' ? 330 : esAutopista(c) ? 380 : 150, dt)) rutaCotxe(c);
     }
     c.vel = Math.hypot(c.x - x0, c.y - y0) / dt;
     orienta(c, dt);
@@ -3659,22 +3800,37 @@ function actualitza(dt) {
   if (tecles.ArrowLeft || tecles.KeyA) ix--; if (tecles.ArrowRight || tecles.KeyD) ix++;
   if (tecles.ArrowUp || tecles.KeyW) iy--; if (tecles.ArrowDown || tecles.KeyS) iy++;
   if (joystick.actiu) { ix = joystick.dx; iy = joystick.dy; }
-  if (J.primera) {
-    j.ang = (j.ang ?? Math.atan2(j.fy, j.fx)) + ix * 2.6 * dt;
-    const endavant = -iy; ix = Math.cos(j.ang) * endavant; iy = Math.sin(j.ang) * endavant;
+  if (J.primera) { // tercera persona: WASD o el joystick es mouen respecte de la càmera; les fletxes o arrossegar giren la càmera
+    j.angCam = j.angCam ?? Math.atan2(j.fy, j.fx);
+    if (tecles.ArrowLeft || tecles.KeyJ) j.angCam -= 2.4 * dt; if (tecles.ArrowRight || tecles.KeyL) j.angCam += 2.4 * dt;
+    let fw = 0, st = 0;
+    if (tecles.KeyW || tecles.ArrowUp) fw++; if (tecles.KeyS || tecles.ArrowDown) fw--; if (tecles.KeyA) st--; if (tecles.KeyD) st++;
+    if (joystick.actiu) { fw = -joystick.dy; st = joystick.dx; }
+    const ca = Math.cos(j.angCam), sa = Math.sin(j.angCam);
+    ix = ca * fw - sa * st; iy = sa * fw + ca * st;
+    if (j.cotxe && !camAgafada && j.cotxe.vel > 40) { const d = Math.atan2(Math.sin(j.cotxe.ang - j.angCam), Math.cos(j.cotxe.ang - j.angCam)); j.angCam += d * Math.min(1, dt * 2.2); } // la càmera es posa darrere el cotxe
   }
   const m = Math.hypot(ix, iy);
   j.mou = m > 0.1;
   if (j.cotxe) { // conduint el Vilamovil
     const v = j.cotxe, x0 = v.x, y0 = v.y;
     if (v.benzina === undefined) v.benzina = 100;
-    if (m > 0.1 && !(v.salt > 0)) { const vel = (v.tipus === 'carromato' ? 560 : v.tipus === 'bestia' ? 430 : v.tipus === 'robat' ? 470 : 320) * Math.min(1, m) * (v.benzina > 0 ? 1 : .16) * pendent(v, ix / m, iy / m); mou(v, ix / m * vel, iy / m * vel, dt, 18); v.fx = ix / m; v.fy = iy / m; orienta(v, dt); }
+    if (!(v.salt > 0)) {
+      // cada vehicle té la seva velocitat punta (el Carromato arriba als 150 km/h) i accelera de mica en mica
+      const punta = VMAX[v.tipus] || 520, objectiu = m > 0.1 ? punta * Math.min(1, m) * (v.benzina > 0 ? 1 : .16) * pendent(v, ix / m, iy / m) : 0;
+      v.va = v.va || 0; v.va += Math.sign(objectiu - v.va) * Math.min(Math.abs(objectiu - v.va), (objectiu > v.va ? 430 : 900) * dt);
+      if (m > 0.1) { v.fx = ix / m; v.fy = iy / m; }
+      if (v.va > 1) {
+        const ax = v.x, ay = v.y; mou(v, v.fx * v.va, v.fy * v.va, dt, 18); orienta(v, dt);
+        if (Math.hypot(v.x - ax, v.y - ay) < v.va * dt * .3) { if (v.va > 330) { J.tremolor = Math.max(J.tremolor, .5); so('cop'); textFlotant(v.x, v.y - 60, 'CRASH!', '#ff9a3d', 11); } v.va *= .25; } // xoc
+      }
+    }
     v.vel = Math.hypot(v.x - x0, v.y - y0) / dt;
     if (granMon() && !J.zona) { const ab = v.benzina; v.benzina = Math.max(0, v.benzina - v.vel * dt / 900); if (ab > 15 && v.benzina <= 15) anunci('QUEDA POCA BENZINA! BUSCA UNA GASOLINERA', 2.2); if (ab > 0 && v.benzina <= 0) anunci('SENSE BENZINA! VAS A PAS DE TORTUGA', 2.2); }
     if (v.vel > 50 && Math.random() < dt * 6) fum(v, '#bbb', .6);
     j.x = v.x; j.y = v.y; j.fx = v.fx; j.fy = v.fy;
   } else if (m > 0.1 && !(j.ensopega > 0)) {
-    let vel = 175 * (J.ciutat === 'vic' && !J.zona && J.sofian && dist(J.sofian, j) < 40 ? .55 : 1) * (j.poder > 0 && triat.id === 'mena' ? 1.9 : 1) * (j.gelat > 0 ? 1.5 : 1) * Math.min(1, m);
+    let vel = (j.vollDamm > 0 ? 2.1 : 1) * 175 * (J.ciutat === 'vic' && !J.zona && J.sofian && dist(J.sofian, j) < 40 ? .55 : 1) * (j.poder > 0 && triat.id === 'mena' ? 1.9 : 1) * (j.gelat > 0 ? 1.5 : 1) * Math.min(1, m);
     if (j.vespa) vel = 250 * Math.min(1, m);
     if (J.zona === 'muntanya' || j.bici) vel = 270 * Math.min(1, m); // en bici
     if (J.zona === 'arinsal') vel = (330 + (j.peralt > 0 ? 160 : 0)) * Math.min(1, m); // baixant per la neu
@@ -3732,7 +3888,7 @@ function actualitza(dt) {
     textFlotant(j.x, j.y - 110, tria(['ON SÓN LES PARELLES?', 'HEHEHE...', 'AVUI ESPANTO A TOTHOM', 'QUIN DIA MÉS BO', 'SHHH...', 'ON HE APARCAT?', 'HULA, HULA...']), '#fff', 9);
   }
   for (const p of J.pintors) p.t += dt;
-  if (J.primera) { j.fx = Math.cos(j.ang); j.fy = Math.sin(j.ang); if (j.cotxe) { j.cotxe.fx = j.fx; j.cotxe.fy = j.fy; } }
+  if (J.primera) j.ang = Math.atan2(j.fy, j.fx); // el personatge mira cap on camina
   const invisible = j.poder > 0 && triat.id === 'escola';
 
   // Armes al terra: si no en portes cap, l'agafes trepitjant-la
@@ -3862,6 +4018,7 @@ function actualitza(dt) {
   // Agents municipals: et veuen, et disparen, i si et perden de vista et busquen
   for (const a of J.agents) {
     if (a.carceller) { actualitzaCarceller(a, dt); continue; }
+    if (a.control && !(a.ko > 0)) { a.pas = 0; continue; }
     if (a.ko > 0) { a.ko -= dt; if (a.ko <= 0) { a.vida = a.vidaMax || 1; textFlotant(a.x, a.y - 70, 'ON SÓC?', '#7fc3ff', 9); } continue; }
     a.pas += dt * 10;
     if (a.glacat > 0) { a.glacat -= dt; continue; }
@@ -4001,7 +4158,7 @@ function final(titol) {
 }
 
 function tornaAlMenu() {
-  document.getElementById('bVista').textContent = '1a PERSONA';
+  document.getElementById('bVista').textContent = 'VISTA 3D';
   setTimeout(() => { document.getElementById('pInici').scrollTop = 0; }, 0);
   if (J && !J.cobrat) { J.cobrat = true; moneder.suma(J.punts); }
   pintaBotiga();
@@ -4735,7 +4892,6 @@ function dibuixa() {
     if (M3D) {
       cx.clearRect(0, 0, W, H);
       M3D.dibuixa(W / dpr, H / dpr); dibuixat3d = true;
-      cx.setTransform(dpr, 0, 0, dpr, 0, 0); dibuixaMans(cx, W / dpr, H / dpr, H / dpr / 2);
     } else dibuixaPrimera(W, H, dpr);
     dibuixaHUD(W / dpr, H / dpr, dpr); return;
   }
@@ -4817,13 +4973,20 @@ function dibuixa() {
   J.vespes.forEach(v => { if (!v.ocupada) ents.push([v.y, escalat(v, () => dibuixaVespa(cx, v))]); });
   dibuixaBatalla(cx);
   if (J.zona === 'arinsal') dibuixaPista(cx);
+  if (J.zona === 'armeria') dibuixaArmeria(cx);
+  if (!J.zona) { if (J.bombers && vist(J.bombers)) ents.push([J.bombers.y + 10, () => dibuixaBombers(cx)]); }
   if (!J.zona && J.ciutat === 'capellades' && granMon()) {
     for (const r of RAMPES) if (vist(r)) dibuixaRampa(cx, r);
+    for (const l of J.llaunes || []) if (vist(l)) ents.push([l.y, () => dibuixaLlauna(cx, l)]);
+    for (const c of J.controlsPoli || []) if (vist(c)) ents.push([c.y - 70, () => dibuixaControl2(cx, c)]);
+    if (j.vollDamm > 0 && j.mou && !j.cotxe && Math.random() < .5) J.particules.push({ x: j.x - j.fx * 20, y: j.y - 10, vx: -j.fx * 60, vy: -20, t: .4, c: 'rgba(47,211,138,.6)', m: 6 });
     for (const cd of J.conductors || []) ents.push([cd.y, escalat(cd, () => { personaPetita(cx, cd.x, cd.y, cd.pr, cd.pas, true, false); cx.font = '7px "Press Start 2P"'; cx.textAlign = 'center'; cx.fillStyle = '#fff'; cx.fillText('AAAH!', cd.x, cd.y - 56); })]);
     const fets = J.paquetsFets || paquetsTrobats(); for (const p of llistaPaquets()) if (!fets.has(p.id) && vist(p)) ents.push([p.y, () => dibuixaPaquet(cx, p)]);
   }
   ents.sort((a, b) => a[0] - b[0]).forEach(e => e[1]());
   if (J.batalla && !J.batalla.heli.mort) dibuixaHeli(cx, J.batalla.heli);
+  if (J.heliPoli && !J.heliPoli.mort && !J.zona) dibuixaHeli(cx, J.heliPoli);
+  for (const fl of J.flames || []) { const k = fl.t / .55; cx.fillStyle = 'rgba(255,' + Math.round(120 + 100 * k) + ',40,' + (.75 * k + .1) + ')'; cx.beginPath(); cx.arc(fl.x, fl.y, 10 + (1 - k) * 22, 0, TAU); cx.fill(); }
   // Trets de la pistola
   for (const b of J.trets) {
     const a = Math.atan2(b.vy, b.vx);
@@ -4832,6 +4995,7 @@ function dibuixa() {
     cx.fillStyle = gr; cx.fillRect(-70, -1.5, 76, 3); cx.restore();
   }
   const ara = performance.now() / 1000;
+  if (!J.zona) dibuixaFocs(cx, e => e.x > camX - 100 && e.x < camX + W / zoom + 100 && e.y > camY - 60 && e.y < camY + H / zoom + 200);
   // El telecadira: cable i cadires que pugen (i tu penjat, si hi vas)
   if (!J.zona && J.ciutat === 'capellades' && granMon() && Math.hypot(j.x - TELECADIRA.baix.x, j.y - TELECADIRA.baix.y) < 2600) {
     const B = TELECADIRA.baix, D = TELECADIRA.dalt;
@@ -5129,6 +5293,7 @@ function dibuixaHUD(W, H, dpr) {
     g.font = Math.min(64, W / 9) + 'px "Press Start 2P"'; g.textAlign = 'center'; g.lineWidth = 10; g.strokeStyle = '#000'; g.strokeText(J.gta.txt, 0, 0); g.fillStyle = J.gta.color; g.globalAlpha = k; g.fillText(J.gta.txt, 0, 0); g.restore(); g.textAlign = 'left'; g.globalAlpha = 1;
   }
   if (J.historia) dibuixaHistoria(g, W, H, petit, caixa);
+  if (j.vollDamm > 0) { const t2 = Math.ceil(j.vollDamm); g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#2fd38a'; g.fillText('VOLL-DAMM ' + Math.floor(t2 / 60) + ':' + String(t2 % 60).padStart(2, '0'), W / 2, H - (tactil ? 220 : 110)); g.textAlign = 'left'; }
   if (enSala()) { // marcador de la sala
     const llista = [{ nom: triat.nom, punts: J.punts, color: '#fff' }, ...[...XARXA.altres.values()].filter(r => r.vist && performance.now() - r.vist < 6000)].sort((a, b) => b.punts - a.punts);
     const bw = 170, bx = W - bw - 14, by = petit ? 250 : 286;
@@ -5143,6 +5308,12 @@ function dibuixaHUD(W, H, dpr) {
   if (j.cotxe && j.cotxe.benzina !== undefined && granMon() && !J.zona) {
     const bw = 190, bx = W / 2 - bw / 2, by = H - (tactil ? 150 : 40), b = j.cotxe.benzina / 100;
     caixa(bx, by - 12, bw, 30); g.font = '7px "Press Start 2P"'; g.fillStyle = '#fff'; g.fillText('BENZINA', bx + 10, by + 6);
+    // comptaquilòmetres
+    const kmh = Math.round((j.cotxe.salt > 0 ? (j.cotxe.velSalt || 0) : j.cotxe.vel || 0) / KMH), sx = bx + bw + 52, sy = by - 4;
+    g.fillStyle = 'rgba(10,10,10,.85)'; g.beginPath(); g.arc(sx, sy, 40, 0, TAU); g.fill(); g.strokeStyle = '#2fd38a'; g.lineWidth = 3; g.stroke();
+    g.strokeStyle = '#333'; g.lineWidth = 6; g.beginPath(); g.arc(sx, sy, 31, Math.PI * .75, Math.PI * 2.25); g.stroke();
+    g.strokeStyle = kmh > 120 ? '#ff3b3b' : kmh > 80 ? '#ffd23f' : '#2fd38a'; g.beginPath(); g.arc(sx, sy, 31, Math.PI * .75, Math.PI * (.75 + 1.5 * Math.min(1, kmh / 150))); g.stroke();
+    g.textAlign = 'center'; g.fillStyle = '#fff'; g.font = '13px "Press Start 2P"'; g.fillText(Math.min(150, kmh), sx, sy + 5); g.font = '6px "Press Start 2P"'; g.fillStyle = '#9fb0a5'; g.fillText('KM/H', sx, sy + 20); g.textAlign = 'left';
     g.fillStyle = '#333'; g.fillRect(bx + 76, by - 2, bw - 88, 10); g.fillStyle = b > .3 ? '#2fd38a' : b > .15 ? '#ffd23f' : (performance.now() / 250 | 0) % 2 ? '#ff3b3b' : '#661111'; g.fillRect(bx + 76, by - 2, (bw - 88) * b, 10);
   }
   if (J.dobles > 0) { g.font = '12px "Press Start 2P"'; g.fillStyle = '#ffd166'; g.textAlign = 'center'; g.fillText('PUNTS x2  ' + Math.ceil(J.dobles), W / 2, petit ? 220 : 150); g.textAlign = 'left'; }
@@ -5157,7 +5328,7 @@ function dibuixaHUD(W, H, dpr) {
       py -= 40;
     };
     fila('[Q] EXPLOSIÓ PERFECTA' + (J.bombes <= 0 ? ' - GASTADA' : ' x' + J.bombes), J.bombes <= 0 ? '#666' : '#ff9a3d');
-    if (j.pistola) fila('[R] PISTOLA x' + j.pistola.bales, j.pistola.bales ? '#e6e6e6' : '#666');
+    if (j.pistola) { const A = ARMES_FOC[j.pistola.tipus || 'pistola'], n = Object.keys(j.armesFoc || {}).length; fila('[R] ' + A.nom + ' x' + j.pistola.bales + (n > 1 ? ' [G]' : ''), j.pistola.bales ? A.color : '#666'); }
     fila('[E] ' + triat.poder, j.recPoder > 0 ? '#777' : '#2fd38a', 1 - j.recPoder / REC_PODER);
     if (j.cotxe && j.cotxe.tipus === 'carromato') fila('[ESPAI] LLANÇAMÍSSILS', '#ff3b3b');
     else if (j.arma) { fila('[ESPAI] ' + ARMES[j.arma.tipus].nom + ' x' + j.arma.usos, ARMES[j.arma.tipus].color); iconaArma(g, j.arma.tipus, 226, py + 56, .9); }
@@ -5165,7 +5336,7 @@ function dibuixaHUD(W, H, dpr) {
   } else {
     document.getElementById('bEsp').style.opacity = j.recPoder > 0 ? .45 : 1;
     document.getElementById('bBomba').style.opacity = J.bombes <= 0 ? .3 : 1;
-    const bP = document.getElementById('bPistola'); bP.classList.toggle('visible', !!j.pistola); if (j.pistola) { const tp = 'PISTOLA ' + j.pistola.bales; if (bP.textContent !== tp) bP.textContent = tp; }
+    const bP = document.getElementById('bPistola'); bP.classList.toggle('visible', !!j.pistola); document.getElementById('bCanvia').classList.toggle('visible', Object.keys(j.armesFoc || {}).length > 1); if (j.pistola) { const tp = ARMES_FOC[j.pistola.tipus || 'pistola'].curt + ' ' + j.pistola.bales; if (bP.textContent !== tp) bP.textContent = tp; }
     const bBuh = document.getElementById('bBuh'), txt = j.cotxe && j.cotxe.tipus === 'carromato' ? 'MÍSSIL' : j.arma ? ARMES[j.arma.tipus].curt + ' x' + j.arma.usos : 'HULAAA!';
     if (bBuh.textContent !== txt) bBuh.textContent = txt;
   }
@@ -5195,6 +5366,7 @@ function dibuixaHUD(W, H, dpr) {
   if (J.carro) { g.fillStyle = '#000'; g.strokeStyle = '#ff3b3b'; g.lineWidth = 2; g.fillRect(mx + J.carro.x * k - 4, my + J.carro.y * k - 4, 8, 8); g.strokeRect(mx + J.carro.x * k - 4, my + J.carro.y * k - 4, 8, 8); }
   if (!J.zona) for (const l of LOCALS[J.ciutat] || []) { g.fillStyle = TIPUS_LOCAL[l.tipus].color; g.fillRect(mx + l.x * TS * k - 3, my + l.y * TS * k - 3, 6, 6); }
   for (const v of aparcatsActius()) if (v.tipus !== 'aparcat') { g.fillStyle = v.tipus === 'carromato' ? '#000' : '#fff'; g.strokeStyle = v.tipus === 'carromato' ? '#ff3b3b' : '#2a7de1'; g.lineWidth = 1.5; g.fillRect(mx + v.x * k - 3, my + v.y * k - 3, 6, 6); g.strokeRect(mx + v.x * k - 3, my + v.y * k - 3, 6, 6); }
+  for (const fc of (!J.zona && J.focsBosc) ? J.focsBosc.values() : []) { g.fillStyle = (performance.now() / 200 | 0) % 2 ? '#ff5c2a' : '#ffd23f'; g.fillRect(mx + fc.px * k - 2, my + fc.py * k - 2, 4, 4); }
   if (!J.zona && granMon()) for (const gs of GASOLINERES) { g.fillStyle = '#ff9a3d'; g.fillRect(mx + (gs.x + 2) * TS * k - 3, my + (gs.y + 2) * TS * k - 3, 6, 6); }
   if (J.vila) { g.fillStyle = '#fff'; g.strokeStyle = '#2a7de1'; g.lineWidth = 2; g.fillRect(mx + J.vila.x * k - 4, my + J.vila.y * k - 4, 8, 8); g.strokeRect(mx + J.vila.x * k - 4, my + J.vila.y * k - 4, 8, 8); }
   if (J.subi) { g.fillStyle = Math.floor(performance.now() / 250) % 2 ? '#ff3b3b' : '#2c5aa0'; g.fillRect(mx + J.subi.x * k - 4, my + J.subi.y * k - 4, 8, 8); }
@@ -5271,6 +5443,8 @@ addEventListener('keydown', e => {
     if (e.code === 'KeyF') accioF();
     if (e.code === 'KeyQ') llencaBomba();
     if (e.code === 'KeyR') disparaPistola();
+    if (e.code === 'KeyG') canviaArmaFoc();
+    if (e.code === 'KeyR' && J.jug.pistola && ARMES_FOC[J.jug.pistola.tipus || 'pistola'].rec < .1) J.ratxa = true;
     if (e.code === 'KeyM') obreMapa();
     if (e.code === 'KeyT') canviaRadio();
     if (e.code === 'KeyV') canviaVista();
@@ -5278,10 +5452,12 @@ addEventListener('keydown', e => {
   } else if (estat === 'pausa' && (e.code === 'KeyP' || e.code === 'Escape')) continua();
   else if (estat === 'final' && e.code === 'Enter') comenca(triat);
   else if (estat === 'mapa' && (e.code === 'KeyM' || e.code === 'Escape' || e.code === 'Space')) tancaMapa();
+  else if (estat === 'mapa' && (e.key === '+' || e.key === '=')) zoomMapa(1.5);
+  else if (estat === 'mapa' && e.key === '-') zoomMapa(1 / 1.5);
   else if (estat === 'video' && (e.code === 'Escape' || e.code === 'Enter' || e.code === 'Space')) acabaVideo();
   if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
 });
-addEventListener('keyup', e => { tecles[e.code] = false; });
+addEventListener('keyup', e => { tecles[e.code] = false; if (e.code === 'KeyR' && J) J.ratxa = false; });
 addEventListener('blur', () => { for (const k in tecles) tecles[k] = false; });
 
 // ---------- Dia i nit ----------
@@ -5323,6 +5499,7 @@ function dibuixaNit(camX, camY, Wv, Hv, zoom) {
   const cotxes = [...J.cotxes, J.vila, J.subi, J.carro, J.bestia, ...aparcatsActius().filter(c => c.estat !== 'aparcat' || c === j.cotxe)].filter(Boolean);
   for (const c of cotxes) { const a = c.ang ?? Math.atan2(c.fy, c.fx); con(c.x + Math.cos(a) * 30, c.y + Math.sin(a) * 30, a, 300, .42); forat(c.x, c.y, 60, .5); }
   for (const fm of J.fums || []) if (fm.foc) forat(fm.x, fm.y - 20, 160, .9);
+  for (const fc of (J.focsBosc || new Map()).values()) forat(fc.px, fc.py - 20, 150, .9);
   // els colors: llum càlida dels fanals, sirenes i focs
   g.globalCompositeOperation = 'lighter';
   const color = (x, y, r, c) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, c); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
@@ -5480,6 +5657,133 @@ function dibuixaPaquet(g, p) {
   g.fillStyle = '#2fd38a'; g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('?', p.x, p.y - 35 + b);
 }
 
+// ---------- Llaunes de Voll-Damm escampades: n'agafes una i corres com un llamp 2 minuts ----------
+function actualitzaLlaunes(dt) {
+  const j = J.jug;
+  j.vollDamm = Math.max(0, (j.vollDamm || 0) - dt);
+  if (J.zona || J.ciutat !== 'capellades' || !granMon()) return;
+  J.llaunes = (J.llaunes || []).filter(l => Math.hypot(l.x - j.x, l.y - j.y) < 4000);
+  while (J.llaunes.length < 7) { const p = casellaCarrerLluny(500, null, 2600); J.llaunes.push({ x: p.x + (Math.random() - .5) * 30, y: p.y + 18 }); }
+  for (const l of J.llaunes) if (!j.cotxe && Math.hypot(l.x - j.x, l.y - j.y) < 36) {
+    l.agafada = true; j.vollDamm = 120; so('poder'); setTimeout(() => so('aigua'), 200);
+    anunci('VOLL-DAMM! HIPERVELOCITAT 2 MINUTS', 2.2); textFlotant(j.x, j.y - 110, 'GLUP GLUP GLUP... BUUURP!', '#2fd38a', 11);
+  }
+  J.llaunes = J.llaunes.filter(l => !l.agafada);
+}
+function dibuixaLlauna(g, l) {
+  const b = Math.sin(performance.now() / 300 + l.x) * 3;
+  g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(l.x, l.y + 2, 10, 4, 0, 0, TAU); g.fill();
+  g.fillStyle = '#0f5a2c'; g.fillRect(l.x - 7, l.y - 26 + b, 14, 26); g.fillStyle = '#c9ccd1'; g.fillRect(l.x - 7, l.y - 28 + b, 14, 3); g.fillRect(l.x - 7, l.y - 2 + b, 14, 2);
+  g.fillStyle = '#d62828'; g.fillRect(l.x - 7, l.y - 18 + b, 14, 7); g.fillStyle = '#f2c230'; g.fillRect(l.x - 7, l.y - 12 + b, 14, 2);
+  g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(l.x - 5, l.y - 25 + b, 3, 22);
+}
+
+// ---------- Controls de la policia: n'hi ha uns quants a les carreteres i canvien de lloc ----------
+function actualitzaControls(dt) {
+  if (J.zona || J.ciutat !== 'capellades' || !granMon()) return;
+  const j = J.jug;
+  J.controlsPoli = (J.controlsPoli || []).filter(c => Math.hypot(c.x - j.x, c.y - j.y) < 5000);
+  if ((J.tControl = (J.tControl || 0) - dt) <= 0 && J.controlsPoli.length < 3) {
+    J.tControl = 12;
+    const p = casellaCarrerLluny(900, (x, y) => !(mapa.auto && mapa.auto[y][x]) && mapa[y][x + 1] === C.CARRER, 2400);
+    if (p && Math.hypot(p.x - j.x, p.y - j.y) > 800) {
+      const ag = [-1, 1].map(k => Object.assign(nouAgent(), { x: p.x + k * 50, y: p.y + 40, estat: 'patrulla', cami: [], control: true, fx: 0, fy: -1 }));
+      J.agents.push(...ag);
+      J.controlsPoli.push({ x: p.x, y: p.y, agents: ag, avisat: false, cotxe: { x: p.x, y: p.y - 70, ang: 0, tipus: 'policia', color: '#f4f6fa', estat: 'aparcat', fx: 1, fy: 0 } });
+    }
+  }
+  for (const c of J.controlsPoli) {
+    const d = Math.hypot(c.x - j.x, c.y - j.y);
+    if (d < 190 && !c.avisat) {
+      c.avisat = true;
+      const sospitos = J.liada || (j.cotxe && j.cotxe.tipus === 'robat') || J.cerca > .5;
+      if (sospitos) { J.liada = true; so('xiulet'); anunci('CONTROL POLICIAL! ALTO!', 1.8); for (const a of c.agents) { a.control = false; a.estat = 'persegueix'; a.ultim = { x: j.x, y: j.y }; a.perdut = 0; } }
+      else textFlotant(c.x, c.y - 80, tria(['BONA NIT, CIRCULI', 'TOT EN ORDRE', 'BUFI AQUÍ... OK, PASSI']), '#7fc3ff', 9);
+    }
+  }
+}
+function dibuixaControl2(g, c) {
+  dibuixaCotxe(g, c.cotxe);
+  for (let k = -2; k <= 2; k++) { const x = c.x + k * 34, y = c.y + 4; g.fillStyle = '#ff6a00'; g.beginPath(); g.moveTo(x - 9, y); g.lineTo(x, y - 24); g.lineTo(x + 9, y); g.fill(); g.fillStyle = '#fff'; g.fillRect(x - 5, y - 13, 10, 4); }
+  const t = performance.now() / 1000; if ((t * 3 | 0) % 2) { g.fillStyle = 'rgba(255,40,40,.25)'; g.beginPath(); g.arc(c.cotxe.x, c.cotxe.y, 70, 0, TAU); g.fill(); }
+}
+
+// ---------- Incendis: els arbres cremen, el foc salta als del costat i venen els bombers ----------
+function encen(x, y) {
+  if (J.zona) return; if (!J.focsBosc) J.focsBosc = new Map();
+  const k = x + ',' + y, t = mapa[y] && mapa[y][x];
+  if (J.focsBosc.has(k) || (t !== C.ARBRE && t !== C.BOSC) || J.focsBosc.size > 90) return;
+  J.focsBosc.set(k, { x, y, px: (x + .5) * TS, py: (y + .5) * TS, t: 7 + Math.random() * 5, salt: .6 + Math.random() });
+  if (!J.tBombers && !J.bombers) { J.tBombers = 6; anunci('INCENDI FORESTAL! TRUQUEN ALS BOMBERS', 2.2); }
+}
+function apaga(k) { const fc = J.focsBosc.get(k); if (!fc) return; J.focsBosc.delete(k); canviaCasella(fc.x, fc.y, C.TERRA); J.cremades.push({ x: fc.px, y: fc.py, r: 46 }); }
+function actualitzaFocs(dt) {
+  if (J.zona) return; if (!J.focsBosc) J.focsBosc = new Map();
+  const j = J.jug;
+  for (const [k, fc] of J.focsBosc) {
+    fc.t -= dt; fc.salt -= dt;
+    if (fc.salt <= 0) { fc.salt = 1 + Math.random(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (Math.random() < .4) encen(fc.x + dx, fc.y + dy); }
+    if (Math.random() < dt * 3) J.particules.push({ x: fc.px + (Math.random() - .5) * 40, y: fc.py - 20, vx: (Math.random() - .5) * 30, vy: -60 - Math.random() * 60, t: .7, c: tria(['#ffb000', '#ff5c2a', '#fff3a0']), m: 5 });
+    if (fc.t <= 0) apaga(k);
+    if (j.invul <= 0 && !j.cotxe && Math.hypot(fc.px - j.x, fc.py - j.y) < 46 && Math.random() < dt * 2) return ferit("T'HAS CREMAT AL BOSC!");
+  }
+  if (J.focsBosc.size) { J.incendis = (J.incendis || 0) + 0; J.punts += Math.round(J.focsBosc.size * dt * 3); }
+  // els bombers
+  if (J.tBombers > 0 && (J.tBombers -= dt) <= 0 && J.focsBosc.size) {
+    J.tBombers = 0; const p = casellaCarrerLluny(700, null, 1600);
+    J.bombers = { x: p.x, y: p.y, fx: 1, fy: 0, ang: 0, tipus: 'bombers', color: '#c62828', estat: 'va', cami: [], t: 0, aigua: 0, vel: 0 };
+    so('sirena'); anunci('NINO NINO! ELS BOMBERS!', 1.8);
+  }
+  const B = J.bombers; if (!B) return;
+  B.t += dt;
+  const objectiu = [...J.focsBosc.values()].sort((a, b) => Math.hypot(a.px - B.x, a.py - B.y) - Math.hypot(b.px - B.x, b.py - B.y))[0];
+  if (B.estat === 'va') {
+    if (!objectiu) B.estat = 'marxa';
+    else if (Math.hypot(objectiu.px - B.x, objectiu.py - B.y) < 260) { B.estat = 'apaga'; so('porta'); }
+    else { if (!B.cami.length || Math.random() < dt * .7) B.cami = cami(B.x, B.y, objectiu.x, objectiu.y); if (!segueixCami(B, 300, dt)) { const dx = objectiu.px - B.x, dy = objectiu.py - B.y, d = Math.hypot(dx, dy) || 1; mou(B, dx / d * 220, dy / d * 220, dt, 18); B.fx = dx / d; B.fy = dy / d; } orienta(B, dt); }
+    if (B.t > 40) B.estat = 'apaga'; // si no hi arriba per carretera, apaga des d'on pot
+    if (Math.random() < dt * .5) so('sirena');
+  } else if (B.estat === 'apaga') {
+    if (!objectiu) { B.estat = 'marxa'; B.t = 0; anunci('ELS BOMBERS HAN APAGAT EL FOC', 1.8); }
+    else { B.aigua = objectiu; if (Math.hypot(objectiu.px - B.x, objectiu.py - B.y) > 420) { B.estat = 'va'; B.cami = []; } else if ((B.tAigua = (B.tAigua || 0) - dt) <= 0) { B.tAigua = .9; for (const [k, fc] of J.focsBosc) if (Math.hypot(fc.px - objectiu.px, fc.py - objectiu.py) < 90) apaga(k); so('aigua'); } }
+  } else { B.aigua = null; B.t += dt; if (B.t > 6) J.bombers = null; }
+}
+function dibuixaFocs(g, vist) {
+  const t = performance.now() / 1000;
+  for (const fc of (J.focsBosc || new Map()).values()) {
+    if (!vist({ x: fc.px, y: fc.py })) continue;
+    for (let i = 0; i < 4; i++) { const fl = Math.sin(t * 9 + i * 2 + fc.x) * 5; g.fillStyle = ['rgba(255,92,42,.85)', 'rgba(255,176,0,.85)', 'rgba(255,243,160,.8)', 'rgba(255,92,42,.7)'][i]; g.beginPath(); g.ellipse(fc.px - 18 + i * 12 + fl * .4, fc.py - 16 - (i % 2) * 8, 10, 22 + fl, 0, 0, TAU); g.fill(); }
+    for (let i = 0; i < 3; i++) { const p = ((t * .4 + i / 3 + fc.x * .07) % 1); g.fillStyle = 'rgba(50,48,46,' + (.4 * (1 - p)) + ')'; g.beginPath(); g.arc(fc.px + p * 30, fc.py - 40 - p * 150, 14 + p * 36, 0, TAU); g.fill(); }
+  }
+}
+function dibuixaBombers(g) {
+  const B = J.bombers; if (!B) return;
+  dibuixaCotxe(g, B);
+  g.save(); g.translate(B.x, B.y - 4); g.rotate(B.ang); g.strokeStyle = '#d9d9d9'; g.lineWidth = 3; for (let k = -24; k <= 24; k += 8) { g.beginPath(); g.moveTo(k, -8); g.lineTo(k, 8); g.stroke(); } g.beginPath(); g.moveTo(-28, -8); g.lineTo(28, -8); g.moveTo(-28, 8); g.lineTo(28, 8); g.stroke(); g.restore();
+  if ((performance.now() / 200 | 0) % 2) { g.fillStyle = 'rgba(40,90,255,.35)'; g.beginPath(); g.arc(B.x, B.y, 60, 0, TAU); g.fill(); }
+  if (B.estat === 'apaga') for (const k of [-1, 1]) {
+    const bx = B.x + k * 46, by = B.y + 40; personaPetita(g, bx, by, { pell: '#e0ac85', cabell: '#111', roba: '#2b2b2b' }, 0, false, false); g.fillStyle = '#ffd23f'; g.fillRect(bx - 8, by - 20, 16, 3); g.fillStyle = '#c62828'; g.fillRect(bx - 9, by - 45, 18, 6);
+    const o = B.aigua; if (o) { g.strokeStyle = 'rgba(140,200,255,.8)'; g.lineWidth = 6; g.setLineDash([12, 8]); g.lineDashOffset = -performance.now() / 20; g.beginPath(); g.moveTo(bx, by - 26); g.quadraticCurveTo((bx + o.px) / 2, Math.min(by, o.py) - 120, o.px, o.py - 10); g.stroke(); g.setLineDash([]); }
+  }
+}
+
+// ---------- Persecució a peu: cotxes patrulla i helicòpter ----------
+function actualitzaPoliciaPeu(dt) {
+  if (J.zona || J.ciutat !== 'capellades' || !granMon() || J.batalla) { return; }
+  const j = J.jug;
+  if (!j.cotxe && J.liada && J.cerca >= 1.2 && (J.tPoliPeu = (J.tPoliPeu || 4) - dt) <= 0) {
+    J.tPoliPeu = 16;
+    if (J.cotxes.filter(c => c.tipus === 'policia' && c.aPeu && !c.buit).length < 2) { const c = nouCotxe('policia', 800); c.aPeu = true; J.cotxes.push(c); so('sirena'); anunci('ARRIBA UNA PATRULLA!', 1.4); }
+  }
+  // l'helicòpter, quan la cosa s'escalfa
+  if (!J.heliPoli && J.cerca >= 3 && J.liada) { J.heliPoli = { x: j.x + 500, y: j.y - 400, ang: 0, vida: 10, tTir: 3, mort: false }; anunci("L'HELICÒPTER DELS MOSSOS!", 2); so('sirena'); }
+  const h = J.heliPoli; if (!h) return;
+  if (h.mort || J.cerca < 1) { if (!h.mort) { h.x += 500 * dt; h.y -= 300 * dt; if (Math.hypot(h.x - j.x, h.y - j.y) > 2500) J.heliPoli = null; } else J.heliPoli = null; return; }
+  h.ang += dt * .5; const tx = j.x + Math.cos(h.ang) * 280, ty = j.y + Math.sin(h.ang) * 170, d = Math.hypot(tx - h.x, ty - h.y) || 1, v = Math.min(d, 460 * dt); h.x += (tx - h.x) / d * v; h.y += (ty - h.y) / d * v;
+  for (const a of J.agents) if (a.estat === 'persegueix') { a.ultim = { x: j.x, y: j.y }; a.perdut = 0; } // des de dalt et veuen sempre
+  if (!modeDetencio() && (h.tTir -= dt) <= 0 && j.invul <= 0) { h.tTir = 1.6; so('tret'); for (const da of [-.1, 0, .1]) { const a = Math.atan2(j.y - 30 - h.y, j.x - h.x) + da; J.bales.push({ x: h.x, y: h.y, vx: Math.cos(a) * 500, vy: Math.sin(a) * 500, t: 1.2 }); } }
+}
+
 // ---------- Rampes per fer salts amb el cotxe ----------
 const RAMPES = [[180, 15.5, 'h'], [330, 15.5, 'h'], [560, 15.5, 'h'], [210, 73.5, 'h'], [400, 73.5, 'h'], [65.5, 130, 'v'], [65.5, 260, 'v'], [65.5, 380, 'v']].map(([x, y, d], i) => ({ id: i, x: x * TS, y: y * TS, d }));
 function actualitzaRampes(dt) {
@@ -5525,34 +5829,67 @@ document.getElementById('bMapaGran').onclick = () => { document.getElementById('
 
 // ---------- El mapa sencer (tocant el minimapa o amb la tecla M) ----------
 let MINI_RECT = null;
+const VM = { z: 1, cx: 0, cy: 0 }; // vista del mapa gran: zoom i centre (en caselles)
 function obreMapa() {
   if (!J || estat !== 'joc') return;
   J.abansMapa = estat; estat = 'mapa';
-  const c = document.getElementById('cvMapa'), g = c.getContext('2d'), esc = Math.min(1, 1800 / (MW * 4));
-  c.width = MW * 4 * esc; c.height = MH * 4 * esc;
-  g.imageSmoothingEnabled = false; g.drawImage(minimapa, 0, 0, c.width, c.height);
-  const z = Math.max(1, c.width / 800), k = 4 * esc / TS, punt = (x, y, r, color, vora) => { r *= z; g.fillStyle = color; g.beginPath(); g.arc(x * k, y * k, r, 0, TAU); g.fill(); if (vora) { g.strokeStyle = vora; g.lineWidth = 2; g.stroke(); } };
-  const rotul = (txt, x, y, color, mida = 11) => { mida = Math.round(mida * z); g.font = mida + 'px "Press Start 2P"'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; g.strokeText(txt, x, y); g.fillStyle = color; g.fillText(txt, x, y); };
-  if (!J.zona && J.ciutat === 'capellades' && granMon()) {
-    for (const p of POBLES) rotul(p.nom, (p.x + p.w / 2) * 4 * esc, (p.y - 1) * 4 * esc, '#ffd23f', 9);
-    rotul('CAPELLADES', 30 * 4 * esc, 12 * 4 * esc, '#ffd23f', 9); rotul('BARCELONA', 100 * 4 * esc, 54 * 4 * esc, '#ffd23f', 9); rotul('MONTSERRAT', 20 * 4 * esc, 52 * 4 * esc, '#ffd23f', 8);
-    rotul('MOSSOS', (COMISSARIA.x0 + COMISSARIA.x1) / 2 * 4 * esc, (COMISSARIA.y0 - 1) * 4 * esc, '#7fc3ff', 9);
-    if (typeof ARINSAL !== 'undefined') rotul('PAL ARINSAL', (ARINSAL.x0 + ARINSAL.x1) / 2 * 4 * esc, (ARINSAL.y1 + 3) * 4 * esc, '#fff', 9);
-    (typeof GASOLINERES !== 'undefined' ? GASOLINERES : []).forEach(gs => punt((gs.x + 2) * TS, (gs.y + 2) * TS, 6, '#ff9a3d', '#000'));
-    punt(CASA_LLOC.x, CASA_LLOC.y, 8, '#2fd38a', '#000');
-  }
-  // objectiu de la missió
-  const m = J.historia && MISSIONS_HISTORIA[J.historia.i], o = m && m.on && m.on();
-  if (o && o.x !== undefined) { punt(o.x, o.y, 10, 'rgba(255,210,63,.5)'); punt(o.x, o.y, 5, '#ffd23f', '#000'); }
-  if (J.carro) punt(J.carro.x, J.carro.y, 6, '#000', '#ff3b3b');
-  (J.aparcats || []).forEach(v => punt(v.x, v.y, 5, v.tipus === 'carromato' ? '#000' : '#fff', v.tipus === 'carromato' ? '#ff3b3b' : '#2a7de1'));
-  J.agents.forEach(a => punt(a.x, a.y, 3, a.estat === 'persegueix' ? '#ff3b3b' : '#7fc3ff'));
-  punt(J.jug.x, J.jug.y, 9, '#fff', '#000'); punt(J.jug.x, J.jug.y, 4, '#ff3b3b');
-  rotul('ETS AQUÍ', J.jug.x * k, J.jug.y * k - 16, '#fff', 9);
   document.getElementById('pMapa').classList.remove('amagat');
+  Object.assign(VM, { z: granMon() ? 2.2 : 1, cx: J.jug.x / TS, cy: J.jug.y / TS });
+  pintaMapaGran();
 }
+function pintaMapaGran() {
+  const c = document.getElementById('cvMapa'), r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  c.width = Math.round(r.width * d); c.height = Math.round(r.height * d);
+  const g = c.getContext('2d'), base = Math.min(c.width / MW, c.height / MH), es = base * VM.z; // píxels per casella
+  const vw = c.width / es, vh = c.height / es;
+  VM.cx = Math.max(vw / 2 - 2, Math.min(MW - vw / 2 + 2, VM.cx)); VM.cy = Math.max(vh / 2 - 2, Math.min(MH - vh / 2 + 2, VM.cy));
+  const ox = c.width / 2 - VM.cx * es, oy = c.height / 2 - VM.cy * es, P = (x, y) => [ox + x / TS * es, oy + y / TS * es];
+  g.fillStyle = '#0b100d'; g.fillRect(0, 0, c.width, c.height);
+  g.imageSmoothingEnabled = VM.z < 1.5; g.drawImage(minimapa, ox, oy, MW * es, MH * es);
+  const u = d * Math.max(1, Math.min(1.8, VM.z * .7));
+  const punt = (x, y, rr, color, vora) => { const [px, py] = P(x, y); g.fillStyle = color; g.beginPath(); g.arc(px, py, rr * u, 0, TAU); g.fill(); if (vora) { g.strokeStyle = vora; g.lineWidth = 2 * d; g.stroke(); } };
+  const rotul = (txt, x, y, color, mida = 9) => { const [px, py] = P(x, y); g.font = Math.round(mida * u) + 'px "Press Start 2P"'; g.textAlign = 'center'; g.lineWidth = 4 * d; g.strokeStyle = '#000'; g.strokeText(txt, px, py); g.fillStyle = color; g.fillText(txt, px, py); };
+  if (!J.zona && J.ciutat === 'capellades' && granMon()) {
+    for (const p of POBLES) rotul(p.nom, (p.x + p.w / 2) * TS, (p.y - 1) * TS, '#ffd23f');
+    rotul('CAPELLADES', 30 * TS, 12 * TS, '#ffd23f'); rotul('BARCELONA', 100 * TS, 54 * TS, '#ffd23f'); rotul('MONTSERRAT', 20 * TS, 52 * TS, '#ffd23f', 8);
+    rotul('MOSSOS', (COMISSARIA.x0 + COMISSARIA.x1) / 2 * TS, (COMISSARIA.y0 - 1) * TS, '#7fc3ff');
+    rotul('PAL ARINSAL', (ARINSAL.x0 + ARINSAL.x1) / 2 * TS, (ARINSAL.y1 + 3) * TS, '#fff');
+    for (const gs of GASOLINERES) { punt((gs.x + 2) * TS, (gs.y + 2) * TS, 6, '#ff9a3d', '#000'); if (VM.z > 3) rotul('GASOLINERA', (gs.x + 2) * TS, (gs.y - .5) * TS, '#ff9a3d', 7); }
+    for (const c2 of J.controlsPoli || []) punt(c2.x, c2.y, 5, '#2d6bff', '#fff');
+    for (const r2 of RAMPES) punt(r2.x, r2.y, 4, '#ffd23f', '#000');
+    punt(CASA_LLOC.x, CASA_LLOC.y, 8, '#2fd38a', '#000'); if (VM.z > 2) rotul('CASA', CASA_LLOC.x, CASA_LLOC.y - 2 * TS, '#2fd38a', 7);
+  }
+  const m = J.historia && MISSIONS_HISTORIA[J.historia.i], o = m && m.on && m.on();
+  if (o && o.x !== undefined) { punt(o.x, o.y, 11, 'rgba(255,210,63,.45)'); punt(o.x, o.y, 5, '#ffd23f', '#000'); }
+  if (J.carro) punt(J.carro.x, J.carro.y, 6, '#000', '#ff3b3b');
+  (J.aparcats || []).forEach(v => v.tipus !== 'aparcat' && punt(v.x, v.y, 4, v.tipus === 'carromato' ? '#000' : '#fff', v.tipus === 'carromato' ? '#ff3b3b' : '#2a7de1'));
+  J.agents.forEach(a => punt(a.x, a.y, 3, a.estat === 'persegueix' ? '#ff3b3b' : '#7fc3ff'));
+  for (const r2 of altresVisibles()) { punt(r2.x, r2.y, 7, r2.color, '#000'); rotul(String(r2.nom).toUpperCase(), r2.x, r2.y - 1.4 * TS / Math.max(1, VM.z * .5), r2.color, 8); }
+  punt(J.jug.x, J.jug.y, 9, '#fff', '#000'); punt(J.jug.x, J.jug.y, 4, '#ff3b3b');
+  rotul('ETS AQUÍ', J.jug.x, J.jug.y - 1.6 * TS / Math.max(1, VM.z * .5), '#fff');
+}
+function zoomMapa(k, px, py) { // px,py: punt de la pantalla que es queda quiet
+  const c = document.getElementById('cvMapa'), r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1, base = Math.min(c.width / MW, c.height / MH);
+  const es0 = base * VM.z, nz = Math.max(1, Math.min(12, VM.z * k)), es1 = base * nz;
+  if (px !== undefined) { const sx = (px - r.left) * d - c.width / 2, sy = (py - r.top) * d - c.height / 2; VM.cx += sx / es0 - sx / es1; VM.cy += sy / es0 - sy / es1; }
+  VM.z = nz; pintaMapaGran();
+}
+{ const c = document.getElementById('cvMapa'); let arr = null; const dits = new Map();
+  c.addEventListener('wheel', e => { e.preventDefault(); zoomMapa(e.deltaY < 0 ? 1.25 : 1 / 1.25, e.clientX, e.clientY); }, { passive: false });
+  c.addEventListener('pointerdown', e => { c.setPointerCapture(e.pointerId); dits.set(e.pointerId, { x: e.clientX, y: e.clientY }); arr = { x: e.clientX, y: e.clientY, dist: null }; });
+  c.addEventListener('pointermove', e => {
+    if (!dits.has(e.pointerId)) return; dits.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const d = window.devicePixelRatio || 1, es = Math.min(c.width / MW, c.height / MH) * VM.z;
+    if (dits.size === 2) { const [a, b] = [...dits.values()], dd = Math.hypot(a.x - b.x, a.y - b.y); if (arr && arr.dist) zoomMapa(dd / arr.dist, (a.x + b.x) / 2, (a.y + b.y) / 2); arr = { dist: dd }; return; }
+    if (arr && arr.x !== undefined) { VM.cx -= (e.clientX - arr.x) * d / es; VM.cy -= (e.clientY - arr.y) * d / es; arr = { x: e.clientX, y: e.clientY }; pintaMapaGran(); }
+  });
+  const fi = e => { dits.delete(e.pointerId); arr = null; }; c.addEventListener('pointerup', fi); c.addEventListener('pointercancel', fi);
+  document.getElementById('bMapaMes').onclick = () => zoomMapa(1.5); document.getElementById('bMapaMenys').onclick = () => zoomMapa(1 / 1.5);
+  document.getElementById('bMapaJo').onclick = () => { VM.cx = J.jug.x / TS; VM.cy = J.jug.y / TS; VM.z = Math.max(VM.z, 3); pintaMapaGran(); };
+  document.getElementById('bMapaTanca').onclick = () => tancaMapa();
+  addEventListener('resize', () => estat === 'mapa' && pintaMapaGran()); }
 function tancaMapa() { if (estat !== 'mapa') return; estat = J.abansMapa || 'joc'; document.getElementById('pMapa').classList.add('amagat'); }
-document.getElementById('pMapa').onclick = tancaMapa;
+
 
 function continua() { estat = (J && J.abansPausa) || 'joc'; document.getElementById('pPausa').classList.add('amagada'); }
 document.getElementById('bContinuar').onclick = continua;
@@ -5563,8 +5900,9 @@ function canviaVista() {
   if (!J) return;
   J.primera = !J.primera; J.jug.ang = Math.atan2(J.jug.fy, J.jug.fx);
   if (J.primera) carrega3d();
-  document.getElementById('bVista').textContent = J.primera ? '3a PERSONA' : '1a PERSONA';
-  anunci(J.primera ? 'PRIMERA PERSONA' : 'VISTA DE DALT', 1);
+  document.getElementById('bVista').textContent = J.primera ? 'VISTA DE DALT' : 'VISTA 3D';
+  J.jug.angCam = Math.atan2(J.jug.fy, J.jug.fx);
+  anunci(J.primera ? (document.body.classList.contains('tactil') ? '3D: ARROSSEGA A LA DRETA PER GIRAR LA CÀMERA' : '3D: WASD PER CAMINAR, FLETXES O RATOLÍ PER GIRAR') : 'VISTA DE DALT', 2.2);
 }
 document.getElementById('bRepetir').onclick = () => comenca(triat);
 document.getElementById('bCanviar').onclick = tornaAlMenu;
@@ -5582,25 +5920,31 @@ function clicaMon(clientX, clientY) {
 cv.addEventListener('mousedown', e => clicaMon(e.clientX, e.clientY));
 
 if (matchMedia('(pointer: coarse)').matches) document.body.classList.add('tactil');
+let camAgafada = null;
+cv.addEventListener('mousemove', e => { if (J && J.primera && (e.buttons & 1)) { J.jug.angCam = (J.jug.angCam ?? 0) + e.movementX * .006; camAgafada = 1; } });
+cv.addEventListener('mouseup', () => { camAgafada = null; });
 cv.addEventListener('touchstart', e => {
   document.body.classList.add('tactil');
   for (const t of e.changedTouches) {
+    if (J && J.primera && t.clientX >= innerWidth * .45 && !camAgafada) { camAgafada = { id: t.identifier, x: t.clientX }; continue; }
     if (clicaMon(t.clientX, t.clientY)) continue;
     if (!joystick.actiu && t.clientX < innerWidth * .6) Object.assign(joystick, { actiu: true, id: t.identifier, ox: t.clientX, oy: t.clientY, dx: 0, dy: 0 });
   }
   e.preventDefault();
 }, { passive: false });
 cv.addEventListener('touchmove', e => {
+  for (const t of e.changedTouches) if (camAgafada && t.identifier === camAgafada.id && J) { J.jug.angCam = (J.jug.angCam ?? 0) + (t.clientX - camAgafada.x) * .009; camAgafada.x = t.clientX; }
   for (const t of e.changedTouches) if (t.identifier === joystick.id) {
     let dx = (t.clientX - joystick.ox) / 50, dy = (t.clientY - joystick.oy) / 50; const m = Math.hypot(dx, dy);
     if (m > 1) { dx /= m; dy /= m; } joystick.dx = dx; joystick.dy = dy;
   }
   e.preventDefault();
 }, { passive: false });
-const finalToc = e => { for (const t of e.changedTouches) if (t.identifier === joystick.id) Object.assign(joystick, { actiu: false, id: null, dx: 0, dy: 0 }); };
+const finalToc = e => { for (const t of e.changedTouches) if (camAgafada && t.identifier === camAgafada.id) camAgafada = null; for (const t of e.changedTouches) if (t.identifier === joystick.id) Object.assign(joystick, { actiu: false, id: null, dx: 0, dy: 0 }); };
 cv.addEventListener('touchend', finalToc); cv.addEventListener('touchcancel', finalToc);
 const botoTactil = (id, f) => document.getElementById(id).addEventListener('touchstart', e => { e.preventDefault(); if (estat === 'joc') f(); }, { passive: false });
-botoTactil('bBuh', accio); botoTactil('bEsp', fesPoder); botoTactil('bBomba', llencaBomba); botoTactil('bPistola', disparaPistola); botoTactil('bAgafar', accioF);
+botoTactil('bBuh', accio); botoTactil('bEsp', fesPoder); botoTactil('bBomba', llencaBomba); botoTactil('bPistola', disparaPistola); botoTactil('bCanvia', canviaArmaFoc);
+{ const bp = document.getElementById('bPistola'); bp.addEventListener('touchstart', () => { if (J) J.ratxa = true; }); bp.addEventListener('touchend', () => { if (J) J.ratxa = false; }); } botoTactil('bAgafar', accioF);
 
 document.addEventListener('click', e => { if (e.target.closest('button')) so('clic'); });
 

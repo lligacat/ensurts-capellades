@@ -377,9 +377,12 @@ export function dibuixa(w, h) {
   // Càmera als ulls del personatge
   const ang = j.ang ?? Math.atan2(j.fy, j.fx), bob = j.mou ? Math.sin(j.pas) * .025 : Math.sin(t * 1.6) * .006;
   const sac = J.tremolor > 0 ? (Math.random() - .5) * .08 * J.tremolor : 0;
-  const alt = j.cotxe ? .62 : j.vespa ? .78 : ULL;
-  camera.position.set(j.x / TS + sac, alt + bob, j.y / TS + sac);
-  camera.lookAt(j.x / TS + Math.cos(ang), alt + bob - .02, j.y / TS + Math.sin(ang));
+  // Tercera persona: la càmera va darrere i per sobre, i s'apropa si hi ha una paret al mig
+  const yaw = j.angCam ?? ang, px = j.x / TS, py = j.y / TS;
+  let dist = j.cotxe ? 5 : 3.9; const hc = j.cotxe ? 2.3 : 1.9;
+  for (let d = .5; d <= dist; d += .2) { const tt = tileA((px - Math.cos(yaw) * d) * TS, (py - Math.sin(yaw) * d) * TS); if (tapaVista(tt) && tt !== C.ARBRE) { dist = Math.max(.7, d - .35); break; } }
+  camera.position.set(px - Math.cos(yaw) * dist + sac, hc * (dist / (j.cotxe ? 5 : 3.9)) * .55 + hc * .45 + bob * .4, py - Math.sin(yaw) * dist + sac);
+  camera.lookAt(px + Math.cos(yaw) * 1.4, j.cotxe ? .8 : .95, py + Math.sin(yaw) * 1.4);
   // Sol i ombres seguint el jugador
   // de nit es fa fosc: menys sol, cel i boira foscos
   if (E.sc.userData.diaNit && typeof nitFactor === 'function') {
@@ -398,7 +401,7 @@ export function dibuixa(w, h) {
   }
   if (E.aigua) E.aigua.map.offset.set(t * .02, t * .013);
   // Cotxes
-  const llista = [...J.cotxes, J.vila, J.subi, J.carro, J.bestia, ...aparcatsActius().filter(c => Math.hypot(c.x - j.x, c.y - j.y) < 40 * TS), J.guillem && Object.assign(J.guillem, { tipus: 'guillem' })].filter(c => c && c !== j.cotxe);
+  const llista = [...J.cotxes, J.vila, J.subi, J.carro, J.bestia, ...aparcatsActius().filter(c => Math.hypot(c.x - j.x, c.y - j.y) < 40 * TS), J.guillem && Object.assign(J.guillem, { tipus: 'guillem' })].filter(c => c); // en tercera persona també es veu el cotxe que condueixes
   if (!J.zona) llista.push({ x: TAXI.x, y: TAXI.y, ang: 0, tipus: 'taxi', color: '#f2c230' });
   while (E.cotxes.length < llista.length) { const c = cotxe3d(); E.sc.add(c); E.cotxes.push(c); }
   E.cotxes.forEach((m, i) => {
@@ -409,8 +412,9 @@ export function dibuixa(w, h) {
     m.userData.llum.visible = c.tipus === 'policia'; if (c.tipus === 'policia') m.userData.llum.material.color.set(Math.floor(t * 6) % 2 ? 0xff2d2d : 0x2d6bff), m.userData.llum.material.emissive.copy(m.userData.llum.material.color);
   });
   // Gent i coses: les més properes que es veuen, com a cartells drets
-  const fx = Math.cos(ang), fy = Math.sin(ang), cosos = [];
-  const posa = (e, k, fn) => { const dx = e.x - j.x, dy = e.y - j.y, d = Math.hypot(dx, dy); if (d < 1700 && (dx * fx + dy * fy) > -40) cosos.push({ e, k, fn, d }); };
+  const fx = Math.cos(yaw), fy = Math.sin(yaw), cosos = [];
+  const posa = (e, k, fn) => { const dx = e.x - j.x, dy = e.y - j.y, d = Math.hypot(dx, dy); if (d < 1700 && (dx * fx + dy * fy) > -260) cosos.push({ e, k, fn, d }); };
+  if (!j.cotxe) posa(j, 2.3, g => dibuixaJugador(g)); // tu mateix, vist des del darrere
   J.parelles.forEach(p => posa(p, 2.3, g => dibuixaParella(g, p)));
   J.agents.forEach(a => posa(a, 2.3, g => dibuixaAgent(g, a)));
   J.matons.forEach(mt => posa(mt, 2.6, g => dibuixaMaton(g, mt)));
