@@ -239,6 +239,10 @@ function caraFoto(img, amplada) {
 const caraSkin = (p, amplada) => { const im = fotosSkin[p.id]; return im && im.complete && im.naturalWidth ? caraFoto(im, amplada) : caraGenerica(p, amplada); };
 for (const p of BOTIGA) if (p.foto) { const im = new Image(); im.onload = () => { cares[p.id] = caraFoto(im, 160); pintaBotiga(); }; im.src = p.foto; fotosSkin[p.id] = im; }
 
+// Cares de foto per a la gent de les parelles amb nom
+const caresParelles = {};
+for (const [id, src] of [['africa', 'africa.jpg']]) { const im = new Image(); im.onload = () => { caresParelles[id] = caraFoto(im, 120); }; im.src = src; }
+
 function pintaMoneder() { document.getElementById('moneder').textContent = 'MONEDER: ' + formatPunts(moneder.get()) + ' PUNTS'; }
 
 function pintaBotiga() {
@@ -1590,7 +1594,7 @@ const PARELLES_NOM = [
   { id: 'subibeltran', noms: 'SUBI & BELTRAN', a: { cabell: '#111', llarg: false, ulleres: true }, b: { cabell: '#5a3a22', llarg: false } },
   { id: 'paunour', noms: 'PAU & NOUR', a: { cabell: '#5a3a22', llarg: false }, b: { cabell: '#111', llarg: true, pell: '#c98e66' } },
   { id: 'jangemma', noms: 'JAN & GEMMA', a: { cabell: '#8b4a1e', llarg: false }, b: { cabell: '#c99a4a', llarg: true } },
-  { id: 'nilafrica', noms: 'NIL & ÀFRICA', a: { cabell: '#3a2416', llarg: false }, b: { cabell: '#2b1d14', llarg: true, pell: '#8d5a3b' } },
+  { id: 'nilafrica', noms: 'NIL & ÀFRICA', a: { cabell: '#3a2416', llarg: false }, b: { cabell: '#8a6a4a', llarg: true, pell: '#f1c7a3', roba: '#f2efe6', cara: 'africa' } },
 ];
 
 // En Nasser apareix per donar les gràcies quan espantes el Nil i l'Àfrica
@@ -3591,6 +3595,12 @@ function personaPetita(g, x, y, pr, pas, cap, assegut) {
       g.fillStyle = pr.roba; g.fillRect(x - 8, y - 27, 16, 18);
     } else { g.fillStyle = pr.roba; g.fillRect(x - 7, y - 26, 14, 17); }
     if (pr.nuvi) { g.fillStyle = '#fff'; g.fillRect(x - 2, y - 26, 4, 10); g.fillStyle = '#c92a3a'; g.fillRect(x - 3, y - 26, 6, 3); }
+  }
+  const caraFt = pr.cara && caresParelles[pr.cara];
+  if (caraFt) { // cap gran amb la cara de la foto, com els protagonistes
+    g.fillStyle = pr.cabell; g.fillRect(x - 9, y - 34, 18, 14);
+    g.drawImage(caraFt, x - 12, y - 56, 24, 24 * caraFt.height / caraFt.width);
+    return;
   }
   g.fillStyle = pr.pell; g.beginPath(); g.arc(x, y - 33, 8, 0, TAU); g.fill();
   g.fillStyle = pr.cabell; g.beginPath(); g.arc(x, y - 35, 8.5, Math.PI * 1.05, TAU * 0.99); g.fill();
