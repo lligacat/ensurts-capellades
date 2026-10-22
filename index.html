@@ -241,7 +241,7 @@ for (const p of BOTIGA) if (p.foto) { const im = new Image(); im.onload = () => 
 
 // Cares de foto per a la gent de les parelles amb nom
 const caresParelles = {};
-for (const [id, src] of [['africa', 'africa.jpg']]) { const im = new Image(); im.onload = () => { caresParelles[id] = caraFoto(im, 120); }; im.src = src; }
+for (const [id, src] of [['africa', 'africa.jpg'], ['nil', 'nil.jpg']]) { const im = new Image(); im.onload = () => { caresParelles[id] = caraFoto(im, 120); }; im.src = src; }
 
 function pintaMoneder() { document.getElementById('moneder').textContent = 'MONEDER: ' + formatPunts(moneder.get()) + ' PUNTS'; }
 
@@ -1594,7 +1594,7 @@ const PARELLES_NOM = [
   { id: 'subibeltran', noms: 'SUBI & BELTRAN', a: { cabell: '#111', llarg: false, ulleres: true }, b: { cabell: '#5a3a22', llarg: false } },
   { id: 'paunour', noms: 'PAU & NOUR', a: { cabell: '#5a3a22', llarg: false }, b: { cabell: '#111', llarg: true, pell: '#c98e66' } },
   { id: 'jangemma', noms: 'JAN & GEMMA', a: { cabell: '#8b4a1e', llarg: false }, b: { cabell: '#c99a4a', llarg: true } },
-  { id: 'nilafrica', noms: 'NIL & ÀFRICA', a: { cabell: '#3a2416', llarg: false }, b: { cabell: '#8a6a4a', llarg: true, pell: '#f1c7a3', roba: '#f2efe6', cara: 'africa' } },
+  { id: 'nilafrica', noms: 'NIL & ÀFRICA', a: { cabell: '#5a4636', llarg: false, roba: '#1b1b1b', cara: 'nil' }, b: { cabell: '#8a6a4a', llarg: true, pell: '#f1c7a3', roba: '#f2efe6', cara: 'africa' } },
 ];
 
 // En Nasser apareix per donar les gràcies quan espantes el Nil i l'Àfrica
