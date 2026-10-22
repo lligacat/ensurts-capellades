@@ -415,7 +415,7 @@ const CLIPS = {}, BYTES = {};
 let fontAtac = null;
 ['ramon', 'hula', 'mentens', 'calent', 'atac'].forEach(n => fetch(n + '.wav').then(r => r.arrayBuffer()).then(b => { BYTES[n] = b; }).catch(() => {}));
 function parlaRamon(megafon) { clip('ramon', megafon, 1); } // veu real del vídeo, sense canviar-ne el to
-function clip(nom, megafon, rate, volum = 1.4) {
+function clip(nom, megafon, rate = 1, volum = 1.4) {
   try {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
     if (ac.state === 'suspended') ac.resume();
@@ -2207,7 +2207,7 @@ function acabaVideo() {
   f();
 }
 document.getElementById('bSkip').onclick = acabaVideo;
-const ESCENES = [5.5, 6, 5, 6]; // durada de cada escena
+const ESCENES = [4.5, 5.5, 5.5, 5.5, 5.5, 6]; // durada de cada escena
 function dibuixaVideo(dt) {
   if (!VID) return;
   VID.t += dt;
@@ -2221,7 +2221,7 @@ function dibuixaVideo(dt) {
   const k = Math.min(W / 800, H / 450); g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
   g.save(); g.translate((W - 800 * k) / 2, (H - 450 * k) / 2); g.scale(k, k);
   g.beginPath(); g.rect(0, 0, 800, 450); g.clip();
-  [escenaAlba, escenaColla, escenaMossos, escenaCarromato][e](g, t, ESCENES[e], un);
+  [escenaAlba, (g, t, D, un) => escenaCita(g, t, un, 0), (g, t, D, un) => escenaCita(g, t, un, 1), (g, t, D, un) => escenaCita(g, t, un, 2), (g, t, D, un) => escenaCita(g, t, un, 3), escenaCarromato][e](g, t, ESCENES[e], un);
   // fosa entre escenes
   const fosa = Math.max(0, 1 - t / .5, 1 - (ESCENES[e] - t) / .5);
   if (fosa > 0) { g.fillStyle = 'rgba(0,0,0,' + fosa + ')'; g.fillRect(0, 0, 800, 450); }
@@ -2260,54 +2260,103 @@ function escenaAlba(g, t, D, un) {
   g.fillStyle = '#2a1e2c'; g.fillRect(250, 220, 34, 140); g.beginPath(); g.moveTo(244, 222); g.lineTo(267, 180); g.lineTo(290, 222); g.fill(); g.fillRect(620, 200, 18, 160);
   g.fillStyle = 'rgba(255,220,150,.9)'; for (let i = 0; i < 18; i++) g.fillRect(hash(i, 9) * 780, 300 + hash(9, i) * 50, 6, 8); // finestres enceses
   for (let i = 0; i < 5; i++) { const bx = (t * 60 + i * 140) % 900 - 50, by = 120 + Math.sin(t * 2 + i) * 14 + i * 12; g.strokeStyle = '#1b1b1b'; g.lineWidth = 2; g.beginPath(); g.moveTo(bx - 8, by); g.quadraticCurveTo(bx - 4, by - 6 + Math.sin(t * 9 + i) * 4, bx, by); g.quadraticCurveTo(bx + 4, by - 6 + Math.sin(t * 9 + i) * 4, bx + 8, by); g.stroke(); }
-  textVideo(g, 'CAPELLADES.', 90, t, 22, '#ffe14d');
-  textVideo(g, 'UN DIA QUALSEVOL...', 128, Math.max(0, t - 1), 14);
+  textVideo(g, 'EL NIL I L\'ÀFRICA', 90, t, 22, '#ff5c8a');
+  textVideo(g, 'ESTAN MOLT ENAMORATS...', 128, Math.max(0, t - 1), 14);
+  for (let i = 0; i < 6; i++) { const hy = 380 - ((t * 50 + i * 60) % 260); g.fillStyle = 'rgba(255,92,138,' + Math.min(1, (hy - 120) / 120) + ')'; g.font = (16 + i % 3 * 6) + 'px sans-serif'; g.fillText('♥', 120 + i * 110 + Math.sin(t * 2 + i) * 14, hy); }
 }
-function escenaColla(g, t, D, un) {
-  const cel = g.createLinearGradient(0, 0, 0, 300); cel.addColorStop(0, '#8fd0ff'); cel.addColorStop(1, '#dff3ff'); g.fillStyle = cel; g.fillRect(0, 0, 800, 450);
-  siluetaPoble(g, 300, '#c9a27a', 4); g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(0, 150, 800, 150);
-  for (let i = 0; i < 9; i++) { g.fillStyle = '#3b6a8f'; g.fillRect(30 + i * 90, 200 + hash(i, 4) * 40, 20, 26); }
-  g.fillStyle = '#8d8a85'; g.fillRect(0, 300, 800, 150); g.fillStyle = '#b5b0a5'; g.fillRect(0, 300, 800, 14);
-  // la parella al banc
-  const crit = t > 3.2, fuig = Math.max(0, t - 3.4);
-  g.fillStyle = '#7a4f2a'; g.fillRect(560, 350, 150, 12); g.fillRect(560, 322, 150, 10); g.fillStyle = '#333'; g.fillRect(568, 362, 8, 24); g.fillRect(694, 362, 8, 24);
-  const pa = { pell: '#f1c7a3', cabell: '#5a3a22', roba: '#e63946' }, pb = { pell: '#e0ac85', cabell: '#111', roba: '#2a9d8f', llarg: true };
-  g.save(); g.translate(fuig * 380, 0);
-  g.save(); g.translate(615, 360); g.scale(2.6, 2.6); personaPetita(g, 0, 0, pa, fuig ? t * 14 : 0, false, false); g.restore();
-  g.save(); g.translate(655, 360); g.scale(2.6, 2.6); personaPetita(g, 0, 0, pb, fuig ? t * 14 : 0, false, false); g.restore();
+// ---------- Les cites del Nil i l'Àfrica (i el Sanchez que les arruïna) ----------
+// Cada escena: 0-2.5 s petons, 2.5 s apareix el Sanchez i crida, després fugen espantats
+function enamoratVideo(g, x, y, qui, t, parla, esc = 1) {
+  const cara = caresParelles[qui], nil = qui === 'nil';
+  g.save(); g.translate(x, y); g.scale(esc, esc);
+  g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 0, 28, 8, 0, 0, TAU); g.fill();
+  const cama = Math.sin(t) * 9;
+  g.fillStyle = nil ? '#8a7a66' : '#3a4a6a'; g.fillRect(-13, -48 + Math.max(0, cama) * .3, 11, 48); g.fillRect(2, -48 + Math.max(0, -cama) * .3, 11, 48);
+  if (!nil) { g.fillStyle = '#7a5a3a'; g.fillRect(-26, -128, 52, 70); } // cabells llargs per l'esquena
+  g.fillStyle = nil ? '#1b1b1b' : '#f2efe6'; g.fillRect(-21, -106, 42, 62);
+  if (nil) { g.fillStyle = '#fff'; g.beginPath(); g.moveTo(0, -84); g.lineTo(5, -76); g.lineTo(-5, -76); g.fill(); } else { g.fillStyle = '#d9c9a0'; g.fillRect(-3, -106, 6, 30); }
+  g.fillStyle = nil ? '#e0b48e' : '#f1c7a3'; g.fillRect(-29, -100, 9, 44); g.fillRect(20, -100, 9, 44);
+  if (cara) dibuixaCaraAnimada(g, cara, 0, -98, 84, t, parla, nil ? 0 : 2);
   g.restore();
-  if (!crit) for (let i = 0; i < 3; i++) { const hy = 250 - ((t * 40 + i * 30) % 90); g.fillStyle = '#ff5c8a'; g.font = '16px sans-serif'; g.fillText('♥', 630 + Math.sin(t * 3 + i) * 10, hy); }
-  if (fuig) { g.fillStyle = '#7fc3ff'; g.font = '12px "Press Start 2P"'; g.fillText('AAAAAH!', 600 + fuig * 380, 230); }
-  // la colla entra caminant
-  const pos = Math.min(1, t / 3), x0 = -300 + pos * 520, parla = crit && t < 4.6;
-  PERSONATGES.forEach((p, i) => personaVideo(g, x0 + i * 92, 400 + (i % 2) * 8, p, pos < 1 ? t * 10 + i : 0, t, parla, .95));
-  if (crit && un('hula')) { clip('hula'); }
-  if (crit && t < 4.8) { g.save(); g.translate((Math.random() - .5) * 8, (Math.random() - .5) * 8); g.font = '34px "Press Start 2P"'; g.textAlign = 'center'; g.lineWidth = 8; g.strokeStyle = '#000'; g.strokeText('HULAAAA!', 400, 140); g.fillStyle = '#ff5c8a'; g.fillText('HULAAAA!', 400, 140); g.restore(); g.textAlign = 'left'; }
-  if (t > 4.6) textVideo(g, 'LA COLLA DEL RAMON', 90, t - 4.6, 18, '#2fd38a');
 }
-function escenaMossos(g, t, D, un) {
-  const fl = (t * 6 | 0) % 2;
-  g.fillStyle = '#141b2e'; g.fillRect(0, 0, 800, 450);
-  g.fillStyle = fl ? 'rgba(255,40,40,.25)' : 'rgba(40,90,255,.25)'; g.fillRect(0, 0, 800, 450);
-  siluetaPoble(g, 300, '#0c1020', 7);
-  g.fillStyle = '#2a2d33'; g.fillRect(0, 300, 800, 150); g.fillStyle = '#f2c230'; for (let x = 0; x < 800; x += 70) g.fillRect(x + ((t * 300) % 70) * 0, 372, 40, 5);
-  if (un('sirena')) so('sirena');
-  // el cotxe dels Mossos entra derrapant
-  const cx = Math.max(470, 900 - t * 420);
-  g.save(); g.translate(cx, 330);
-  g.fillStyle = '#f4f6fa'; g.fillRect(0, 0, 230, 48); g.fillRect(40, -34, 130, 36);
-  g.fillStyle = '#8fc3e8'; g.fillRect(52, -28, 50, 26); g.fillRect(110, -28, 50, 26);
-  g.fillStyle = '#1d3f8f'; g.fillRect(0, 22, 230, 12); g.fillStyle = '#d62828'; g.fillRect(0, 34, 230, 5);
-  g.fillStyle = '#fff'; g.font = '10px "Press Start 2P"'; g.fillText('MOSSOS', 70, 32);
-  g.fillStyle = fl ? '#ff3b3b' : '#2d6bff'; g.fillRect(80, -44, 26, 10); g.fillStyle = fl ? '#2d6bff' : '#ff3b3b'; g.fillRect(106, -44, 26, 10);
-  g.fillStyle = '#111'; g.beginPath(); g.arc(46, 50, 20, 0, TAU); g.arc(186, 50, 20, 0, TAU); g.fill();
-  g.restore();
-  // mossos que baixen
-  if (t > 1.6) for (let i = 0; i < 3; i++) { const mx = cx - 40 - i * 60 - Math.min(160, (t - 1.6) * 120); g.save(); g.translate(mx, 400); g.scale(2.4, 2.4); dibuixaAgent(g, { x: 0, y: 0, fx: -1, fy: 0, pas: t * 10, estat: 'persegueix', veu: true, glacat: 0, fuig: 0, mosso: true }); g.restore(); }
-  // la colla fuig corrent
-  PERSONATGES.forEach((p, i) => personaVideo(g, 300 - i * 80 - t * 140, 410 + (i % 2) * 6, p, t * 16 + i, t, t > 1, .9));
-  textVideo(g, 'PERÒ ELS MOSSOS', 80, t, 18, '#7fc3ff');
-  textVideo(g, 'NO ELS DEIXEN EN PAU...', 116, Math.max(0, t - 1.2), 14);
+const LLOCS_CITA = [
+  { nom: 'LA BASSA, CAPELLADES', fons(g, t) {
+      const cel = g.createLinearGradient(0, 0, 0, 300); cel.addColorStop(0, '#7cc4f2'); cel.addColorStop(1, '#d8efff'); g.fillStyle = cel; g.fillRect(0, 0, 800, 450);
+      siluetaPoble(g, 270, '#c9a27a', 4); g.fillStyle = '#5c8d40'; g.fillRect(0, 270, 800, 180);
+      g.fillStyle = '#3f86b8'; g.beginPath(); g.ellipse(170, 330, 160, 34, 0, 0, TAU); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 2; for (let i = 0; i < 5; i++) { g.beginPath(); g.arc(90 + i * 40, 330 + (i % 2) * 8, 10 + Math.sin(t * 3 + i) * 3, .2, Math.PI - .2); g.stroke(); }
+      for (const [x, h] of [[650, 1], [720, .8], [560, .9]]) { g.fillStyle = '#5b3d25'; g.fillRect(x - 6, 250, 12, 60); g.fillStyle = '#3f8040'; g.beginPath(); g.arc(x, 230, 50 * h, 0, TAU); g.fill(); }
+      g.fillStyle = '#7a4f2a'; g.fillRect(330, 372, 160, 10); g.fillRect(330, 346, 160, 8); g.fillStyle = '#333'; g.fillRect(338, 382, 8, 26); g.fillRect(474, 382, 8, 26);
+    }, entra: 'arbre' },
+  { nom: 'MONTSERRAT', fons(g, t) {
+      const cel = g.createLinearGradient(0, 0, 0, 300); cel.addColorStop(0, '#9fd3ff'); cel.addColorStop(1, '#fff2df'); g.fillStyle = cel; g.fillRect(0, 0, 800, 450);
+      for (let i = 0; i < 16; i++) { const x = i * 55 - 10, h = 140 + hash(i, 2) * 150; const gr = g.createLinearGradient(x, 0, x + 50, 0); gr.addColorStop(0, '#c99f8a'); gr.addColorStop(1, '#9a7464'); g.fillStyle = gr; g.beginPath(); g.moveTo(x, 330); g.lineTo(x, 330 - h + 25); g.quadraticCurveTo(x + 27, 330 - h - 20, x + 54, 330 - h + 25); g.lineTo(x + 54, 330); g.fill(); }
+      g.fillStyle = '#e8dcc0'; g.fillRect(560, 250, 90, 50); g.fillStyle = '#b5a37e'; g.beginPath(); g.moveTo(555, 250); g.lineTo(605, 225); g.lineTo(655, 250); g.fill(); // el monestir
+      g.fillStyle = '#6b8f4a'; g.fillRect(0, 330, 800, 120);
+      for (let i = 0; i < 6; i++) for (let k = 0; k < 3; k++) { g.fillStyle = (i + k) % 2 ? '#d62828' : '#fff'; g.fillRect(310 + i * 30, 392 + k * 10, 30, 10); } // estovalles de pícnic
+    }, entra: 'roca' },
+  { nom: 'LA BARCELONETA', fons(g, t) {
+      const cel = g.createLinearGradient(0, 0, 0, 300); cel.addColorStop(0, '#3d2a5a'); cel.addColorStop(.6, '#ff7a4a'); cel.addColorStop(1, '#ffd38a'); g.fillStyle = cel; g.fillRect(0, 0, 800, 450);
+      g.fillStyle = '#ffe9a8'; g.beginPath(); g.arc(620, 250, 44, 0, TAU); g.fill();
+      g.fillStyle = '#2a1e2c'; for (const [x, h] of [[90, 150], [118, 175], [146, 175], [174, 150]]) { g.beginPath(); g.moveTo(x - 10, 260); g.lineTo(x, 260 - h); g.lineTo(x + 10, 260); g.fill(); } g.fillRect(70, 180, 130, 80); // la Sagrada Família
+      g.beginPath(); g.ellipse(280, 200, 18, 60, 0, Math.PI, TAU); g.fill(); g.fillRect(262, 200, 36, 60); // la Torre Glòries
+      g.fillStyle = '#1f5f8f'; g.fillRect(0, 260, 800, 70); g.fillStyle = 'rgba(255,255,255,.6)'; for (let x = -((t * 40) % 60); x < 800; x += 60) g.fillRect(x, 322 + Math.sin(x + t * 3) * 3, 34, 4);
+      g.fillStyle = '#e8d3a2'; g.fillRect(0, 330, 800, 120);
+      g.fillStyle = '#d62828'; g.beginPath(); g.moveTo(560, 330); g.lineTo(640, 300); g.lineTo(720, 330); g.fill(); g.fillStyle = '#333'; g.fillRect(638, 300, 4, 100); // para-sol
+    }, entra: 'mar' },
+  { nom: 'LA RAVE DE VIC', fons(g, t) {
+      g.fillStyle = '#0d0820'; g.fillRect(0, 0, 800, 450);
+      for (let i = 0; i < 5; i++) { const a = Math.sin(t * 1.5 + i) * .6; g.save(); g.translate(150 + i * 125, 40); g.rotate(a); g.fillStyle = ['rgba(255,43,214,.22)', 'rgba(43,240,255,.22)', 'rgba(182,255,43,.22)'][i % 3]; g.beginPath(); g.moveTo(0, 0); g.lineTo(-50, 420); g.lineTo(50, 420); g.fill(); g.restore(); }
+      for (const x of [40, 700]) { g.fillStyle = '#111'; g.fillRect(x, 230, 70, 140); g.fillStyle = '#2b2b2b'; g.beginPath(); g.arc(x + 35, 270, 22 + Math.abs(Math.sin(t * 9)) * 3, 0, TAU); g.arc(x + 35, 330, 22, 0, TAU); g.fill(); }
+      g.fillStyle = '#1b1430'; g.fillRect(0, 370, 800, 80);
+      for (let i = 0; i < 14; i++) { const x = 30 + i * 58, b = Math.abs(Math.sin(t * 8 + i)) * 10; g.fillStyle = '#05030c'; g.beginPath(); g.arc(x, 330 - b, 14, 0, TAU); g.fill(); g.fillRect(x - 14, 340 - b, 28, 40); }
+      if ((t * 8 | 0) % 2) { g.fillStyle = 'rgba(255,255,255,.06)'; g.fillRect(0, 0, 800, 450); }
+    }, entra: 'cel' },
+];
+function escenaCita(g, t, un, n) {
+  const L = LLOCS_CITA[n], sanchez = PERSONATGES.find(p => p.id === 'sanchez');
+  L.fons(g, t);
+  const ap = 2.5, crit = t > ap + .2, fuig = Math.max(0, t - ap - 1.1);
+  // la parella: abans de l'ensurt es fan petons
+  const peto = !crit ? (Math.sin(t * 3.2) + 1) / 2 : 0, sep = 38 - peto * 26;
+  const salt = crit && fuig === 0 ? -Math.abs(Math.sin((t - ap) * 9)) * 30 : 0;
+  const mou = fuig * 420;
+  enamoratVideo(g, 400 - sep - mou, 410 + salt, 'nil', fuig ? t * 16 : t, crit, 1.05);
+  enamoratVideo(g, 400 + sep - mou * 1.15, 410 + salt, 'africa', fuig ? t * 16 + 1 : t + 1, crit, 1.05);
+  if (!crit) {
+    for (let i = 0; i < 4; i++) { const hy = 250 - ((t * 45 + i * 25) % 110); g.fillStyle = '#ff5c8a'; g.font = (14 + i * 4) + 'px sans-serif'; g.fillText('♥', 390 + Math.sin(t * 3 + i) * 22, hy); }
+    if (peto > .85) { g.font = '12px "Press Start 2P"'; g.fillStyle = '#ff5c8a'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; g.strokeText('MUA!', 400, 230); g.fillText('MUA!', 400, 230); g.textAlign = 'left'; }
+  } else {
+    // el cor es trenca
+    const k = Math.min(1, (t - ap - .2) * 2); g.save(); g.translate(400, 230); g.font = '44px sans-serif'; g.textAlign = 'center'; g.fillStyle = '#ff5c8a';
+    g.save(); g.translate(-k * 18, k * 14); g.rotate(-k * .4); g.beginPath(); g.rect(-30, -40, 30, 60); g.clip(); g.fillText('♥', 0, 0); g.restore();
+    g.save(); g.translate(k * 18, k * 14); g.rotate(k * .4); g.beginPath(); g.rect(0, -40, 30, 60); g.clip(); g.fillText('♥', 0, 0); g.restore(); g.restore(); g.textAlign = 'left';
+    if (fuig) { g.font = '12px "Press Start 2P"'; g.fillStyle = '#7fc3ff'; g.fillText('AAAAAH!', 330 - mou, 250); }
+  }
+  // el Sanchez arriba (cada vegada d'un lloc diferent)
+  if (t > ap - .4) {
+    const k = Math.min(1, (t - ap + .4) / .4);
+    let sx = 610, sy = 418;
+    if (L.entra === 'arbre') sx = 820 - k * 210;
+    if (L.entra === 'roca') sy = 418 + (1 - k) * 160;
+    if (L.entra === 'mar') { sx = 620; sy = 418 + (1 - k) * 120; }
+    if (L.entra === 'cel') sy = 418 - (1 - k) * 420;
+    g.save(); if (L.entra === 'mar' && k < 1) { g.beginPath(); g.rect(0, 0, 800, 330 + (sy - 418) * 0 + 88); g.clip(); }
+    personaVideo(g, sx, sy, sanchez, 0, t, crit && t < ap + 2.2, 1.05); g.restore();
+    if (L.entra === 'mar' && k < 1) { g.fillStyle = 'rgba(255,255,255,.7)'; for (let i = 0; i < 8; i++) g.fillRect(sx - 40 + i * 10, 400 - Math.random() * 30, 5, 5); }
+    if (crit && un('atac' + n)) { clip('atac'); }
+    if (crit && t < ap + 2.4) { // la frase del Sanchez
+      g.save(); g.translate((Math.random() - .5) * 5, (Math.random() - .5) * 5);
+      g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 4; g.beginPath(); g.roundRect(380, 70, 400, 74, 14); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(580, 144); g.lineTo(600, 180); g.lineTo(610, 144); g.fill(); g.stroke();
+      g.fillStyle = '#d2452b'; g.font = '15px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('HOLAAA!', 580, 100); g.fillStyle = '#111'; g.font = '12px "Press Start 2P"'; g.fillText('EM DIC RAMOOOON!', 580, 128); g.textAlign = 'left';
+      g.restore();
+    }
+    if (t > ap + 2.4) { g.font = '11px "Press Start 2P"'; g.fillStyle = '#ffe14d'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; g.strokeText('HEHEHE...', sx, sy - 210); g.fillText('HEHEHE...', sx, sy - 210); g.textAlign = 'left'; }
+  }
+  // rètol del lloc
+  g.font = '10px "Press Start 2P"'; g.fillStyle = 'rgba(0,0,0,.6)'; const w = g.measureText(L.nom).width + 24; g.fillRect(20, 46, w, 26); g.fillStyle = '#ffd23f'; g.fillText(L.nom, 32, 64);
+  if (t > ap + 2.8) textVideo(g, ['CITA ARRUÏNADA!', 'UNA ALTRA VEGADA!', 'PERÒ QUÈ FA AQUÍ?!', 'JA N\'HI HA PROU!'][n], 120, t - ap - 2.8, 18, '#ff5c8a');
 }
 function escenaCarromato(g, t, D, un) {
   const cel = g.createLinearGradient(0, 0, 0, 340); cel.addColorStop(0, '#2a1b3d'); cel.addColorStop(.6, '#ff6b3d'); cel.addColorStop(1, '#ffd166'); g.fillStyle = cel; g.fillRect(0, 0, 800, 450);
@@ -2326,7 +2375,7 @@ function escenaCarromato(g, t, D, un) {
   g.fillStyle = '#555'; g.fillRect(150, -44, 70, 14); g.fillStyle = '#d62828'; g.fillRect(214, -42, 14, 10); // llançamíssils al sostre
   g.restore();
   if (un('motor')) so('poder');
-  textVideo(g, 'ARA ÉS L\'HORA DE LA VENJANÇA', 82, t - .3, 15, '#fff');
+  textVideo(g, 'CAP PARELLA ESTÀ A SALVO', 82, t - .3, 15, '#fff');
   if (t > 2.4) { const k = Math.min(1, (t - 2.4) * 2); g.save(); g.globalAlpha = k; g.font = '30px "Press Start 2P"'; g.textAlign = 'center'; g.lineWidth = 8; g.strokeStyle = '#000'; g.strokeText('ENSURTS A CAPELLADES', 400, 150); g.fillStyle = '#ffe14d'; g.fillText('ENSURTS A CAPELLADES', 400, 150);
     g.font = '16px "Press Start 2P"'; g.strokeText('MODE HISTÒRIA', 400, 186); g.fillStyle = '#ff5c8a'; g.fillText('MODE HISTÒRIA', 400, 186); g.restore(); g.textAlign = 'left'; }
 }
