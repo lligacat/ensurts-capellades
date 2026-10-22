@@ -180,7 +180,7 @@ const PERSONATGES = [
 const PREU_SKIN = 1000;
 const BOTIGA = [
   { id: 'nil', nom: 'Nil Mena', jaqueta: '#e63946', interior: '#f1faee', pantalo: '#1d3557', gen: { pell: '#f1c7a3', cabell: '#3a2416', fons: '#a8dadc' }, poder: 'TELEPORT', desc: 'Apareix de cop 250 passes endavant' },
-  { id: 'teo', nom: 'Teo Glaudiri', jaqueta: '#2a9d8f', interior: '#e9c46a', pantalo: '#264653', gen: { pell: '#e0ac85', cabell: '#111', fons: '#e9c46a', ulleres: true }, poder: 'TERRATRÈMOL', desc: 'Fa tremolar el barri i espanta tothom' },
+  { id: 'teo', nom: 'Teo Glaudiri', foto: 'teo.jpg', jaqueta: '#f4f4f4', interior: '#1d3557', pantalo: '#264653', gen: { pell: '#e0ac85', cabell: '#111', fons: '#e9c46a', ulleres: true }, poder: 'TERRATRÈMOL', desc: 'Fa tremolar el barri i espanta tothom' },
   { id: 'vila', nom: 'Vila Sanchez', jaqueta: '#f4a261', interior: '#2a2a2a', pantalo: '#3d405b', gen: { pell: '#c98e66', cabell: '#2b1d14', fons: '#f4a261', llarg: true }, poder: 'IMANT DE PARELLES', desc: 'Les parelles properes venen cap a tu' },
   { id: 'pol', nom: 'Pol Tintomena', jaqueta: '#6a4c93', interior: '#ffca3a', pantalo: '#1b1b1b', gen: { pell: '#f6d2b8', cabell: '#c99a4a', fons: '#cdb4db' }, poder: 'PETARD', desc: 'Llença un petard que esclata lluny' },
   { id: 'pau', nom: 'Pau Escolà', jaqueta: '#4a5233', interior: '#ff7ac4', pantalo: '#2a2a2a', gen: { pell: '#e0ac85', cabell: '#5a3a22', fons: '#b5e48c', rinxols: true }, poder: 'CLONS', desc: 'Dos clons distreuen la policia' },
@@ -226,16 +226,29 @@ function caraGenerica(p, amplada) {
   return c;
 }
 
+// Personatges de la botiga que ja tenen foto: la cara es retalla en oval com la de la colla
+const fotosSkin = {};
+function caraFoto(img, amplada) {
+  const c = document.createElement('canvas'); c.width = amplada; c.height = Math.round(amplada * img.naturalHeight / img.naturalWidth);
+  const x = c.getContext('2d');
+  x.beginPath(); x.ellipse(c.width / 2, c.height / 2, c.width / 2 - 3, c.height / 2 - 3, 0, 0, TAU);
+  x.save(); x.clip(); x.filter = 'brightness(1.1) contrast(1.05)'; x.drawImage(img, 0, 0, c.width, c.height); x.restore();
+  x.lineWidth = 5; x.strokeStyle = '#111'; x.stroke();
+  return c;
+}
+const caraSkin = (p, amplada) => { const im = fotosSkin[p.id]; return im && im.complete && im.naturalWidth ? caraFoto(im, amplada) : caraGenerica(p, amplada); };
+for (const p of BOTIGA) if (p.foto) { const im = new Image(); im.onload = () => { cares[p.id] = caraFoto(im, 160); pintaBotiga(); }; im.src = p.foto; fotosSkin[p.id] = im; }
+
 function pintaMoneder() { document.getElementById('moneder').textContent = 'MONEDER: ' + formatPunts(moneder.get()) + ' PUNTS'; }
 
 function pintaBotiga() {
   const cont = document.getElementById('botiga'), meus = comprats(), diners = moneder.get();
   cont.innerHTML = '';
   for (const p of BOTIGA) {
-    cares[p.id] = cares[p.id] || caraGenerica(p, 160);
+    cares[p.id] = cares[p.id] || caraSkin(p, 160);
     const teu = meus.includes(p.id);
     const b = document.createElement('button'); b.className = 'carta' + (teu ? '' : ' bloquejada');
-    b.appendChild(caraGenerica(p, 208));
+    b.appendChild(caraSkin(p, 208));
     const etiqueta = teu ? '<span class="preu teu">JUGAR</span>' : '<span class="preu' + (diners >= PREU_SKIN ? '' : ' no') + '">COMPRAR ' + formatPunts(PREU_SKIN) + '</span>';
     b.insertAdjacentHTML('beforeend', '<span class="nom">' + p.nom + '</span><span class="poder">' + p.poder + '</span><span class="desc">' + p.desc + '</span>' + etiqueta);
     b.onclick = () => {
