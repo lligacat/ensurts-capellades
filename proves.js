@@ -1,7 +1,7 @@
 // Proves automàtiques del joc. Obre la pàgina amb ?proves al final de l'adreça i els resultats surten a la pantalla i a la consola.
 // Fan servir les funcions i l'estat globals del joc, i deixen el moneder i la botiga tal com estaven.
 
-const CLAUS = ['ensurts-moneder', 'ensurts-skins', 'ensurts-explosions', 'ensurts-missions', 'ensurts-historia', 'ensurts-mode'];
+const CLAUS = ['ensurts-moneder', 'ensurts-skins', 'ensurts-explosions', 'ensurts-missions', 'ensurts-historia', 'ensurts-mode', 'ensurts-paquets'];
 
 export async function executa() {
   const resultats = [], guardat = Object.fromEntries(CLAUS.map(k => [k, localStorage.getItem(k)]));
@@ -121,6 +121,7 @@ export async function executa() {
   prova('Sense fer res greu, la policia et deté i acabes al calabós', () => {
     const j = J.jug; J.liada = true; J.gravetat = 0; j.invul = 0; const a = Object.assign(nouAgent(), { x: j.x + 50, y: j.y, fx: -1, fy: 0 }); J.agents = [a];
     for (let i = 0; i < 20 && estat === 'joc'; i++) actualitza(.05);
+    if (estat === 'busted') J.continuaDetencio(); // sense esperar la pantalla BUSTED
     if (estat !== 'video') return 'no hi ha detenció (estat ' + estat + ')';
     acabaVideo();
     return (J.zona === 'presso' && mapa[10][16] === C.TANCA) || 'zona ' + J.zona;
@@ -153,6 +154,27 @@ export async function executa() {
     for (let i = 0; i < 70 && J.zona !== 'arinsal'; i++) actualitza(.1);
     return J.zona === 'arinsal' || 'zona ' + J.zona;
   });
+  J.cobrat = true; tornaAlMenu();
+
+  // --- Coses a l'estil GTA ---
+  comenca(PERSONATGES[0]);
+  prova('Es pot robar un cotxe del trànsit i conduir-lo', () => {
+    const j = J.jug, c = J.cotxes.find(c => c.tipus === 'normal'); j.x = c.x + 40; j.y = c.y;
+    const ap = accioPropera(); if (!ap || ap.boto !== 'ROBAR') return 'acció: ' + (ap && ap.text);
+    ap.fer(); return (j.cotxe === c && c.tipus === 'robat' && J.liada && !J.cotxes.includes(c)) || 'no condueixes el cotxe robat';
+  });
+  prova('Passar per una rampa a tota velocitat fa saltar el cotxe', () => {
+    const j = J.jug, v = j.cotxe, r = RAMPES[0]; Object.assign(v, { x: r.x - 10, y: r.y, fx: 1, fy: 0, vel: 500, salt: 0 }); j.x = v.x; j.y = v.y;
+    const p0 = J.punts; actualitzaRampes(.016);
+    return (v.salt > 0 && J.punts - p0 === 1000) || 'salt ' + v.salt + ', punts +' + (J.punts - p0);
+  });
+  prova('Agafar un paquet amagat suma 500 i queda guardat', () => {
+    localStorage.removeItem('ensurts-paquets'); J.paquetsFets = null; baixaVila();
+    const p = llistaPaquets()[3], j = J.jug; j.x = p.x; j.y = p.y; const p0 = J.punts; actualitzaPaquets();
+    return (J.punts - p0 === 500 && paquetsTrobats().has(p.id) && llistaPaquets().length === NPAQUETS) || 'punts +' + (J.punts - p0);
+  });
+  prova("La ràdio canvia d'emissora i torna a començar", () => { J.radio = 0; for (let i = 0; i < EMISSORES.length; i++) canviaRadio(); return J.radio === 0 || 'ràdio ' + J.radio; });
+  prova('De nit és fosc i de dia no', () => { J.hora = 23; const n = nitFactor(); J.hora = 12; return (n === 1 && nitFactor() === 0) || 'nit ' + n; });
   J.cobrat = true; tornaAlMenu();
 
   // --- Mode història ---

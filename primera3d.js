@@ -121,7 +121,8 @@ function construeix(nom) {
     sc.userData.cel = cel;
   }
   // Llums
-  sc.add(new THREE.HemisphereLight(nit ? 0x443366 : 0xcfe6ff, nit ? 0x221a10 : 0x6b5a45, interior ? 1.4 : nit ? .7 : 1.1));
+  const hemi = new THREE.HemisphereLight(nit ? 0x443366 : 0xcfe6ff, nit ? 0x221a10 : 0x6b5a45, interior ? 1.4 : nit ? .7 : 1.1); sc.add(hemi);
+  sc.userData.hemi = hemi; sc.userData.diaNit = !interior && !nit; sc.userData.horitzo = new THREE.Color(horitzo);
   const sun = new THREE.DirectionalLight(nit ? 0x8877ff : 0xfff1d6, interior ? 0 : nit ? .6 : 2.6);
   sun.castShadow = !interior; sun.shadow.mapSize.set(1024, 1024);
   Object.assign(sun.shadow.camera, { left: -13, right: 13, top: 13, bottom: -13, near: 1, far: 60 });
@@ -380,6 +381,13 @@ export function dibuixa(w, h) {
   camera.position.set(j.x / TS + sac, alt + bob, j.y / TS + sac);
   camera.lookAt(j.x / TS + Math.cos(ang), alt + bob - .02, j.y / TS + Math.sin(ang));
   // Sol i ombres seguint el jugador
+  // de nit es fa fosc: menys sol, cel i boira foscos
+  if (E.sc.userData.diaNit && typeof nitFactor === 'function') {
+    const n = nitFactor(), fosc = new THREE.Color(0x0a0e22), cH = E.sc.userData.horitzo.clone().lerp(fosc, n * .85);
+    E.sun.intensity = 2.6 * (1 - n * .8); E.sc.userData.hemi.intensity = 1.1 * (1 - n * .55);
+    E.sc.fog.color.copy(cH); E.sc.background.copy(cH);
+    const cel = E.sc.userData.cel; if (cel) { cel.material.uniforms.baix.value.copy(cH); if (!cel.userData.top0) cel.userData.top0 = cel.material.uniforms.top.value.clone(); cel.material.uniforms.top.value.copy(cel.userData.top0).lerp(new THREE.Color(0x03040c), n); }
+  }
   E.sun.position.set(camera.position.x - 9, 16, camera.position.z - 12); E.sun.target.position.set(camera.position.x, 0, camera.position.z); E.sun.target.updateMatrixWorld();
   if (E.sc.userData.cel) E.sc.userData.cel.position.copy(camera.position);
   // Vent als arbres i ones a l'aigua
