@@ -196,7 +196,7 @@
 </div>
 <div id="pMapa" class="amagat"><canvas id="cvMapa"></canvas>
   <div class="fila"><button class="boto" id="bMapaMes">+</button><button class="boto" id="bMapaMenys">−</button><button class="boto" id="bMapaJo">ON SÓC</button><button class="boto sec" id="bMapaTanca">TORNAR AL JOC</button></div>
-  <p>ROSSEGA PER MOURE'T · RODA O PESSIC PER FER ZOOM · [M] PER TANCAR</p></div>
+  <p>TOCA PER POSAR UN PUNTER (TOCA'L UN ALTRE COP PER TREURE'L) · ROSSEGA PER MOURE'T · RODA O PESSIC PER FER ZOOM</p></div>
 <div id="tactil">
   <button id="bCanvia">CANVIA<br>ARMA</button><button id="bPistola">PIS<br>TOLA</button><button id="bAgafar">AGAFAR</button><button id="bBomba">EXPLO<br>SIÓ</button>
   <button id="bEsp">PODER</button><button id="bBuh">HULAAA!</button>
@@ -5188,6 +5188,7 @@ function dibuixa() {
   if (!J.zona && J.ciutat === 'capellades' && granMon()) {
     for (const r of RAMPES) if (vist(r)) dibuixaRampa(cx, r);
     dibuixaControlsRalli(cx, vist);
+    for (const p of totsPunters()) if (vist(p)) ents.push([p.y, () => { const b = Math.sin(performance.now() / 300) * 4; cx.fillStyle = 'rgba(255,255,255,.12)'; cx.fillRect(p.x - 3, p.y - 220, 6, 220); agullaMapa(cx, p.x, p.y + b, 3, p.color, p.nom, p.meu ? '' : p.autor); }]);
     for (const l of J.llaunes || []) if (vist(l)) ents.push([l.y, () => dibuixaLlauna(cx, l)]);
     for (const e of J.elois || []) if (vist(e)) ents.push([e.y, escalat(e, () => dibuixaEloi(cx, e), 1.35)]);
     for (const sc of J.sacs || []) if (!sc.agafat && vist(sc)) ents.push([sc.y, () => dibuixaSac(cx, sc)]);
@@ -5516,6 +5517,10 @@ function dibuixaHUD(W, H, dpr) {
   }
   if (J.historia) dibuixaHistoria(g, W, H, petit, caixa);
   dibuixaRalliHUD(g, W, H, caixa, petit);
+  { const ps = totsPunters().filter(p => Math.hypot(p.x - j.x, p.y - j.y) > 4 * TS).sort((a, b) => (b.t || 0) - (a.t || 0)); // fletxa cap al punter més nou
+    if (ps.length && !J.zona) { const p = ps[0], a = Math.atan2(p.y - j.y, p.x - j.x), ax = W - 210, ay = H - (tactil ? 300 : 170), dd = Math.round(Math.hypot(p.x - j.x, p.y - j.y) / TS * 4);
+      caixa(ax - 30, ay - 26, 210, 52); g.save(); g.translate(ax, ay); g.rotate(a); g.fillStyle = p.color; g.strokeStyle = '#000'; g.lineWidth = 3; g.beginPath(); g.moveTo(18, 0); g.lineTo(-9, -12); g.lineTo(-3, 0); g.lineTo(-9, 12); g.closePath(); g.fill(); g.stroke(); g.restore();
+      g.font = '7px "Press Start 2P"'; g.fillStyle = p.color; g.fillText(p.nom.slice(0, 14), ax + 26, ay - 4); g.fillStyle = '#fff'; g.fillText(dd + ' M' + (p.meu ? '' : ' · ' + String(p.autor).slice(0, 8)), ax + 26, ay + 12); } }
   if (j.ciment) { g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#c9c1ad'; g.fillText('PORTES UN SAC DE CIMENT', W / 2, H - (tactil ? 240 : 130)); g.textAlign = 'left'; }
   if (j.vollDamm > 0) { const t2 = Math.ceil(j.vollDamm); g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#2fd38a'; g.fillText('VOLL-DAMM ' + Math.floor(t2 / 60) + ':' + String(t2 % 60).padStart(2, '0'), W / 2, H - (tactil ? 220 : 110)); g.textAlign = 'left'; }
   if (enSala()) { // marcador de la sala
@@ -5599,6 +5604,7 @@ function dibuixaHUD(W, H, dpr) {
   g.fillStyle = '#ffd23f'; J.parelles.forEach(p => { if (p.especial && p.estat !== 'espantada') g.fillRect(mx + p.x * k - 4, my + p.y * k - 4, 8, 8); });
   g.fillStyle = '#c77dff'; J.sorpreses.forEach(e => { if (e.tipus !== 'pluja') g.fillRect(mx + e.x * k - 3, my + e.y * k - 3, 7, 7); });
   g.fillStyle = '#ff8c1a'; J.matons.forEach(m => { if (!m.caigut) g.fillRect(mx + m.x * k - 3, my + m.y * k - 3, 6, 6); });
+  for (const p of totsPunters()) agullaMapa(g, mx + p.x * k, my + p.y * k, .55, p.color);
   for (const r of altresVisibles()) { g.fillStyle = r.color; g.strokeStyle = '#000'; g.lineWidth = 1.5; g.beginPath(); g.arc(mx + r.x * k, my + r.y * k, 5, 0, TAU); g.fill(); g.stroke(); }
   g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 1; g.fillRect(mx + j.x * k - 3, my + j.y * k - 3, 6, 6); g.strokeRect(mx + j.x * k - 3, my + j.y * k - 3, 6, 6);
   g.restore();
@@ -5867,7 +5873,7 @@ async function comparteixSala() {
   try { if (navigator.share) { await navigator.share({ title: 'Ensurts a Capellades', text, url }); return; } } catch (e) { return; }
   try { await navigator.clipboard.writeText(text + ' ' + url); pintaSala('ENLLAÇ COPIAT! ENGANXA\'L AL XAT · SALA <b>' + XARXA.codi + '</b>'); } catch (e) { pintaSala('ENVIA AQUEST ENLLAÇ: ' + url); }
 }
-function treuJugador(id) { const r = XARXA.altres.get(id); XARXA.altres.delete(id); if (r && J) anunci(String(r.nom).toUpperCase() + ' HA MARXAT DE LA SALA', 1.8); pintaSala(); }
+function treuJugador(id) { const r = XARXA.altres.get(id); XARXA.altres.delete(id); PUNTERS.altres.delete(id); if (r && J) anunci(String(r.nom).toUpperCase() + ' HA MARXAT DE LA SALA', 1.8); pintaSala(); }
 function repDades(d) {
   if (d.t === 'adeu') return treuJugador(d.id);
   let r = XARXA.altres.get(d.id);
@@ -5936,6 +5942,13 @@ function pasVisuals(dt) {
   for (const l of ['tretsVis', 'missilsVis', 'flamesVis']) if (J[l]) { for (const b of J[l]) { b.t -= dt; b.x += b.vx * dt; b.y += b.vy * dt; if (l === 'flamesVis') { b.vx *= .96; b.vy *= .96; } } J[l] = J[l].filter(b => b.t > 0); }
 }
 function repEvent(d) {
+  if (d.tipus === 'punters') { // els punters dels altres arriben sempre (també amb el mapa obert)
+    const abans = PUNTERS.altres.get(d.id), nous = (d.llista || []).filter(p => !abans || !(abans.llista || []).some(q => q.pid === p.pid));
+    PUNTERS.altres.set(d.id, { nom: d.nom, llista: d.llista || [] });
+    if (abans && nous.length && J) { anunci(String(d.nom).toUpperCase() + ' HA POSAT UN PUNTER: ' + nous[nous.length - 1].nom, 2); so('paquet'); }
+    if (estat === 'mapa') pintaMapaGran();
+    return;
+  }
   if (!J || estat !== 'joc' && estat !== 'busted') return;
   const j = J.jug, aqui = mateixLloc(d), aprop = Math.hypot(j.x - d.x, j.y - d.y) < 1500;
   if (d.tipus === 'espanta' && XARXA.creador && aqui) for (const u of d.us || []) espantaRemota(J.parelles.find(p => p.uid === u), d.x, d.y);
@@ -5977,7 +5990,8 @@ function xarxaPas(dt) {
     r.x += dx * k; r.y += dy * k; if (Math.hypot(dx, dy) > 3) r.pas = (r.pas || 0) + dt * 12;
   }
   if (!enSala()) return;
-  if ((XARXA.tSala -= dt) <= 0) { XARXA.tSala = 15; anunciaSala(); } // la sala segueix a la llista
+  if ((XARXA.tSala -= dt) <= 0) { XARXA.tSala = 15; anunciaSala(); }
+  if ((XARXA.tPunters = (XARXA.tPunters ?? 2) - dt) <= 0) { XARXA.tPunters = 8; enviaPunters(); } // la sala segueix a la llista
   if (!J || estat !== 'joc') { if ((XARXA.tHola -= dt) <= 0) { XARXA.tHola = 4; envia({ t: 'hola', id: XARXA.jo, nom: nomJugador() }); if (estat === 'menu') pintaSala(); } return; }
   if ((XARXA.tEnvia -= dt) > 0) return; XARXA.tEnvia = .16;
   const j = J.jug, c = j.cotxe;
@@ -6413,6 +6427,35 @@ document.getElementById('bMapaGran').onclick = () => { document.getElementById('
 
 // ---------- El mapa sencer (tocant el minimapa o amb la tecla M) ----------
 let MINI_RECT = null;
+// Punters: els teus es guarden; els dels altres jugadors arriben per la xarxa
+const PUNTERS = { meus: [], altres: new Map() };
+try { PUNTERS.meus = JSON.parse(localStorage.getItem('ensurts-punters') || '[]'); } catch (e) {}
+function desaPunters() { try { localStorage.setItem('ensurts-punters', JSON.stringify(PUNTERS.meus)); } catch (e) {} enviaPunters(); }
+function enviaPunters() { if (enSala()) envia({ t: 'ev', id: XARXA.jo, tipus: 'punters', nom: nomJugador(), x: 0, y: 0, ciutat: J ? J.ciutat : 'capellades', zona: null, llista: PUNTERS.meus }); }
+function totsPunters() { // [{x, y, nom, color, autor, meu, t}]
+  const l = PUNTERS.meus.map(p => Object.assign({ color: '#2fd38a', autor: 'TU', meu: true }, p));
+  for (const [id, a] of PUNTERS.altres) { const r = XARXA.altres.get(id); for (const p of a.llista || []) l.push(Object.assign({ color: (r && r.color) || '#7fc3ff', autor: a.nom, meu: false }, p)); }
+  return l.filter(p => !J || (p.ciutat || 'capellades') === J.ciutat);
+}
+function posaPunter(wx, wy) {
+  const prop = PUNTERS.meus.findIndex(p => Math.hypot(p.x - wx, p.y - wy) < 3 * TS / Math.max(1, VM.z * .6));
+  if (prop >= 0) { const p = PUNTERS.meus.splice(prop, 1)[0]; so('clic'); desaPunters(); pintaMapaGran(); if (J) anunci('PUNTER TRET: ' + p.nom, 1.2); return; }
+  let nom = null; try { nom = prompt('NOM DEL PUNTER (el veuran tots els de la sala):', 'QUEDEM AQUÍ'); } catch (e) { nom = 'PUNTER'; }
+  if (nom === null) return;
+  nom = (nom.trim() || 'PUNTER').toUpperCase().slice(0, 18);
+  PUNTERS.meus.push({ pid: Math.random().toString(36).slice(2, 8), x: Math.round(wx), y: Math.round(wy), nom, ciutat: J ? J.ciutat : 'capellades', t: Date.now() });
+  if (PUNTERS.meus.length > 6) PUNTERS.meus.shift();
+  so('paquet'); desaPunters(); pintaMapaGran();
+}
+// el punter, com una agulla de mapa: gota de color amb un forat blanc
+function agullaMapa(g, px, py, u, color, nom, autor) {
+  g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.ellipse(px, py, 7 * u, 3 * u, 0, 0, TAU); g.fill();
+  g.fillStyle = color; g.strokeStyle = '#000'; g.lineWidth = 1.5 * u;
+  g.beginPath(); g.moveTo(px, py); g.bezierCurveTo(px - 4 * u, py - 10 * u, px - 11 * u, py - 14 * u, px - 11 * u, py - 22 * u); g.arc(px, py - 22 * u, 11 * u, Math.PI, 0); g.bezierCurveTo(px + 11 * u, py - 14 * u, px + 4 * u, py - 10 * u, px, py); g.fill(); g.stroke();
+  g.fillStyle = '#fff'; g.beginPath(); g.arc(px, py - 22 * u, 4.5 * u, 0, TAU); g.fill();
+  if (nom) { g.font = Math.round(7 * u) + 'px "Press Start 2P"'; g.textAlign = 'center'; const txt = nom + (autor ? ' · ' + String(autor).toUpperCase() : ''), w = g.measureText(txt).width + 10 * u;
+    g.fillStyle = 'rgba(0,0,0,.8)'; g.fillRect(px - w / 2, py - 48 * u, w, 13 * u); g.fillStyle = color; g.fillText(txt, px, py - 38 * u); g.textAlign = 'left'; }
+}
 const VM = { z: 1, cx: 0, cy: 0 }; // vista del mapa gran: zoom i centre (en caselles)
 function obreMapa() {
   if (!J || estat !== 'joc') return;
@@ -6450,6 +6493,7 @@ function pintaMapaGran() {
   (J.aparcats || []).forEach(v => v.tipus !== 'aparcat' && punt(v.x, v.y, 4, v.tipus === 'carromato' ? '#000' : '#fff', v.tipus === 'carromato' ? '#ff3b3b' : '#2a7de1'));
   J.agents.forEach(a => punt(a.x, a.y, 3, a.estat === 'persegueix' ? '#ff3b3b' : '#7fc3ff'));
   for (const r2 of altresVisibles()) { punt(r2.x, r2.y, 7, r2.color, '#000'); rotul(String(r2.nom).toUpperCase(), r2.x, r2.y - 1.4 * TS / Math.max(1, VM.z * .5), r2.color, 8); }
+  for (const p of totsPunters()) { const [px, py] = P(p.x, p.y); agullaMapa(g, px, py, u * 1.1, p.color, p.nom, p.meu ? '' : p.autor); }
   punt(J.jug.x, J.jug.y, 9, '#fff', '#000'); punt(J.jug.x, J.jug.y, 4, '#ff3b3b');
   rotul('ETS AQUÍ', J.jug.x, J.jug.y - 1.6 * TS / Math.max(1, VM.z * .5), '#fff');
 }
@@ -6461,14 +6505,24 @@ function zoomMapa(k, px, py) { // px,py: punt de la pantalla que es queda quiet
 }
 { const c = document.getElementById('cvMapa'); let arr = null; const dits = new Map();
   c.addEventListener('wheel', e => { e.preventDefault(); zoomMapa(e.deltaY < 0 ? 1.25 : 1 / 1.25, e.clientX, e.clientY); }, { passive: false });
-  c.addEventListener('pointerdown', e => { c.setPointerCapture(e.pointerId); dits.set(e.pointerId, { x: e.clientX, y: e.clientY }); arr = { x: e.clientX, y: e.clientY, dist: null }; });
+  let toc = null;
+  c.addEventListener('pointerdown', e => { c.setPointerCapture(e.pointerId); dits.set(e.pointerId, { x: e.clientX, y: e.clientY }); arr = { x: e.clientX, y: e.clientY, dist: null }; toc = dits.size === 1 ? { x: e.clientX, y: e.clientY, t: performance.now() } : null; });
   c.addEventListener('pointermove', e => {
     if (!dits.has(e.pointerId)) return; dits.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (toc && Math.hypot(e.clientX - toc.x, e.clientY - toc.y) > 8) toc = null;
     const d = window.devicePixelRatio || 1, es = Math.min(c.width / MW, c.height / MH) * VM.z;
     if (dits.size === 2) { const [a, b] = [...dits.values()], dd = Math.hypot(a.x - b.x, a.y - b.y); if (arr && arr.dist) zoomMapa(dd / arr.dist, (a.x + b.x) / 2, (a.y + b.y) / 2); arr = { dist: dd }; return; }
     if (arr && arr.x !== undefined) { VM.cx -= (e.clientX - arr.x) * d / es; VM.cy -= (e.clientY - arr.y) * d / es; arr = { x: e.clientX, y: e.clientY }; pintaMapaGran(); }
   });
-  const fi = e => { dits.delete(e.pointerId); arr = null; }; c.addEventListener('pointerup', fi); c.addEventListener('pointercancel', fi);
+  const fi = e => { dits.delete(e.pointerId); arr = null; if (e.type === 'pointercancel') toc = null; };
+  c.addEventListener('pointerup', e => {
+    const t0 = toc; fi(e); toc = null;
+    if (!t0 || performance.now() - t0.t > 600 || dits.size) return;
+    const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1, es = Math.min(c.width / MW, c.height / MH) * VM.z;
+    const ox = c.width / 2 - VM.cx * es, oy = c.height / 2 - VM.cy * es;
+    posaPunter(((e.clientX - r.left) * d - ox) / es * TS, ((e.clientY - r.top) * d - oy) / es * TS);
+  });
+  c.addEventListener('pointercancel', fi);
   document.getElementById('bMapaMes').onclick = () => zoomMapa(1.5); document.getElementById('bMapaMenys').onclick = () => zoomMapa(1 / 1.5);
   document.getElementById('bMapaJo').onclick = () => { VM.cx = J.jug.x / TS; VM.cy = J.jug.y / TS; VM.z = Math.max(VM.z, 3); pintaMapaGran(); };
   document.getElementById('bMapaTanca').onclick = () => tancaMapa();
