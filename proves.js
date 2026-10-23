@@ -198,6 +198,12 @@ export async function executa() {
     actualitzaDrift(.016); if (!J.drift) return 'no ha vingut'; actualitzaDrift(.1);
     return a.estat === 'patrulla' || 'estat ' + a.estat;
   });
+  prova('Conduint tranquil, la policia no et persegueix ni et punxa les rodes', () => {
+    const j = J.jug; J.liada = false; J.cerca = 0; if (!j.cotxe) { const v = J.aparcats.find(v => v.tipus === 'carromato'); j.x = v.x; j.y = v.y; pujaVila(); }
+    const c = nouCotxe('policia', 300); c.estat = 'roda'; c.x = j.x + 40; c.y = j.y; J.cotxes = [c]; J.tPoliCotxe = 0;
+    actualitzaVehicles(.05); actualitzaVehicles(.05);
+    const ok = (c.estat === 'marxa' && j.cotxe && J.cotxes.filter(x => x.tipus === 'policia' && x.estat !== 'marxa').length === 0) || 'estat ' + c.estat; baixaVila(); return ok;
+  });
   prova('La patrulla para i en baixen dos policies', () => {
     const j = J.jug; J.liada = true; const c = nouCotxe('policia', 300); c.aPeu = true; c.x = j.x + 150; c.y = j.y; J.cotxes = [c]; const n0 = J.agents.length;
     actualitzaVehicles(.05);
@@ -219,18 +225,23 @@ export async function executa() {
   J.cobrat = true; tornaAlMenu();
 
   // --- Mode història ---
-  prova('Mode història: sense temps, i agafar la pistola completa la primera missió', () => {
+  prova("Mode història: la primera missió és enformigonar el salt de l'Eloi Mena", () => {
     localStorage.removeItem('ensurts-historia'); modeJoc = 'historia';
     comenca(PERSONATGES[0]);
     if (J.temps !== Infinity || !J.historia) return 'no és mode història';
-    J.jug.pistola = { bales: 30 }; actualitzaHistoria(.016);
-    return (J.historia.i === 1 && progresHistoria.get() === 1) || 'missió ' + J.historia.i;
+    const e = J.elois.find(e => e.nom === 'bassa'), sc = J.sacs.find(s => s.eloi === e), j = J.jug;
+    j.x = sc.x; j.y = sc.y; actualitzaElois(.05); if (!j.ciment) return 'no has agafat el ciment';
+    j.x = e.L.x - e.sp.dx * 30; j.y = e.L.y - e.sp.dy * 30; accioPropera().fer(); if (!e.formigo) return 'no hi ha formigó';
+    e.estat = 'prepara'; e.t = 0; for (let i = 0; i < 40 && !J.eloiFet; i++) actualitzaElois(.05);
+    if (e.estat !== 'estampat') return "l'Eloi no s'ha estampat (" + e.estat + ')';
+    actualitzaHistoria(.016); return (J.historia.i === 1 && progresHistoria.get() === 1) || 'missió ' + J.historia.i;
   });
+  prova('La segona missió és agafar la pistola', () => { J.jug.pistola = { bales: 30 }; preparaMissio(); actualitzaHistoria(.016); return J.historia.i === 2 || 'missió ' + J.historia.i; });
   prova('Les missions de comptar (5 parelles) només compten des que comencen', () => {
     preparaMissio(); const H = J.historia; J.espantades += 4; actualitzaHistoria(.016);
-    if (H.i !== 1) return 'massa aviat';
+    if (H.i !== 2) return 'massa aviat';
     J.espantades += 1; actualitzaHistoria(.016);
-    return H.i === 2 || 'missió ' + H.i;
+    return H.i === 3 || 'missió ' + H.i;
   });
   J.cobrat = true; tornaAlMenu(); modeJoc = modeAbans;
 
