@@ -675,9 +675,9 @@ function pasDnb(i, t, sem) {
 const TS = 64;
 let MW = 42, MH = 30; // mida del mapa actiu (cada mapa té la seva)
 const MIDES = { capellades: [640, 480], arinsal: [42, 60] }; // el món: 25 vegades més gran que abans
-const C = { CARRER: 0, EDIF: 1, AIGUA: 2, GESPA: 3, ARBRE: 4, ROCA: 5, MOLI: 6, ESGL: 7, PLACA: 8, BANC: 9, GARATGE: 10, TANCA: 11, RAVE: 12, ALTAVEU: 13, ESCENARI: 14, PORTA: 15, PARET: 16, PARQUET: 17, BUIT: 19, TERRA: 20, BOSC: 21, SORRA: 22, MAR: 23, SAGRADA: 24, GLORIES: 25, PEDRERA: 26, ESTADI: 27, CAMP: 28, MONESTIR: 29, COMISSARIA: 30, RUNA: 31, PARQUING: 32, NEU: 33, FORMIGO: 34 };
+const C = { CARRER: 0, EDIF: 1, AIGUA: 2, GESPA: 3, ARBRE: 4, ROCA: 5, MOLI: 6, ESGL: 7, PLACA: 8, BANC: 9, GARATGE: 10, TANCA: 11, RAVE: 12, ALTAVEU: 13, ESCENARI: 14, PORTA: 15, PARET: 16, PARQUET: 17, BUIT: 19, TERRA: 20, BOSC: 21, SORRA: 22, MAR: 23, SAGRADA: 24, GLORIES: 25, PEDRERA: 26, ESTADI: 27, CAMP: 28, MONESTIR: 29, COMISSARIA: 30, RUNA: 31, PARQUING: 32, NEU: 33, FORMIGO: 34, VALLA: 35, GRADA: 36, CULTIU: 37 };
 let portaOberta = false; // la porta de la rave, fins que tombes el control policial
-const transitable = t => t === C.FORMIGO || t === C.RUNA || t === C.PARQUING || t === C.NEU || t === C.CARRER || t === C.GESPA || t === C.PLACA || t === C.BANC || t === C.RAVE || t === C.PARQUET || t === C.TERRA || t === C.SORRA || t === C.CAMP || (t === C.PORTA && portaOberta);
+const transitable = t => t === C.CULTIU || t === C.FORMIGO || t === C.RUNA || t === C.PARQUING || t === C.NEU || t === C.CARRER || t === C.GESPA || t === C.PLACA || t === C.BANC || t === C.RAVE || t === C.PARQUET || t === C.TERRA || t === C.SORRA || t === C.CAMP || (t === C.PORTA && portaOberta);
 const tapaVista = t => t === C.EDIF || t === C.ROCA || t === C.MOLI || t === C.ESGL || t === C.ARBRE || t === C.GARATGE || t === C.ALTAVEU || t === C.ESCENARI || t === C.PARET || t === C.BUIT || t === C.BOSC || t === C.SAGRADA || t === C.GLORIES || t === C.PEDRERA || t === C.ESTADI || t === C.MONESTIR || t === C.COMISSARIA;
 const hash = (x, y) => { let h = x * 374761393 + y * 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
 
@@ -758,6 +758,9 @@ function generaZona(z) {
 
 // La muntanya de Pal Arinsal (en caselles): el cim és al mig i a dalt de tot hi ha l'estació nevada
 const ARINSAL = { x0: 444, y0: 22, x1: 520, y1: 70, cx: 482, cy: 46, rx: 38, ry: 24 };
+// Camp de tir, al sud de Capellades: precisió (dianes) i tir al plat, amb armeria i marcador
+const CAMP_TIR = { x0: 38, y0: 100, x1: 62, y1: 118, precisio: { x: 45.5, y: 115.5 }, plat: { x: 56.5, y: 115.5 },
+  dianes: [[42.5, 106.5], [45.5, 105.5], [48.5, 106.5], [43.5, 109.5], [47.5, 109.5]], trampes: [[52.5, 108.5], [60.5, 108.5]] };
 // Circuit de ral·lis: una pista de terra pel mig del bosc, a les afores de Manresa (en caselles)
 const RALLI = { x0: 306, y0: 40, x1: 358, y1: 88, sortida: [313, 80],
   punts: [[313, 80], [334, 81], [350, 79], [354, 71], [345, 64], [352, 55], [347, 45], [331, 44], [322, 51], [331, 58], [319, 65], [310, 60], [309, 71]],
@@ -935,6 +938,13 @@ function generaMon(m) {
     }
     for (let i = 0; i < REVOLTS.length - 1; i++) { const [ax, ay] = REVOLTS[i], [bx, by] = REVOLTS[i + 1]; omple(Math.min(ax, bx), Math.min(ay, by), Math.max(ax, bx) + 1, Math.max(ay, by) + 1, C.CARRER); }
     omple(469, 40, 471, 41, C.EDIF); omple(489, 52, 491, 53, C.EDIF); omple(497, 44, 499, 45, C.EDIF); } // xalets
+  // El camp de tir: tancat, amb les línies de tir, l'armeria i un camí fins a l'AP-7
+  { const T2 = CAMP_TIR;
+    omple(T2.x0, T2.y0, T2.x1, T2.y1, C.TANCA); omple(T2.x0 + 1, T2.y0 + 1, T2.x1 - 1, T2.y1 - 1, C.GESPA);
+    omple(41, 115, 49, 116, C.PLACA); omple(53, 115, 59, 116, C.PLACA); // línies de tir
+    omple(39, 101, 41, 102, C.EDIF); // l'armeria
+    omple(T2.x1, 108, T2.x1 + 1, 109, C.CARRER); omple(T2.x1 - 1, 108, T2.x1 - 1, 109, C.GESPA); // la porta i el camí
+  }
   // El circuit de ral·lis: bosc espès, pista de terra en bucle, paddock i camí fins a l'autopista
   { const Q = RALLI;
     for (let y = Q.y0; y <= Q.y1; y++) for (let x = Q.x0; x <= Q.x1; x++) m[y][x] = hash(x * 5, y * 7) < .55 ? C.ARBRE : C.GESPA;
@@ -945,9 +955,32 @@ function generaMon(m) {
     omple(Q.paddock.x0, Q.paddock.y0, Q.paddock.x1, Q.paddock.y1, C.PARQUING);
     omple(Q.paddock.x0 - 1, 82, Q.paddock.x0 + 1, Q.paddock.y0, C.TERRA); // del paddock a la pista
     omple(304, 85, Q.paddock.x0 - 1, 86, C.CARRER); // camí fins a l'autopista
+    // la graderia, davant la recta de sortida
+    omple(316, 74, 331, 76, C.GRADA);
+    // tanques a les dues vores de la pista (deixant pas cap al paddock)
+    const vores = [];
+    for (let y = Q.y0; y <= Q.y1; y++) for (let x = Q.x0; x <= Q.x1; x++) {
+      const t = m[y][x]; if (t === C.TERRA || t === C.PARQUING || t === C.CARRER || t === C.GRADA) continue;
+      if (x >= Q.paddock.x0 - 2 && x <= Q.paddock.x0 + 2 && y >= 81 && y <= 84) continue;
+      let toca = false; for (let dy = -1; dy <= 1 && !toca; dy++) for (let dx = -1; dx <= 1; dx++) if (m[y + dy] && m[y + dy][x + dx] === C.TERRA) { toca = true; break; }
+      if (toca) vores.push([x, y]);
+    }
+    for (const [x, y] of vores) m[y][x] = C.VALLA;
+  }
+  // Camps de conreu a la plana (blat, verdura, terra llaurada, gira-sols)
+  { m.camp = new Uint8Array(MW * MH);
+    for (let i = 0; i < 260; i++) {
+      const w = 7 + Math.floor(hash(i, 3) * 12), h = 5 + Math.floor(hash(3, i) * 8), x0 = 2 + Math.floor(hash(i, 11) * (MW - w - 4)), y0 = 2 + Math.floor(hash(11, i) * (MH - h - 4));
+      if (x0 < 128 && y0 < 96) continue;
+      const xoca = Q2 => x0 <= Q2.x1 + 2 && x0 + w >= Q2.x0 - 2 && y0 <= Q2.y1 + 2 && y0 + h >= Q2.y0 - 2; if (xoca(CAMP_TIR) || xoca(RALLI) || xoca(COMISSARIA)) continue;
+      let ok = true; for (let y = y0 - 1; y <= y0 + h && ok; y++) for (let x = x0 - 1; x <= x0 + w; x++) { const t = m[y][x]; if (t !== C.GESPA && t !== C.ARBRE) { ok = false; break; } }
+      if (!ok) continue;
+      const v = 1 + Math.floor(hash(i, 17) * 4);
+      for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) { m[y][x] = C.CULTIU; m.camp[y * MW + x] = v; }
+    }
   }
   // Carreteres secundàries (no passen pel mar, ni per la comissaria, ni per Arinsal, ni per Barcelona)
-  { const prohibit = (x, y) => esMar(x, y) || (x >= RALLI.x0 - 1 && x <= RALLI.x1 + 1 && y >= RALLI.y0 - 1 && y <= RALLI.y1 + 1) || (x >= COMISSARIA.x0 - 1 && x <= COMISSARIA.x1 + 1 && y >= COMISSARIA.y0 - 1 && y <= COMISSARIA.y1 + 1) || alcadaT(x, y) > 0 || (x >= BCN.x0 && x <= BCN.x1 && y >= BCN.y0 && y <= BCN.y1) || (x >= 42 && x <= 51 && y >= 17 && y <= 25);
+  { const prohibit = (x, y) => esMar(x, y) || (x >= CAMP_TIR.x0 - 1 && x <= CAMP_TIR.x1 + 2 && y >= CAMP_TIR.y0 - 1 && y <= CAMP_TIR.y1 + 1) || (x >= RALLI.x0 - 1 && x <= RALLI.x1 + 1 && y >= RALLI.y0 - 1 && y <= RALLI.y1 + 1) || (x >= COMISSARIA.x0 - 1 && x <= COMISSARIA.x1 + 1 && y >= COMISSARIA.y0 - 1 && y <= COMISSARIA.y1 + 1) || alcadaT(x, y) > 0 || (x >= BCN.x0 && x <= BCN.x1 && y >= BCN.y0 && y <= BCN.y1) || (x >= 42 && x <= 51 && y >= 17 && y <= 25);
     const traca = (ax, ay, bx, by, primerH) => {
       const pts = []; let x = ax, y = ay;
       const pas = (tx, ty) => { while (x !== tx || y !== ty) { if (x !== tx) x += Math.sign(tx - x); else y += Math.sign(ty - y); pts.push([x, y]); } };
@@ -1327,6 +1360,24 @@ function pintaMapa(m, ciutat, nomesTerra = false, regio = { x0: 0, y0: 0, x1: MW
       g.fillStyle = '#b98a5a'; g.fillRect(X, Y, TS, TS);
       g.fillStyle = 'rgba(80,45,20,.25)'; for (let i = 0; i < TS; i += 16) g.fillRect(X, Y + i, TS, 2);
       g.fillRect(X + (y % 2 ? 20 : 44), Y, 2, TS);
+    } else if (t === C.VALLA) { // tanca de ral·li: pneumàtics i franja vermella i blanca
+      pintaGespa(g, x, y);
+      const vert = [[0, -1], [0, 1]].some(([dx, dy]) => m[y + dy] && m[y + dy][x + dx] === C.VALLA) && ![[1, 0], [-1, 0]].some(([dx, dy]) => m[y][x + dx] === C.VALLA);
+      g.save(); g.translate(X + 32, Y + 32); if (vert) g.rotate(Math.PI / 2);
+      g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(-32, 2, 64, 16);
+      for (let k = 0; k < 4; k++) { g.fillStyle = '#1b1b1b'; g.beginPath(); g.arc(-24 + k * 16, -2, 9, 0, TAU); g.fill(); g.fillStyle = '#3a3a3a'; g.beginPath(); g.arc(-24 + k * 16, -2, 4, 0, TAU); g.fill(); }
+      for (let k = 0; k < 4; k++) { g.fillStyle = (k + x + y) % 2 ? '#d62828' : '#f4f4f4'; g.fillRect(-32 + k * 16, -14, 16, 6); }
+      g.restore();
+    } else if (t === C.GRADA) { // graderia: esglaons de formigó
+      g.fillStyle = '#8a8f99'; g.fillRect(X, Y, TS, TS);
+      for (let k = 0; k < 4; k++) { g.fillStyle = k % 2 ? '#a2a7b0' : '#767b84'; g.fillRect(X, Y + k * 16, TS, 13); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(X, Y + k * 16 + 13, TS, 3); }
+    } else if (t === C.CULTIU) { // camps de conreu: blat, verdura, terra llaurada i gira-sols
+      const v = (m.camp && m.camp[y * MW + x]) || 1, cols = [null, ['#c9ad55', '#b8983f'], ['#5d8f3a', '#476f2b'], ['#7a5636', '#5f412a'], ['#5b7d2e', '#e2b71f']][v];
+      g.fillStyle = cols[0]; g.fillRect(X, Y, TS, TS); g.fillStyle = cols[1];
+      const ver = v % 2 === 0; for (let k = 3; k < TS; k += 10) ver ? g.fillRect(X + k, Y, 4, TS) : g.fillRect(X, Y + k, TS, 4);
+      if (v === 4) for (let k = 0; k < 6; k++) { g.fillStyle = '#f2c230'; g.beginPath(); g.arc(X + 6 + (k % 3) * 22, Y + 12 + Math.floor(k / 3) * 30, 6, 0, TAU); g.fill(); g.fillStyle = '#5a3a1a'; g.beginPath(); g.arc(X + 6 + (k % 3) * 22, Y + 12 + Math.floor(k / 3) * 30, 2.5, 0, TAU); g.fill(); }
+      if (v === 1 && hash(x * 13, y * 7) < .08) { g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(X + 36, Y + 40, 16, 7, 0, 0, TAU); g.fill(); g.fillStyle = '#d9bf6a'; g.beginPath(); g.arc(X + 32, Y + 30, 14, 0, TAU); g.fill(); g.strokeStyle = '#b8983f'; g.lineWidth = 2; g.beginPath(); g.arc(X + 32, Y + 30, 8, 0, TAU); g.stroke(); } // bala de palla
+      variacio(g, x, y, X, Y, .12);
     } else if (t === C.FORMIGO) { // formigó acabat d'abocar damunt l'aigua
       texturaCasella(g, 'asfalt', X, Y); g.fillStyle = 'rgba(200,198,190,.72)'; g.fillRect(X, Y, TS, TS);
       g.strokeStyle = 'rgba(90,90,85,.35)'; g.lineWidth = 2; for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(X + 10 + hash(x, k) * 44, Y + 10 + hash(k, y) * 44, 10 + k * 3, .3, 2.2); g.stroke(); }
@@ -1449,7 +1500,7 @@ function pintaMinimapa(m, alt) {
   const mm = mini.getContext('2d');
   const colors = { [C.CARRER]: '#8d8a85', [C.EDIF]: '#9b5a40', [C.AIGUA]: '#3f86b8', [C.GESPA]: '#6fa04f', [C.ARBRE]: '#2f6e36', [C.ROCA]: '#9a7b5c', [C.MOLI]: '#7a5136', [C.ESGL]: '#8f8a80', [C.PLACA]: '#c4b49a', [C.BANC]: '#6fa04f',
     [C.GARATGE]: '#f2c230', [C.TANCA]: '#c0c8d0', [C.RAVE]: '#3a2a6a', [C.ALTAVEU]: '#111', [C.ESCENARI]: '#5a3a2a', [C.PORTA]: '#ff3b3b', [C.PARET]: '#d9cdb8', [C.PARQUET]: '#b98a5a', [C.BUIT]: '#0d0f0e', [C.TERRA]: '#a07850', [C.BOSC]: '#2d5a2a',
-    [C.SORRA]: '#e8d3a2', [C.MAR]: '#1f5f8f', [C.SAGRADA]: '#d9b26a', [C.GLORIES]: '#4fa3ff', [C.PEDRERA]: '#f4efe4', [C.ESTADI]: '#a50044', [C.CAMP]: '#4aa956', [C.MONESTIR]: '#cfc3a5', [C.COMISSARIA]: '#1d3f8f', [C.RUNA]: '#6e6862', [C.PARQUING]: '#4a4d51', [C.NEU]: '#f4f8fc', [C.FORMIGO]: '#b0b0aa' };
+    [C.SORRA]: '#e8d3a2', [C.MAR]: '#1f5f8f', [C.SAGRADA]: '#d9b26a', [C.GLORIES]: '#4fa3ff', [C.PEDRERA]: '#f4efe4', [C.ESTADI]: '#a50044', [C.CAMP]: '#4aa956', [C.MONESTIR]: '#cfc3a5', [C.COMISSARIA]: '#1d3f8f', [C.RUNA]: '#6e6862', [C.PARQUING]: '#4a4d51', [C.NEU]: '#f4f8fc', [C.FORMIGO]: '#b0b0aa', [C.VALLA]: '#d62828', [C.GRADA]: '#8a8f99', [C.CULTIU]: '#b8a35a' };
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) { mm.fillStyle = (m.auto && m.auto[y][x]) ? '#5d6066' : colors[m[y][x]]; mm.fillRect(x * 4, y * 4, 4, 4); }
   if (alt) for (let y = 1; y < MH - 1; y++) for (let x = 1; x < MW - 1; x++) { // ombres de les muntanyes (la llum ve del nord-oest)
     const i = y * MW + x, s = (alt[i - 1] + alt[i - MW] - alt[i + 1] - alt[i + MW]) * .5; if (Math.abs(s) < .04) continue;
@@ -1531,7 +1582,7 @@ const RETOLS = {
   lliga: [['LLIGA.CAT', 20.5, 5.3, '#ff5c8a']],
 };
 for (const p of POBLES) RETOLS.capellades.push([p.nom, p.x + p.w / 2, p.y - .6, '#f2c230']);
-RETOLS.capellades.push(['CIRCUIT DE RAL·LIS', 318, 88.8, '#ff9a3d'], ['PADDOCK', 318, 83.4, '#fff'], ['TELECADIRA', 474.5, 53.2, '#7fc3ff'], ['LLOGUER DE BICIS', 481.5, 49.3, '#ffd23f'], ['PORT DE MUNTANYA', 478, 25.6, '#fff']);
+RETOLS.capellades.push(['CAMP DE TIR', 50, 99.4, '#ffd23f'], ['PRECISIÓ', 45, 117.6, '#fff'], ['TIR AL PLAT', 56, 117.6, '#fff'], ['CIRCUIT DE RAL·LIS', 318, 88.8, '#ff9a3d'], ['PADDOCK', 318, 83.4, '#fff'], ['TELECADIRA', 474.5, 53.2, '#7fc3ff'], ['LLOGUER DE BICIS', 481.5, 49.3, '#ffd23f'], ['PORT DE MUNTANYA', 478, 25.6, '#fff']);
 for (const gs of GASOLINERES) RETOLS.capellades.push(['GASOLINERA', gs.x + 3, gs.y + 4.6, '#ff9a3d']);
 for (const p of POBLES) { const q = parquingDe(p); RETOLS.capellades.push(['PÀRQUING', (q.x0 + q.x1 + 1) / 2, q.y1 + 1.6, '#7fc3ff']); }
 RETOLS.capellades.push(['CASA DEL RAMON', 46.5, 17.6, '#2fd38a'], ['COMISSARIA DELS MOSSOS', (COMISSARIA.x0 + COMISSARIA.x1) / 2, COMISSARIA.y0 - .6, '#2d6bff'], ['AP-7', 66, 200, '#2a7de1'], ['C-16', 302, 60, '#2a7de1'], ['N-II', 502, 100, '#2a7de1']);
@@ -1629,7 +1680,7 @@ function canviaCasella(x, y, t) {
 // Els carrers, les cases i l'aigua queden plans, i el terreny hi baixa de mica en mica.
 function calculaRelleu(m) {
   const W = MW, H = MH, N = W * H, alt = new Float32Array(N);
-  const natural = t => t === C.GESPA || t === C.ARBRE || t === C.TERRA || t === C.ROCA || t === C.NEU;
+  const natural = t => t === C.GESPA || t === C.ARBRE || t === C.TERRA || t === C.ROCA || t === C.NEU || t === C.CULTIU;
   const bfs = (dist, origen, entra, max) => {
     const cua = new Int32Array(N); let a = 0, b = 0;
     for (let i = 0; i < N; i++) if (origen(i)) { dist[i] = 0; cua[b++] = i; }
@@ -2509,6 +2560,7 @@ function canviaArmaFoc() {
 }
 function disparaPistola() {
   const j = J.jug, p = j.pistola;
+  if (J.tir) return tirConcurs();
   if (!p || j.cotxe || (j.recPis || 0) > 0) return;
   const A = ARMES_FOC[p.tipus || 'pistola'];
   if (p.bales <= 0) { j.recPis = .5; so('clic'); so('rebot'); textFlotant(j.x, j.y - 100, 'SENSE BALES! VES A L\'ARMERIA', '#bbb', 9); return; }
@@ -2541,7 +2593,7 @@ function pendent(v, dx, dy) { if (J.zona || J.ciutat !== 'capellades') return 1;
 function actualitzaPistola(dt) {
   const j = J.jug;
   actualitzaBenziners(dt);
-  if ((tecles.KeyR || J.ratxa) && j.pistola && ARMES_FOC[j.pistola.tipus || 'pistola'].rec < .1) disparaPistola(); actualitzaPaquets(); actualitzaRampes(dt); actualitzaLlaunes(dt); actualitzaControls(dt); actualitzaElois(dt); actualitzaRalli(dt); actualitzaFocs(dt); actualitzaPoliciaPeu(dt); actualitzaDrift(dt);
+  if ((tecles.KeyR || J.ratxa) && j.pistola && ARMES_FOC[j.pistola.tipus || 'pistola'].rec < .1) disparaPistola(); actualitzaPaquets(); actualitzaRampes(dt); actualitzaLlaunes(dt); actualitzaControls(dt); actualitzaElois(dt); actualitzaRalli(dt); actualitzaTir(dt); actualitzaFocs(dt); actualitzaPoliciaPeu(dt); actualitzaDrift(dt);
   for (const cd of J.conductors || []) { cd.t -= dt; cd.pas += dt * 14; mou(cd, cd.vx, cd.vy, dt, 10); } if (J.conductors) J.conductors = J.conductors.filter(cd => cd.t > 0);
   if (!J.zona && J.ciutat === 'capellades' && granMon()) actualitzaArinsal(dt);
   if (J.zona === 'arinsal') actualitzaPista(dt);
@@ -3063,6 +3115,7 @@ function avisaPolicia(x, y, radi) {
 
 function accio() {
   const j = J.jug;
+  if (J.tir) return tirConcurs();
   if (j.recBuh > 0) return;
   if (!(j.cotxe && j.cotxe.tipus === 'carromato')) xarxaEvent('hula', j.x, j.y);
   if (J.zona === 'presso') {
@@ -3163,6 +3216,8 @@ function actualitzaTaxi(dt) {
 
 function accioPropera() {
   const j = J.jug;
+  if (J.tir) return { boto: 'PLEGAR', text: 'DEIXAR EL CONCURS', fer: () => { J.tir = null; anunci('CONCURS ABANDONAT', 1.2); } };
+  if (!j.cotxe && !J.zona && J.ciutat === 'capellades' && granMon()) { for (const mode of ['precisio', 'plat']) { const sp = CAMP_TIR[mode]; if (Math.hypot(sp.x * TS - j.x, sp.y * TS - j.y) < 80) return { boto: 'CONCURS', text: mode === 'precisio' ? 'CONCURS DE PRECISIÓ (10 TIRS A LES DIANES)' : 'TIR AL PLAT (10 PLATS)', fer: () => comencaTir(mode) }; } }
   if (j.passatger) { const r = XARXA.altres.get(j.passatger); return { boto: 'BAIXAR', text: 'BAIXAR DEL COTXE' + (r ? ' DE ' + String(r.nom).toUpperCase() : ''), fer: baixaPassatger }; }
   if (!j.cotxe && !j.vespa && enSala()) { const r = [...XARXA.altres.entries()].find(([id, r]) => r.cotxe && !r.passatger && r.vist && performance.now() - r.vist < 3000 && mateixLloc(r) && Math.hypot(r.x - j.x, r.y - j.y) < 95); if (r) return { boto: 'PUJAR', text: 'PUJAR AL COTXE DE ' + String(r[1].nom).toUpperCase(), fer: () => pujaPassatger(r[0]) }; }
   if (j.cotxe && J.autostop && J.autostop.estat === 'espera' && Math.hypot(J.autostop.x - j.x, J.autostop.y - j.y) < 110) return { boto: 'RECOLLIR', text: 'RECOLLIR LES AUTOESTOPISTES', fer: recullAutostop };
@@ -3258,6 +3313,7 @@ const LOCALS = {
   ],
   vic: [{ tipus: 'bar', x: 4.5, y: 14.45 }, { tipus: 'disfresses', x: 12.5, y: 28.45 }],
 };
+LOCALS.capellades.push({ tipus: 'armeria', x: 40.5, y: 103.45 }); // la del camp de tir
 // armeries també als pobles grans
 for (const nom of ['IGUALADA', 'MANRESA', 'LLEIDA', 'GIRONA', 'TARRAGONA', 'REUS']) { const p = POBLES.find(q => q.nom === nom); LOCALS.capellades.push({ tipus: 'armeria', x: p.x + 20.5, y: p.y + 6.45 }); }
 const TIPUS_LOCAL = {
@@ -4012,7 +4068,8 @@ function actualitza(dt) {
       }
     }
     v.vel = Math.hypot(v.x - x0, v.y - y0) / dt;
-    if (granMon() && !J.zona) { const ab = v.benzina; v.benzina = Math.max(0, v.benzina - v.vel * dt / 900); if (ab > 15 && v.benzina <= 15) anunci('QUEDA POCA BENZINA! BUSCA UNA GASOLINERA', 2.2); if (ab > 0 && v.benzina <= 0) anunci('SENSE BENZINA! VAS A PAS DE TORTUGA', 2.2); }
+    if (v.tipus === 'ralli') v.benzina = 100; // els cotxes de ral·li tenen el dipòsit infinit
+    else if (granMon() && !J.zona) { const ab = v.benzina; v.benzina = Math.max(0, v.benzina - v.vel * dt / 900); if (ab > 15 && v.benzina <= 15) anunci('QUEDA POCA BENZINA! BUSCA UNA GASOLINERA', 2.2); if (ab > 0 && v.benzina <= 0) anunci('SENSE BENZINA! VAS A PAS DE TORTUGA', 2.2); }
     if (v.vel > 50 && Math.random() < dt * 6) fum(v, '#bbb', .6);
     j.x = v.x; j.y = v.y; j.fx = v.fx; j.fy = v.fy;
   } else if (m > 0.1 && !(j.ensopega > 0)) {
@@ -5104,6 +5161,7 @@ function dibuixa() {
   }
   const j = J.jug;
   let camX = j.x - W / zoom / 2, camY = j.y - H / zoom / 2;
+  if (J.tir && J.tir.cam) { camX = J.tir.cam.x - W / zoom / 2; camY = J.tir.cam.y - H / zoom / 2; } // al concurs de tir, la càmera mira les dianes
   camX = Math.max(0, Math.min(MW * TS - W / zoom, camX)); camY = Math.max(-80, Math.min(MH * TS - H / zoom, camY));
   J.cam = { x: camX, y: camY, z: zoom / dpr };
   if (J.tremolor > 0) { camX += (Math.random() - .5) * 16 * J.tremolor; camY += (Math.random() - .5) * 16 * J.tremolor; }
@@ -5187,7 +5245,7 @@ function dibuixa() {
   if (!J.zona) { if (J.bombers && vist(J.bombers)) ents.push([J.bombers.y + 10, () => dibuixaBombers(cx)]); }
   if (!J.zona && J.ciutat === 'capellades' && granMon()) {
     for (const r of RAMPES) if (vist(r)) dibuixaRampa(cx, r);
-    dibuixaControlsRalli(cx, vist);
+    dibuixaControlsRalli(cx, vist); dibuixaRalliDecorat(cx, vist); dibuixaCampTir(cx, vist);
     for (const p of totsPunters()) if (vist(p)) ents.push([p.y, () => { const b = Math.sin(performance.now() / 300) * 4; cx.fillStyle = 'rgba(255,255,255,.12)'; cx.fillRect(p.x - 3, p.y - 220, 6, 220); agullaMapa(cx, p.x, p.y + b, 3, p.color, p.nom, p.meu ? '' : p.autor); }]);
     for (const l of J.llaunes || []) if (vist(l)) ents.push([l.y, () => dibuixaLlauna(cx, l)]);
     for (const e of J.elois || []) if (vist(e)) ents.push([e.y, escalat(e, () => dibuixaEloi(cx, e), 1.35)]);
@@ -5210,6 +5268,7 @@ function dibuixa() {
   }
   const ara = performance.now() / 1000;
   if (!J.zona) dibuixaFocs(cx, e => e.x > camX - 100 && e.x < camX + W / zoom + 100 && e.y > camY - 60 && e.y < camY + H / zoom + 200);
+  dibuixaPaisatge(cx, e => e.x > camX - 200 && e.x < camX + W / zoom + 200 && e.y > camY - 40 && e.y < camY + H / zoom + 260);
   // El telecadira: cable i cadires que pugen (i tu penjat, si hi vas)
   if (!J.zona && J.ciutat === 'capellades' && granMon() && Math.hypot(j.x - TELECADIRA.baix.x, j.y - TELECADIRA.baix.y) < 2600) {
     const B = TELECADIRA.baix, D = TELECADIRA.dalt;
@@ -5517,6 +5576,7 @@ function dibuixaHUD(W, H, dpr) {
   }
   if (J.historia) dibuixaHistoria(g, W, H, petit, caixa);
   dibuixaRalliHUD(g, W, H, caixa, petit);
+  if (J.tir) { const T3 = J.tir; caixa(12, petit ? 150 : 96, 230, 48); g.font = '8px "Press Start 2P"'; g.fillStyle = '#ffd23f'; g.fillText(T3.mode === 'precisio' ? 'PRECISIÓ' : 'TIR AL PLAT', 22, (petit ? 150 : 96) + 16); g.fillStyle = '#fff'; g.fillText(T3.punts + ' PUNTS · ' + Math.min(10, T3.n) + '/10' + (tactil ? '' : '  [ESPAI]'), 22, (petit ? 150 : 96) + 36); }
   { const ps = totsPunters().filter(p => Math.hypot(p.x - j.x, p.y - j.y) > 4 * TS).sort((a, b) => (b.t || 0) - (a.t || 0)); // fletxa cap al punter més nou
     if (ps.length && !J.zona) { const p = ps[0], a = Math.atan2(p.y - j.y, p.x - j.x), ax = W - 210, ay = H - (tactil ? 300 : 170), dd = Math.round(Math.hypot(p.x - j.x, p.y - j.y) / TS * 4);
       caixa(ax - 30, ay - 26, 210, 52); g.save(); g.translate(ax, ay); g.rotate(a); g.fillStyle = p.color; g.strokeStyle = '#000'; g.lineWidth = 3; g.beginPath(); g.moveTo(18, 0); g.lineTo(-9, -12); g.lineTo(-3, 0); g.lineTo(-9, 12); g.closePath(); g.fill(); g.stroke(); g.restore();
@@ -5966,6 +6026,7 @@ function repEvent(d) {
       xarxaEvent('ensurt', j.x, j.y, { a: d.id });
     }
   }
+  if (d.tipus === 'tir') { const nom = String(d.nom).toUpperCase(), r = J.rankTir = J.rankTir || { precisio: {}, plat: {} }; r[d.mode][nom] = Math.max(r[d.mode][nom] || 0, d.punts); textFlotant(j.x, j.y - 120, nom + ': ' + (d.mode === 'precisio' ? 'PRECISIÓ ' : 'PLAT ') + d.punts + '/100', '#ffd23f', 9); }
   if (d.tipus === 'volta') { const nom = String(d.nom).toUpperCase(); (J.rankRalli = J.rankRalli || {})[nom] = Math.min(J.rankRalli[nom] || 1e9, d.temps); textFlotant(j.x, j.y - 120, nom + ': VOLTA ' + fmtVolta(d.temps), '#ff9a3d', 9); }
   if (d.tipus === 'puja' && d.a === XARXA.jo) { anunci(String(d.nom).toUpperCase() + ' HA PUJAT AL TEU COTXE!', 1.8); so('porta'); }
   if (d.tipus === 'baixa' && d.a === XARXA.jo) { textFlotant(j.x, j.y - 90, String(d.nom).toUpperCase() + ' HA BAIXAT', '#fff', 9); so('porta'); }
@@ -6341,7 +6402,15 @@ function actualitzaRalli(dt) {
   if (v && v.vel > 220 && tileA(v.x, v.y) === C.TERRA && Math.random() < dt * 25) J.particules.push({ x: v.x - Math.cos(v.ang) * 34, y: v.y - Math.sin(v.ang) * 34, vx: (Math.random() - .5) * 60, vy: -20 - Math.random() * 30, t: .9, c: 'rgba(170,130,90,.55)', m: 12 });
   if (!v) { if (R2 && R2.actiu) { R2.actiu = false; anunci('VOLTA ANUL·LADA: HAS BAIXAT DEL COTXE', 1.6); } return; }
   const s0 = ptRalli(0), aSortida = Math.hypot(v.x - s0.x, v.y - s0.y) < 3 * TS;
-  if (!R2 || !R2.actiu) { if (aSortida && (!R2 || !R2.dinsSortida)) { J.ralli = { actiu: true, t: 0, cp: 1, dinsSortida: true }; so('bip'); anunci('VOLTA COMENÇADA! PASSA PER TOTS ELS PUNTS DE CONTROL', 1.6); } else if (R2) R2.dinsSortida = aSortida; return; }
+  if (J.semafor && !J.semafor.verd) { // tres llums vermells i després verd
+    const S = J.semafor, abans = Math.floor(S.t / .8); S.t += dt; const ara = Math.floor(S.t / .8);
+    if (ara !== abans && ara <= 3) so(ara < 3 ? 'bip' : 'punts');
+    if (!aSortida && S.t < 3.2) { J.semafor = null; anunci('SORTIDA ANUL·LADA: ESPERA EL VERD A LA LÍNIA', 1.6); return; }
+    if (S.t >= 3.2) { J.semafor = { verd: true, t: 0 }; J.ralli = { actiu: true, t: 0, cp: 1, dinsSortida: true }; anunci('VERD! A FONS!', 1.4); so('motor'); }
+    return;
+  }
+  if (J.semafor && J.semafor.verd && (J.semafor.t += dt) > 2) J.semafor = null;
+  if (!R2 || !R2.actiu) { if (aSortida && (!R2 || !R2.dinsSortida) && !J.semafor) { J.semafor = { t: 0 }; J.ralli = { actiu: false, dinsSortida: true }; anunci("ATENCIÓ AL SEMÀFOR...", 1.4); } else if (R2) R2.dinsSortida = aSortida; return; }
   R2.t += dt; R2.dinsSortida = aSortida;
   const n = RALLI.punts.length;
   if (R2.cp < n) { const p = ptRalli(R2.cp); if (Math.hypot(v.x - p.x, v.y - p.y) < 3.6 * TS) { R2.cp++; so('punts'); textFlotant(v.x, v.y - 70, 'CONTROL ' + (R2.cp - 1) + '/' + (n - 1) + ' · ' + fmtVolta(R2.t), '#ffd23f', 10); } }
@@ -6369,6 +6438,37 @@ function dibuixaRalliHUD(g, W, H, caixa, petit) {
     g.save(); g.translate(ax, ay); g.rotate(a); g.fillStyle = '#ff9a3d'; g.strokeStyle = '#000'; g.lineWidth = 3; g.beginPath(); g.moveTo(22, 0); g.lineTo(-10, -14); g.lineTo(-4, 0); g.lineTo(-10, 14); g.closePath(); g.fill(); g.stroke(); g.restore();
   }
 }
+function dibuixaRalliDecorat(g, vist) {
+  const t = performance.now() / 1000, j = J.jug, v = j.cotxe, aprop = v && v.vel > 200 && Math.hypot(v.x - 323 * TS, v.y - 79 * TS) < 12 * TS;
+  // el públic de les grades (salta i aixeca els braços quan passa un cotxe)
+  if (vist({ x: 323 * TS, y: 75 * TS })) for (let i = 0; i < 64; i++) {
+    const x = (316.3 + (i % 16) * .98) * TS, y = (74.4 + Math.floor(i / 16) * .62) * TS, salt = Math.abs(Math.sin(t * (aprop ? 9 : 2) + i)) * (aprop ? 7 : 2), col = ['#e63946', '#2a7de1', '#f2c230', '#2fd38a', '#fff', '#ff7ac4'][i % 6];
+    g.fillStyle = col; g.fillRect(x - 6, y - 14 - salt, 12, 12); g.fillStyle = ['#f1c7a3', '#e0ac85', '#c98e66', '#8d5a3b'][i % 4]; g.beginPath(); g.arc(x, y - 19 - salt, 5, 0, TAU); g.fill();
+    if (aprop || i % 5 === 0) { g.strokeStyle = g.fillStyle; g.lineWidth = 2; g.beginPath(); g.moveTo(x - 5, y - 13 - salt); g.lineTo(x - 9, y - 26 - salt); g.moveTo(x + 5, y - 13 - salt); g.lineTo(x + 9, y - 26 - salt); g.stroke(); }
+    if (i % 7 === 0) { g.fillStyle = i % 2 ? '#d62828' : '#f2c230'; g.fillRect(x + 6, y - 34 - salt, 12, 8); } // banderetes
+  }
+  // les animadores a la línia de sortida, amb pompons
+  if (vist({ x: 314 * TS, y: 77 * TS })) for (let i = 0; i < 4; i++) {
+    const x = (313.2 + i * .9) * TS, y = 77.15 * TS, b = Math.abs(Math.sin(t * 6 + i * .8)) * 10;
+    personaPetita(g, x, y - b, { pell: ['#f1c7a3', '#e0ac85', '#f6d2b8', '#c98e66'][i], cabell: ['#c99a4a', '#3a2416', '#111', '#8b4a1e'][i], roba: '#d62828', llarg: true }, t * 8, false, false);
+    for (const k of [-1, 1]) { const px = x + k * 12, py = y - 34 - b - Math.abs(Math.sin(t * 6 + i + k)) * 12; g.fillStyle = i % 2 ? '#f2c230' : '#fff'; for (let a = 0; a < 6; a++) { g.beginPath(); g.arc(px + Math.cos(a) * 5, py + Math.sin(a) * 5, 4, 0, TAU); g.fill(); } }
+  }
+  // el pòrtic de sortida amb el semàfor
+  const sx = (RALLI.sortida[0] + .5) * TS, sy = (RALLI.sortida[1] - 2.6) * TS;
+  if (vist({ x: sx, y: sy })) {
+    g.fillStyle = '#2b2f36'; g.fillRect(sx - 6, sy - 60, 12, 70); g.fillStyle = '#111'; g.fillRect(sx - 30, sy - 116, 60, 60);
+    const S = J.semafor, enc = S ? (S.verd ? 0 : Math.min(3, Math.floor(S.t / .8) + 1)) : 0;
+    for (let k = 0; k < 3; k++) { g.fillStyle = S && S.verd ? '#2fd38a' : k < enc ? '#ff2d2d' : '#3a1414'; g.beginPath(); g.arc(sx - 18 + k * 18, sy - 86, 7, 0, TAU); g.fill(); if (k < enc || (S && S.verd)) { g.fillStyle = S && S.verd ? 'rgba(47,211,138,.3)' : 'rgba(255,45,45,.3)'; g.beginPath(); g.arc(sx - 18 + k * 18, sy - 86, 14, 0, TAU); g.fill(); } }
+  }
+  // el cronòmetre gegant damunt les grades
+  const cxr = 323.5 * TS, cyr = 73.2 * TS;
+  if (vist({ x: cxr, y: cyr })) {
+    g.fillStyle = '#2b2f36'; g.fillRect(cxr - 8, cyr - 20, 16, 40); g.fillStyle = '#0a0a0a'; g.fillRect(cxr - 150, cyr - 92, 300, 76); g.strokeStyle = '#ff9a3d'; g.lineWidth = 4; g.strokeRect(cxr - 150, cyr - 92, 300, 76);
+    const R2 = J.ralli, mill = millorRalli(); g.textAlign = 'center';
+    g.font = '22px "Press Start 2P"'; g.fillStyle = '#ffd23f'; g.fillText(R2 && R2.actiu ? fmtVolta(R2.t) : J.semafor && !J.semafor.verd ? 'PREPARATS' : '0:00.0', cxr, cyr - 52);
+    g.font = '10px "Press Start 2P"'; g.fillStyle = '#2fd38a'; g.fillText('RÈCORD ' + (mill ? fmtVolta(mill) : '--'), cxr, cyr - 28); g.textAlign = 'left';
+  }
+}
 function dibuixaControlsRalli(g, vist) { // banderoles als punts de control (el següent, més gros)
   const R2 = J.ralli, t = performance.now() / 1000;
   RALLI.punts.forEach((_, i) => {
@@ -6376,6 +6476,114 @@ function dibuixaControlsRalli(g, vist) { // banderoles als punts de control (el 
     for (const k of [-1, 1]) { const x = p.x + k * 2.2 * TS, y = p.y; g.fillStyle = '#333'; g.fillRect(x - 2, y - 46, 4, 46); g.fillStyle = seg ? ((t * 4 | 0) % 2 ? '#ff9a3d' : '#ffd23f') : (i ? '#2a7de1' : '#fff'); g.beginPath(); g.moveTo(x + 2, y - 46); g.lineTo(x + 24 + Math.sin(t * 6 + i) * 3, y - 38); g.lineTo(x + 2, y - 30); g.fill(); }
     if (seg) rotul(g, i ? 'CONTROL ' + i : 'META', p.x, p.y - 56, '#ff9a3d', 8);
   });
+}
+
+// ---------- Camp de tir: concurs de precisió (10 tirs a les dianes) i de tir al plat (10 plats) ----------
+const dinsTir = (x, y) => x >= CAMP_TIR.x0 * TS && x <= (CAMP_TIR.x1 + 1) * TS && y >= CAMP_TIR.y0 * TS && y <= (CAMP_TIR.y1 + 1) * TS;
+const millorsTir = () => { try { return JSON.parse(localStorage.getItem('ensurts-tir') || '{}'); } catch (e) { return {}; } };
+function comencaTir(mode) {
+  const j = J.jug, sp = CAMP_TIR[mode];
+  j.x = sp.x * TS; j.y = sp.y * TS;
+  J.tir = { mode, n: 0, punts: 0, t: 0, forats: [], plat: null, tPlat: 1, cam: mode === 'precisio' ? { x: 45.5 * TS, y: 111 * TS } : { x: 56.5 * TS, y: 111 * TS } };
+  so('agafar'); anunci(mode === 'precisio' ? "PRECISIÓ: DISPARA QUAN LA MIRA SIGUI AL MIG" : 'TIR AL PLAT: DISPARA QUAN LA MIRA TOQUI EL PLAT', 2.4);
+}
+function miraTir() {
+  const T3 = J.tir, t = T3.t;
+  if (T3.mode === 'precisio') { const [dx, dy] = CAMP_TIR.dianes[Math.min(4, Math.floor(T3.n / 2))], A = 24 + Math.floor(T3.n / 2) * 6; return { x: dx * TS + Math.sin(t * 1.9) * A, y: dy * TS + Math.sin(t * 2.7 + 1.2) * A * .8, cx: dx * TS, cy: dy * TS }; }
+  const p = T3.plat; if (!p) return null; return { x: p.x + Math.sin(t * 7) * 16, y: p.y + Math.cos(t * 5.3) * 12 };
+}
+function tirConcurs() {
+  const T3 = J.tir, j = J.jug; if (!T3 || T3.fi || (j.recPis || 0) > 0) return;
+  j.recPis = .45; const mira = miraTir(); if (!mira) return;
+  (J.tretsVis = J.tretsVis || []).push({ x: j.x, y: j.y - 30, vx: (mira.x - j.x) * 4, vy: (mira.y - j.y + 30) * 4, t: .25 });
+  if (T3.mode === 'precisio') {
+    so('rifle'); const d = Math.hypot(mira.x - mira.cx, mira.y - mira.cy), p = Math.max(0, 10 - Math.floor(d / 3));
+    T3.forats.push({ x: mira.x, y: mira.y }); T3.punts += p; T3.n++;
+    textFlotant(mira.cx, mira.cy - 50, p === 10 ? 'DIANA! 10' : p ? '+' + p : 'FORA!', p >= 9 ? '#ffd23f' : p ? '#fff' : '#ff9a9a', p === 10 ? 13 : 10);
+    if (p === 10) so('paquet');
+  } else {
+    if (T3.plat.tocat !== undefined) return; so('escopeta');
+    const encert = Math.hypot(mira.x - T3.plat.x, mira.y - T3.plat.y) < 15;
+    T3.plat.tocat = encert;
+    if (encert) { T3.punts += 10; textFlotant(T3.plat.x, T3.plat.y - 30, 'TRENCAT! +10', '#ffd23f', 11); so('xoc'); for (let i = 0; i < 16; i++) J.particules.push({ x: T3.plat.x, y: T3.plat.y, vx: (Math.random() - .5) * 300, vy: (Math.random() - .5) * 300, t: .7, c: tria(['#ff7a00', '#ffb000', '#5a3a1a']), m: 5, g: 500 }); T3.plat.t = 0; }
+    else textFlotant(T3.plat.x, T3.plat.y - 30, 'FALLAT!', '#ff9a9a', 10);
+  }
+  if (T3.n >= 10 && T3.mode === 'precisio') acabaTir();
+}
+function acabaTir() {
+  const T3 = J.tir; if (!T3 || T3.fi) return; T3.fi = true;
+  const mill = millorsTir(), rec = !mill[T3.mode] || T3.punts > mill[T3.mode];
+  if (rec) { mill[T3.mode] = T3.punts; try { localStorage.setItem('ensurts-tir', JSON.stringify(mill)); } catch (e) {} }
+  J.punts += T3.punts * 20; so('paquet');
+  anunci((rec ? 'RÈCORD! ' : '') + (T3.mode === 'precisio' ? 'PRECISIÓ: ' : 'TIR AL PLAT: ') + T3.punts + '/100 · +' + T3.punts * 20, 3);
+  const r = J.rankTir = J.rankTir || { precisio: {}, plat: {} }; r[T3.mode][nomJugador()] = Math.max(r[T3.mode][nomJugador()] || 0, T3.punts);
+  xarxaEvent('tir', J.jug.x, J.jug.y, { mode: T3.mode, punts: T3.punts });
+  setTimeout(() => { if (J && J.tir === T3) J.tir = null; }, 2500);
+}
+function actualitzaTir(dt) {
+  const T3 = J.tir; if (!T3) return;
+  const j = J.jug, sp = CAMP_TIR[T3.mode]; T3.t += dt; j.x = sp.x * TS; j.y = sp.y * TS; j.fx = 0; j.fy = -1;
+  if (T3.mode === 'plat' && !T3.fi) {
+    const p = T3.plat;
+    if (p) { p.t -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 520 * dt; if (p.t <= 0) { T3.plat = null; T3.n++; T3.tPlat = .9; if (T3.n >= 10) acabaTir(); } }
+    else if ((T3.tPlat -= dt) <= 0 && T3.n < 10) { const esq = Math.random() < .5, [tx, ty] = CAMP_TIR.trampes[esq ? 0 : 1]; T3.plat = { x: tx * TS, y: ty * TS, vx: (esq ? 1 : -1) * (300 + Math.random() * 120), vy: -420 - Math.random() * 80, t: 1.7 }; so('salt'); }
+  }
+}
+function dibuixaCampTir(g, vist) {
+  const C2 = CAMP_TIR, t = performance.now() / 1000;
+  if (!vist({ x: 50 * TS, y: 109 * TS }) && !vist({ x: 45 * TS, y: 115 * TS })) return;
+  // les dianes, sobre un trípode
+  for (const [dx, dy] of C2.dianes) { const x = dx * TS, y = dy * TS; g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x - 20, y + 30, 40, 8); g.fillStyle = '#6b4a2a'; g.fillRect(x - 3, y, 6, 36);
+    for (const [r, c] of [[32, '#fff'], [26, '#111'], [20, '#2a7de1'], [14, '#d62828'], [8, '#f2c230']]) { g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); } }
+  for (const fo of (J.tir && J.tir.forats) || []) { g.fillStyle = '#000'; g.beginPath(); g.arc(fo.x, fo.y, 3, 0, TAU); g.fill(); }
+  // les cabines del tir al plat
+  for (const [tx, ty] of C2.trampes) { const x = tx * TS, y = ty * TS; g.fillStyle = '#9a9890'; g.fillRect(x - 28, y - 30, 56, 44); g.fillStyle = '#5a5a52'; g.fillRect(x - 28, y - 34, 56, 8); g.fillStyle = '#111'; g.fillRect(x - 10, y - 18, 20, 10); }
+  // el marcador gegant
+  const bx = 50 * TS, by = 102.2 * TS, mill = millorsTir(), r = J.rankTir || { precisio: {}, plat: {} };
+  g.fillStyle = '#2b2f36'; g.fillRect(bx - 6, by - 10, 12, 50); g.fillStyle = '#0a0a0a'; g.fillRect(bx - 170, by - 110, 340, 104); g.strokeStyle = '#ffd23f'; g.lineWidth = 4; g.strokeRect(bx - 170, by - 110, 340, 104);
+  g.textAlign = 'center'; g.font = '12px "Press Start 2P"'; g.fillStyle = '#ffd23f'; g.fillText('MARCADOR', bx, by - 88);
+  const top = mode => { const l = Object.entries(r[mode] || {}); if (mill[mode]) l.push(['TU', mill[mode]]); return l.sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, p]) => String(n).slice(0, 7) + ' ' + p).join('  '); };
+  g.font = '8px "Press Start 2P"'; g.fillStyle = '#fff'; g.fillText('PRECISIÓ: ' + (top('precisio') || '--'), bx, by - 60); g.fillText('PLAT: ' + (top('plat') || '--'), bx, by - 36);
+  if (J.tir) { g.fillStyle = '#2fd38a'; g.fillText('ARA: ' + J.tir.punts + ' PUNTS · ' + J.tir.n + '/10', bx, by - 16); }
+  g.textAlign = 'left';
+  // el plat en l'aire i la mira
+  if (J.tir && J.tir.plat) { const p = J.tir.plat; g.fillStyle = '#ff7a00'; g.beginPath(); g.ellipse(p.x, p.y, 11, 5, 0, 0, TAU); g.fill(); g.fillStyle = '#5a3a1a'; g.beginPath(); g.ellipse(p.x, p.y - 1, 5, 2, 0, 0, TAU); g.fill(); }
+  const mira = J.tir && !J.tir.fi && miraTir();
+  if (mira) { g.strokeStyle = '#ff2d2d'; g.lineWidth = 2.5; g.beginPath(); g.arc(mira.x, mira.y, 12, 0, TAU); g.moveTo(mira.x - 20, mira.y); g.lineTo(mira.x - 5, mira.y); g.moveTo(mira.x + 5, mira.y); g.lineTo(mira.x + 20, mira.y); g.moveTo(mira.x, mira.y - 20); g.lineTo(mira.x, mira.y - 5); g.moveTo(mira.x, mira.y + 5); g.lineTo(mira.x, mira.y + 20); g.stroke(); }
+}
+
+// ---------- Aerogeneradors als turons i torres elèctriques al costat de les autopistes ----------
+let PAISATGE = null;
+function paisatge() {
+  if (PAISATGE) return PAISATGE;
+  const c = CIUTATS.capellades, A = c.alt, m = c.mapa, W = c.mw, H = c.mh, aeros = [], torres = [];
+  for (let y = 6; y < H - 6; y += 3) for (let x = 6; x < W - 6; x += 3) {
+    if (x < 128 && y < 96) continue; const t = m[y][x], h = A[y * W + x];
+    if ((t === C.GESPA || t === C.CULTIU) && h > 1.6 && h < 6 && !aeros.some(a => Math.hypot(a.tx - x, a.ty - y) < 16)) aeros.push({ tx: x, ty: y, x: (x + .5) * TS, y: (y + .5) * TS, fase: hash(x, y) * TAU });
+    if (aeros.length > 40) break;
+  }
+  for (const [y0, x0, x1] of [[11, 136, 630], [69, 136, 630]]) for (let x = x0; x <= x1; x += 13) { const t = m[y0] && m[y0][x]; if (t === C.GESPA || t === C.CULTIU || t === C.ARBRE) torres.push({ x: (x + .5) * TS, y: (y0 + .5) * TS, linia: y0 }); }
+  return PAISATGE = { aeros, torres };
+}
+function dibuixaPaisatge(g, vist) {
+  if (J.zona || J.ciutat !== 'capellades' || !granMon()) return;
+  const P2 = paisatge(), t = performance.now() / 1000;
+  // cables entre torres seguides (només els que es veuen)
+  g.strokeStyle = 'rgba(30,30,30,.55)'; g.lineWidth = 1.5;
+  for (let i = 1; i < P2.torres.length; i++) { const a = P2.torres[i - 1], b = P2.torres[i]; if (a.linia !== b.linia || (!vist(a) && !vist(b))) continue; for (const dy of [-118, -104]) { g.beginPath(); g.moveTo(a.x - 22, a.y + dy); g.quadraticCurveTo((a.x + b.x) / 2, a.y + dy + 22, b.x - 22, b.y + dy); g.moveTo(a.x + 22, a.y + dy); g.quadraticCurveTo((a.x + b.x) / 2, a.y + dy + 22, b.x + 22, b.y + dy); g.stroke(); } }
+  for (const tr of P2.torres) if (vist(tr)) { // torre de ferro
+    g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(tr.x + 10, tr.y + 4, 20, 6, 0, 0, TAU); g.fill();
+    g.strokeStyle = '#6a6e74'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(tr.x - 14, tr.y); g.lineTo(tr.x, tr.y - 120); g.lineTo(tr.x + 14, tr.y); g.moveTo(tr.x - 10, tr.y - 30); g.lineTo(tr.x + 10, tr.y - 30); g.moveTo(tr.x - 7, tr.y - 60); g.lineTo(tr.x + 7, tr.y - 60);
+    g.moveTo(tr.x - 26, tr.y - 104); g.lineTo(tr.x + 26, tr.y - 104); g.moveTo(tr.x - 24, tr.y - 118); g.lineTo(tr.x + 24, tr.y - 118); g.moveTo(tr.x - 10, tr.y - 30); g.lineTo(tr.x + 7, tr.y - 60); g.moveTo(tr.x + 10, tr.y - 30); g.lineTo(tr.x - 7, tr.y - 60); g.stroke();
+  }
+  for (const a of P2.aeros) if (vist(a)) { // aerogenerador
+    g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(a.x + 40, a.y + 6, 60, 10, .3, 0, TAU); g.fill();
+    g.fillStyle = '#e9edf0'; g.beginPath(); g.moveTo(a.x - 7, a.y); g.lineTo(a.x - 3, a.y - 170); g.lineTo(a.x + 3, a.y - 170); g.lineTo(a.x + 7, a.y); g.fill();
+    g.fillStyle = '#d5dade'; g.fillRect(a.x - 9, a.y - 178, 22, 12);
+    const r = t * 1.6 + a.fase; g.fillStyle = '#f4f6f8'; g.strokeStyle = '#b8bec4'; g.lineWidth = 1;
+    for (let k = 0; k < 3; k++) { const an = r + k * TAU / 3; g.save(); g.translate(a.x, a.y - 172); g.rotate(an); g.beginPath(); g.moveTo(0, -3); g.quadraticCurveTo(40, -7, 80, 0); g.quadraticCurveTo(40, 4, 0, 3); g.fill(); g.stroke(); g.restore(); }
+    g.fillStyle = '#c3c9ce'; g.beginPath(); g.arc(a.x, a.y - 172, 5, 0, TAU); g.fill();
+  }
 }
 
 // ---------- Rampes per fer salts amb el cotxe ----------

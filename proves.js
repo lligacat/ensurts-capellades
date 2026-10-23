@@ -1,7 +1,7 @@
 // Proves automàtiques del joc. Obre la pàgina amb ?proves al final de l'adreça i els resultats surten a la pantalla i a la consola.
 // Fan servir les funcions i l'estat globals del joc, i deixen el moneder i la botiga tal com estaven.
 
-const CLAUS = ['ensurts-ralli-millor', 'ensurts-moneder', 'ensurts-skins', 'ensurts-explosions', 'ensurts-missions', 'ensurts-historia', 'ensurts-mode', 'ensurts-paquets'];
+const CLAUS = ['ensurts-tir', 'ensurts-ralli-millor', 'ensurts-moneder', 'ensurts-skins', 'ensurts-explosions', 'ensurts-missions', 'ensurts-historia', 'ensurts-mode', 'ensurts-paquets'];
 
 export async function executa() {
   const resultats = [], guardat = Object.fromEntries(CLAUS.map(k => [k, localStorage.getItem(k)]));
@@ -214,8 +214,18 @@ export async function executa() {
     const rc = J.aparcats.filter(c => c.tipus === 'ralli'); if (rc.length < 4) return 'cotxes: ' + rc.length;
     if (mapa[RALLI.sortida[1]][RALLI.sortida[0]] !== C.TERRA) return 'la sortida no és de terra';
     j.x = rc[0].x; j.y = rc[0].y; pujaVila(); const v = j.cotxe; if (!v || v.tipus !== 'ralli') return 'no condueixes un cotxe de ral·li';
-    J.ralli = null; for (let i = 0; i <= RALLI.punts.length; i++) { const p = ptRalli(i % RALLI.punts.length); v.x = j.x = p.x; v.y = j.y = p.y; for (let k = 0; k < 3; k++) actualitzaRalli(.5); }
+    J.ralli = null; J.semafor = null; const s0 = ptRalli(0); v.x = j.x = s0.x; v.y = j.y = s0.y; for (let k = 0; k < 11; k++) actualitzaRalli(.4); if (!J.ralli || !J.ralli.actiu) return 'el semàfor no ha donat la sortida';
+    if (v.benzina !== 100) return 'el cotxe de ral·li gasta benzina';
+    for (let i = 1; i <= RALLI.punts.length; i++) { const p = ptRalli(i % RALLI.punts.length); v.x = j.x = p.x; v.y = j.y = p.y; for (let k = 0; k < 3; k++) actualitzaRalli(.5); }
     const ok = millorRalli() > 0 || 'cap volta'; baixaVila(); return ok;
+  });
+  prova('Al camp de tir es pot fer el concurs de precisió i el de tir al plat', () => {
+    localStorage.removeItem('ensurts-tir'); const j = J.jug; if (j.cotxe) baixaVila();
+    j.x = CAMP_TIR.precisio.x * TS; j.y = CAMP_TIR.precisio.y * TS; const ap = accioPropera(); if (!ap || ap.boto !== 'CONCURS') return 'no surt el concurs';
+    ap.fer(); for (let i = 0; i < 10; i++) { J.jug.recPis = 0; J.tir.t = 0; tirConcurs(); }
+    if (!J.tir.fi || J.tir.n !== 10) return 'precisió: ' + J.tir.n + ' tirs';
+    J.tir = null; comencaTir('plat'); for (let i = 0; i < 400 && !J.tir.fi; i++) { actualitzaTir(.05); if (J.tir.plat && J.tir.plat.tocat === undefined) { J.jug.recPis = 0; tirConcurs(); } }
+    const ok = (J.tir.fi && millorsTir().precisio > 0) || 'plat: ' + J.tir.n; J.tir = null; return ok;
   });
   prova('La patrulla para i en baixen dos policies', () => {
     const j = J.jug; J.liada = true; const c = nouCotxe('policia', 300); c.aPeu = true; c.x = j.x + 150; c.y = j.y; J.cotxes = [c]; const n0 = J.agents.length;

@@ -1,5 +1,5 @@
 // Permet instal·lar el joc i obrir-lo sense connexió. La pàgina es demana primer a la xarxa perquè les noves versions arribin de seguida.
-const CACHE = 'ensurts-v32';
+const CACHE = 'ensurts-v33';
 const FITXERS = ['./', 'index.html', 'colla.webp', 'colla-festa.webp', 'teo.jpg', 'africa.jpg', 'nil.jpg', 'pau.jpg', 'vila.jpg', 'pol.jpg', 'ramon.wav', 'hula.wav', 'mentens.wav', 'calent.wav', 'atac.wav', 'primera3d.js', 'lib/three.module.min.js', 'conduir.m4a', 'musica.m4a', 'manifest.webmanifest', 'icona-192.png', 'icona-512.png'];
 
 self.addEventListener('install', e => {
