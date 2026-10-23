@@ -65,11 +65,16 @@ export async function executa() {
     return pe === pn * 2 || 'normal ' + pn + ', amb nom ' + pe;
   });
   prova('Fer HOLAAA puja el nivell de cerca de la policia', () => { J.cerca = 0; j.arma = null; j.recBuh = 0; accio(); return Math.abs(J.cerca - .35) < 1e-9 || 'cerca = ' + J.cerca; });
-  prova("Si en Guillem t'encasta, perds una vida", () => {
-    j.cotxe = Object.assign(nouBestia(), { x: j.x, y: j.y, estat: 'conduit' }); J.bestia = j.cotxe;
+  prova("Si en Guillem t'encasta, et destrossa el cotxe però no perds cap vida", () => {
+    j.cotxe = Object.assign(nouBestia(), { x: j.x, y: j.y, estat: 'conduit' }); J.bestia = j.cotxe; const v = j.cotxe;
     const vides = J.vides; J.guillem = { x: j.x + 10, y: j.y, vx: 0, vy: 0, t: 1, ang: 0 }; j.invul = 0;
     actualitzaCarretera(.016);
-    return J.vides === vides - 1 || 'vides ' + vides + ' -> ' + J.vides;
+    return (J.vides === vides && !j.cotxe && v.estat === 'espatllat') || 'vides ' + vides + ' -> ' + J.vides + ', cotxe ' + v.estat;
+  });
+  prova('Al mode pacífic no hi ha policia ni res que et faci mal', () => {
+    const ab = J.pacific; J.pacific = true; J.agents.push(nouAgent()); J.cotxes.push(nouCotxe('policia', 400)); J.guillem = { x: j.x, y: j.y, t: 5, vx: 0, vy: 0 };
+    const vides = J.vides; j.invul = 0; ferit('PROVA'); pacifica(); const ok = J.agents.length === 0 && !J.cotxes.some(c => c.tipus === 'policia') && !J.guillem && J.vides === vides;
+    J.pacific = ab; return ok || 'agents ' + J.agents.length;
   });
   prova('Les autoestopistes et porten a Vic i paguen 2.500 punts', () => {
     J.vides = 3; J.ciutat = 'capellades'; activaCiutat('capellades'); J.zona = null;

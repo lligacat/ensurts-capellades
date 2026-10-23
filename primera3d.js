@@ -426,7 +426,7 @@ export function dibuixa(w, h) {
   // Gent i coses: les més properes que es veuen, com a cartells drets
   const fx = Math.cos(yaw), fy = Math.sin(yaw), cosos = [];
   const posa = (e, k, fn) => { const dx = e.x - j.x, dy = e.y - j.y, d = Math.hypot(dx, dy); if (d < 1700 && (dx * fx + dy * fy) > -260) cosos.push({ e, k, fn, d }); };
-  if (!j.cotxe) posa(j, 2.3, g => dibuixaJugador(g)); // tu mateix, vist des del darrere
+  if (!j.cotxe && !j.passatger) posa(j, 2.3, g => dibuixaJugador(g)); // tu mateix, vist des del darrere
   J.parelles.forEach(p => posa(p, 2.3, g => dibuixaParella(g, p)));
   J.agents.forEach(a => posa(a, 2.3, g => dibuixaAgent(g, a)));
   J.matons.forEach(mt => posa(mt, 2.6, g => dibuixaMaton(g, mt)));
