@@ -230,7 +230,7 @@ const BOTIGA = [
   { id: 'teo', nom: 'Teo Glaudiri', foto: 'teo.jpg', jaqueta: '#f4f4f4', interior: '#1d3557', pantalo: '#264653', gen: { pell: '#e0ac85', cabell: '#111', fons: '#e9c46a', ulleres: true }, poder: 'TERRATRÈMOL', desc: 'Fa tremolar el barri i espanta tothom' },
   { id: 'vila', nom: 'Vila Sanchez', jaqueta: '#f4a261', interior: '#2a2a2a', pantalo: '#3d405b', gen: { pell: '#c98e66', cabell: '#2b1d14', fons: '#f4a261', llarg: true }, poder: 'IMANT DE PARELLES', desc: 'Les parelles properes venen cap a tu' },
   { id: 'pol', nom: 'Pol Tintomena', jaqueta: '#6a4c93', interior: '#ffca3a', pantalo: '#1b1b1b', gen: { pell: '#f6d2b8', cabell: '#c99a4a', fons: '#cdb4db' }, poder: 'PETARD', desc: 'Llença un petard que esclata lluny' },
-  { id: 'pau', nom: 'Pau Escolà', jaqueta: '#4a5233', interior: '#ff7ac4', pantalo: '#2a2a2a', gen: { pell: '#e0ac85', cabell: '#5a3a22', fons: '#b5e48c', rinxols: true }, poder: 'CLONS', desc: 'Dos clons distreuen la policia' },
+  { id: 'pau', nom: 'Pau Escolà', foto: 'pau.jpg', jaqueta: '#4a2c4f', interior: '#5e3a63', pantalo: '#2a2a2a', gen: { pell: '#e0ac85', cabell: '#5a3a22', fons: '#b5e48c', rinxols: true }, poder: 'CLONS', desc: 'Dos clons distreuen la policia' },
   { id: 'jan', nom: 'Jan Mena', jaqueta: '#118ab2', interior: '#ffd166', pantalo: '#073b4c', gen: { pell: '#f1c7a3', cabell: '#8b4a1e', fons: '#ffd166' }, poder: 'PUNTS DOBLES', desc: '8 segons en què tot val el doble' },
   { id: 'subimena', nom: 'Subimena', jaqueta: '#3d348b', interior: '#f7b801', pantalo: '#1b1b1b', gen: { pell: '#e8b48e', cabell: '#1b1b1b', fons: '#7678ed', ulleres: true }, poder: 'MENTEIX', desc: 'La policia es confon i et busca a l\'altra banda' },
   { id: 'ferran', nom: 'Ferran Glaudiri', jaqueta: '#1b1b1b', interior: '#c23a2c', pantalo: '#2a2a2a', gen: { pell: '#d9a27a', cabell: '#2b1d14', fons: '#ef8354', barba: true }, poder: 'ESCUT', desc: 'Invulnerable durant 5 segons' },
@@ -288,7 +288,7 @@ for (const p of BOTIGA) if (p.foto) { const im = new Image(); im.onload = () => 
 
 // Cares de foto per a la gent de les parelles amb nom
 const caresParelles = {};
-for (const [id, src] of [['africa', 'africa.jpg'], ['nil', 'nil.jpg']]) { const im = new Image(); im.onload = () => { caresParelles[id] = caraFoto(im, 120); }; im.src = src; }
+for (const [id, src] of [['africa', 'africa.jpg'], ['nil', 'nil.jpg'], ['pau', 'pau.jpg']]) { const im = new Image(); im.onload = () => { caresParelles[id] = caraFoto(im, 120); }; im.src = src; }
 
 function pintaMoneder() { document.getElementById('moneder').textContent = 'MONEDER: ' + formatPunts(moneder.get()) + ' PUNTS'; }
 
@@ -1917,7 +1917,7 @@ function entraCiutat(nom, ambTaxi) {
 const PARELLES_NOM = [
   { id: 'teoabril', noms: 'TEO & ABRIL', a: { cabell: '#3a2416', llarg: false }, b: { cabell: '#8b4a1e', llarg: true } },
   { id: 'subibeltran', noms: 'SUBI & BELTRAN', a: { cabell: '#111', llarg: false, ulleres: true }, b: { cabell: '#5a3a22', llarg: false } },
-  { id: 'paunour', noms: 'PAU & NOUR', a: { cabell: '#5a3a22', llarg: false }, b: { cabell: '#111', llarg: true, pell: '#c98e66' } },
+  { id: 'paunour', noms: 'PAU & NOUR', a: { cabell: '#3a2416', llarg: false, roba: '#4a2c4f', cara: 'pau' }, b: { cabell: '#111', llarg: true, pell: '#c98e66' } },
   { id: 'jangemma', noms: 'JAN & GEMMA', a: { cabell: '#8b4a1e', llarg: false }, b: { cabell: '#c99a4a', llarg: true } },
   { id: 'nilafrica', noms: 'NIL & ÀFRICA', a: { cabell: '#5a4636', llarg: false, roba: '#1b1b1b', cara: 'nil' }, b: { cabell: '#8a6a4a', llarg: true, pell: '#f1c7a3', roba: '#f2efe6', cara: 'africa' } },
 ];
