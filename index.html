@@ -758,6 +758,10 @@ function generaZona(z) {
 
 // La muntanya de Pal Arinsal (en caselles): el cim és al mig i a dalt de tot hi ha l'estació nevada
 const ARINSAL = { x0: 444, y0: 22, x1: 520, y1: 70, cx: 482, cy: 46, rx: 38, ry: 24 };
+// Circuit de ral·lis: una pista de terra pel mig del bosc, a les afores de Manresa (en caselles)
+const RALLI = { x0: 306, y0: 40, x1: 358, y1: 88, sortida: [313, 80],
+  punts: [[313, 80], [334, 81], [350, 79], [354, 71], [345, 64], [352, 55], [347, 45], [331, 44], [322, 51], [331, 58], [319, 65], [310, 60], [309, 71]],
+  paddock: { x0: 312, y0: 84, x1: 324, y1: 87 } };
 const alcadaT = (x, y) => { const A = ARINSAL; if (x < A.x0 - 2 || x > A.x1 + 2 || y < A.y0 - 2 || y > A.y1 + 2) return 0; return Math.max(0, 1 - Math.hypot((x - A.cx) / A.rx, (y - A.cy) / A.ry)); };
 const alcada = (px, py) => alcadaT(px / TS, py / TS);
 const TELECADIRA = { baix: { x: 474.5 * TS, y: 51.5 * TS }, dalt: { x: 494.5 * TS, y: 39.5 * TS } };
@@ -931,8 +935,19 @@ function generaMon(m) {
     }
     for (let i = 0; i < REVOLTS.length - 1; i++) { const [ax, ay] = REVOLTS[i], [bx, by] = REVOLTS[i + 1]; omple(Math.min(ax, bx), Math.min(ay, by), Math.max(ax, bx) + 1, Math.max(ay, by) + 1, C.CARRER); }
     omple(469, 40, 471, 41, C.EDIF); omple(489, 52, 491, 53, C.EDIF); omple(497, 44, 499, 45, C.EDIF); } // xalets
+  // El circuit de ral·lis: bosc espès, pista de terra en bucle, paddock i camí fins a l'autopista
+  { const Q = RALLI;
+    for (let y = Q.y0; y <= Q.y1; y++) for (let x = Q.x0; x <= Q.x1; x++) m[y][x] = hash(x * 5, y * 7) < .55 ? C.ARBRE : C.GESPA;
+    const P = Q.punts;
+    for (let i = 0; i < P.length; i++) { const [ax, ay] = P[i], [bx, by] = P[(i + 1) % P.length], n = Math.ceil(Math.hypot(bx - ax, by - ay) * 3);
+      for (let k = 0; k <= n; k++) { const px = ax + (bx - ax) * k / n, py = ay + (by - ay) * k / n;
+        for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (Math.hypot(dx, dy) <= 1.7) m[Math.round(py + dy)][Math.round(px + dx)] = C.TERRA; } }
+    omple(Q.paddock.x0, Q.paddock.y0, Q.paddock.x1, Q.paddock.y1, C.PARQUING);
+    omple(Q.paddock.x0 - 1, 82, Q.paddock.x0 + 1, Q.paddock.y0, C.TERRA); // del paddock a la pista
+    omple(304, 85, Q.paddock.x0 - 1, 86, C.CARRER); // camí fins a l'autopista
+  }
   // Carreteres secundàries (no passen pel mar, ni per la comissaria, ni per Arinsal, ni per Barcelona)
-  { const prohibit = (x, y) => esMar(x, y) || (x >= COMISSARIA.x0 - 1 && x <= COMISSARIA.x1 + 1 && y >= COMISSARIA.y0 - 1 && y <= COMISSARIA.y1 + 1) || alcadaT(x, y) > 0 || (x >= BCN.x0 && x <= BCN.x1 && y >= BCN.y0 && y <= BCN.y1) || (x >= 42 && x <= 51 && y >= 17 && y <= 25);
+  { const prohibit = (x, y) => esMar(x, y) || (x >= RALLI.x0 - 1 && x <= RALLI.x1 + 1 && y >= RALLI.y0 - 1 && y <= RALLI.y1 + 1) || (x >= COMISSARIA.x0 - 1 && x <= COMISSARIA.x1 + 1 && y >= COMISSARIA.y0 - 1 && y <= COMISSARIA.y1 + 1) || alcadaT(x, y) > 0 || (x >= BCN.x0 && x <= BCN.x1 && y >= BCN.y0 && y <= BCN.y1) || (x >= 42 && x <= 51 && y >= 17 && y <= 25);
     const traca = (ax, ay, bx, by, primerH) => {
       const pts = []; let x = ax, y = ay;
       const pas = (tx, ty) => { while (x !== tx || y !== ty) { if (x !== tx) x += Math.sign(tx - x); else y += Math.sign(ty - y); pts.push([x, y]); } };
@@ -1463,6 +1478,11 @@ function pintaEmblemes(g, nomesTerra) {
     g.fillStyle = '#2b2b2b'; g.fillRect(LLOGUER_BICIS.x - 80, LLOGUER_BICIS.y - 70, 160, 60); g.fillStyle = '#ffd23f'; g.fillRect(LLOGUER_BICIS.x - 84, LLOGUER_BICIS.y - 78, 168, 14);
     for (let i = 0; i < 5; i++) dibuixaBici(g, LLOGUER_BICIS.x - 60 + i * 30, LLOGUER_BICIS.y + 18, 1);
     if (!nomesTerra) for (let i = 0; i <= 20; i++) { const k = i / 20; g.fillStyle = '#555'; if (i % 5 === 0) g.fillRect(B.x + (D.x - B.x) * k - 5, B.y + (D.y - B.y) * k - 70, 10, 80); } }
+  // Circuit de ral·lis: línia de sortida a quadres i pancarta
+  { const [sx, sy] = RALLI.sortida, X = sx * T, Y = (sy - 2) * T;
+    for (let i = 0; i < 10; i++) for (let k = 0; k < 2; k++) { g.fillStyle = (i + k) % 2 ? '#111' : '#fff'; g.fillRect(X + k * 20, Y + i * 25.6, 20, 25.6); }
+    if (!nomesTerra) { g.fillStyle = '#d62828'; g.fillRect(X - 20, Y - 30, 80, 24); g.fillStyle = '#fff'; g.font = 'bold 14px sans-serif'; g.textAlign = 'center'; g.fillText('SORTIDA', X + 20, Y - 13); }
+    for (let x = RALLI.paddock.x0; x <= RALLI.paddock.x1; x++) { g.fillStyle = (x % 2) ? '#d62828' : '#fff'; g.fillRect(x * T, (RALLI.paddock.y0 - .15) * T, T, 10); } }
   // Gasolineres: sortidors, marquesina i preus
   for (const gs of GASOLINERES) {
     const X = gs.x * T, Y = gs.y * T;
@@ -1511,7 +1531,7 @@ const RETOLS = {
   lliga: [['LLIGA.CAT', 20.5, 5.3, '#ff5c8a']],
 };
 for (const p of POBLES) RETOLS.capellades.push([p.nom, p.x + p.w / 2, p.y - .6, '#f2c230']);
-RETOLS.capellades.push(['PAL ARINSAL', 482, 36.6, '#fff'], ['TELECADIRA', 474.5, 53.2, '#7fc3ff'], ['LLOGUER DE BICIS', 481.5, 49.3, '#ffd23f'], ['PORT DE MUNTANYA', 478, 25.6, '#fff']);
+RETOLS.capellades.push(['CIRCUIT DE RAL·LIS', 318, 88.8, '#ff9a3d'], ['PADDOCK', 318, 83.4, '#fff'], ['TELECADIRA', 474.5, 53.2, '#7fc3ff'], ['LLOGUER DE BICIS', 481.5, 49.3, '#ffd23f'], ['PORT DE MUNTANYA', 478, 25.6, '#fff']);
 for (const gs of GASOLINERES) RETOLS.capellades.push(['GASOLINERA', gs.x + 3, gs.y + 4.6, '#ff9a3d']);
 for (const p of POBLES) { const q = parquingDe(p); RETOLS.capellades.push(['PÀRQUING', (q.x0 + q.x1 + 1) / 2, q.y1 + 1.6, '#7fc3ff']); }
 RETOLS.capellades.push(['CASA DEL RAMON', 46.5, 17.6, '#2fd38a'], ['COMISSARIA DELS MOSSOS', (COMISSARIA.x0 + COMISSARIA.x1) / 2, COMISSARIA.y0 - .6, '#2d6bff'], ['AP-7', 66, 200, '#2a7de1'], ['C-16', 302, 60, '#2a7de1'], ['N-II', 502, 100, '#2a7de1']);
@@ -1857,6 +1877,7 @@ function llocActual() {
   const x = J.jug.x / TS, y = J.jug.y / TS, p = pobleDe(x, y);
   if (p) return p.nom;
   if (alcadaT(x, y) > 0) return 'PAL ARINSAL';
+  if (x >= RALLI.x0 && x <= RALLI.x1 && y >= RALLI.y0 && y <= RALLI.y1 + 3) return 'RAL·LIS';
   if (x >= COMISSARIA.x0 && x <= COMISSARIA.x1 && y >= COMISSARIA.y0 && y <= COMISSARIA.y1) return 'MOSSOS';
   if (x >= BCN.x0 - 4 && x <= BCN.x1 && y <= BCN.y1 + 6) return 'BARCELONA';
   if (x < 128 && y < 96) return x < 40 && y > 30 ? 'MONTSERRAT' : 'CAPELLADES';
@@ -2515,12 +2536,12 @@ function koAgent(a, txt = 'K.O.!') {
 }
 // Pujant una muntanya, el cotxe va més lent; baixant, més ràpid (la definició real és a la part de la muntanya)
 // Velocitat punta de cada vehicle (px/s). 4,2 px/s = 1 km/h, així el més ràpid fa 150 km/h
-const VMAX = { carromato: 630, bestia: 610, robat: 590, policia: 600, vilamovil: 520 }, KMH = 4.2;
+const VMAX = { ralli: 615, carromato: 630, bestia: 610, robat: 590, policia: 600, vilamovil: 520 }, KMH = 4.2;
 function pendent(v, dx, dy) { if (J.zona || J.ciutat !== 'capellades') return 1; const dh = altTerra(v.x + dx * 40, v.y + dy * 40) - altTerra(v.x, v.y); return 1 - Math.max(-.35, Math.min(.6, dh * 2.2)); }
 function actualitzaPistola(dt) {
   const j = J.jug;
   actualitzaBenziners(dt);
-  if ((tecles.KeyR || J.ratxa) && j.pistola && ARMES_FOC[j.pistola.tipus || 'pistola'].rec < .1) disparaPistola(); actualitzaPaquets(); actualitzaRampes(dt); actualitzaLlaunes(dt); actualitzaControls(dt); actualitzaElois(dt); actualitzaFocs(dt); actualitzaPoliciaPeu(dt); actualitzaDrift(dt);
+  if ((tecles.KeyR || J.ratxa) && j.pistola && ARMES_FOC[j.pistola.tipus || 'pistola'].rec < .1) disparaPistola(); actualitzaPaquets(); actualitzaRampes(dt); actualitzaLlaunes(dt); actualitzaControls(dt); actualitzaElois(dt); actualitzaRalli(dt); actualitzaFocs(dt); actualitzaPoliciaPeu(dt); actualitzaDrift(dt);
   for (const cd of J.conductors || []) { cd.t -= dt; cd.pas += dt * 14; mou(cd, cd.vx, cd.vy, dt, 10); } if (J.conductors) J.conductors = J.conductors.filter(cd => cd.t > 0);
   if (!J.zona && J.ciutat === 'capellades' && granMon()) actualitzaArinsal(dt);
   if (J.zona === 'arinsal') actualitzaPista(dt);
@@ -3528,6 +3549,9 @@ function posaAparcats() {
     J.aparcats.push(vehicleAparcat(i % 2 ? 'vilamovil' : 'carromato', places[0][0], places[0][1], Math.PI / 2));
     for (let k = 1; k < Math.min(places.length, 5); k++) J.aparcats.push(vehicleAparcat('aparcat', places[k][0], places[k][1], Math.PI / 2));
   });
+  // els cotxes de ral·li, aparcats al paddock
+  { const P = RALLI.paddock, colors = ['#e63946', '#1d3557', '#f2c230', '#2a9d8f', '#ff7a00', '#7b2cbf', '#e9edf0', '#0b6e4f'];
+    for (let i = 0; i < 8; i++) { const c = vehicleAparcat('ralli', (P.x0 + 1 + i * 1.45) * TS, (P.y0 + 2) * TS, -Math.PI / 2); c.color = colors[i]; c.dorsal = 11 + i * 7; c.benzina = 100; J.aparcats.push(c); } }
   // a peu de carrer, pel món
   for (let i = 0; i < 10; i++) { const c = carrers[Math.floor(hash(i, 77) * carrers.length)]; if (c) J.aparcats.push(vehicleAparcat(i % 3 ? 'carromato' : 'vilamovil', (c[0] + .5) * TS, (c[1] + .5) * TS)); }
   // els benziners
@@ -3573,8 +3597,8 @@ function pujaVila() {
   J.jug.cotxe = v; v.cami = []; v.estat = 'conduit'; so('porta'); setTimeout(() => so('arrenca'), 250); J.jug.x = v.x; J.jug.y = v.y; J.tPoliCotxe = 3;
   so('motor'); anunci(v.tipus === 'carromato' ? 'CARROMATO! ESPAI PER LLANÇAR MÍSSILS' : 'AL VILAMOVIL!', 1.8);
 }
-const nomCotxe = v => v && v.tipus === 'carromato' ? 'CARROMATO' : v && v.tipus === 'bestia' ? 'LA BÈSTIA' : v && v.tipus === 'robat' ? 'COTXE (ROBAT)' : v && v.tipus === 'policia' ? 'COTXE DE POLICIA' : 'VILAMOVIL';
-const pujable = c => c && (c.tipus === 'vilamovil' || c.tipus === 'carromato' || c.tipus === 'bestia' || c.tipus === 'robat' || (c.tipus === 'policia' && c.buit));
+const nomCotxe = v => v && v.tipus === 'carromato' ? 'CARROMATO' : v && v.tipus === 'bestia' ? 'LA BÈSTIA' : v && v.tipus === 'ralli' ? 'COTXE DE RAL·LI' : v && v.tipus === 'robat' ? 'COTXE (ROBAT)' : v && v.tipus === 'policia' ? 'COTXE DE POLICIA' : 'VILAMOVIL';
+const pujable = c => c && (c.tipus === 'ralli' || c.tipus === 'vilamovil' || c.tipus === 'carromato' || c.tipus === 'bestia' || c.tipus === 'robat' || (c.tipus === 'policia' && c.buit));
 // El conductor surt corrent cridant i el cotxe queda aturat amb la porta oberta
 function abandonaCotxe(c) {
   J.cotxes = J.cotxes.filter(x => x !== c);
@@ -4623,6 +4647,11 @@ function dibuixaCotxe(g, c) {
   if (c.tipus === 'policia') { const on = Math.floor(performance.now() / 160) % 2; g.fillStyle = on ? '#ff2d2d' : '#5a1010'; g.fillRect(-4, -9, 8, 8); g.fillStyle = on ? '#1a2a5a' : '#2d6bff'; g.fillRect(-4, 1, 8, 8); }
   g.restore();
   if (c.tipus === 'policia') { g.globalAlpha = .25; g.fillStyle = Math.floor(performance.now() / 160) % 2 ? '#ff2d2d' : '#2d6bff'; g.beginPath(); g.arc(c.x, c.y - 4, 34, 0, TAU); g.fill(); g.globalAlpha = 1; }
+  if (c.tipus === 'ralli') { // franges i el dorsal al sostre
+    g.save(); g.translate(c.x, c.y - 4); g.rotate(c.ang || 0); g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(-30, -3, 60, 6); g.restore();
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(c.x, c.y - 8, 10, 0, TAU); g.fill(); g.strokeStyle = '#000'; g.lineWidth = 2; g.stroke();
+    g.fillStyle = '#000'; g.font = 'bold 11px sans-serif'; g.textAlign = 'center'; g.fillText(c.dorsal || 7, c.x, c.y - 4); g.textAlign = 'left';
+  }
   if ((c.tipus === 'carromato' || c.tipus === 'bestia') && c !== J.jug.cotxe) rotul(g, nomCotxe(c) + (c.estat === 'espatllat' ? ' (PUNXAT)' : ''), c.x, c.y - 44, c.tipus === 'bestia' ? '#f2c230' : '#ff3b3b', 8);
   if (pujable(c) && (c.tipus === 'vilamovil' || c === J.jug.cotxe)) {
     if (c === J.jug.cotxe) { // el teu personatge treu el cap pel sostre
@@ -5158,6 +5187,7 @@ function dibuixa() {
   if (!J.zona) { if (J.bombers && vist(J.bombers)) ents.push([J.bombers.y + 10, () => dibuixaBombers(cx)]); }
   if (!J.zona && J.ciutat === 'capellades' && granMon()) {
     for (const r of RAMPES) if (vist(r)) dibuixaRampa(cx, r);
+    dibuixaControlsRalli(cx, vist);
     for (const l of J.llaunes || []) if (vist(l)) ents.push([l.y, () => dibuixaLlauna(cx, l)]);
     for (const e of J.elois || []) if (vist(e)) ents.push([e.y, escalat(e, () => dibuixaEloi(cx, e), 1.35)]);
     for (const sc of J.sacs || []) if (!sc.agafat && vist(sc)) ents.push([sc.y, () => dibuixaSac(cx, sc)]);
@@ -5485,6 +5515,7 @@ function dibuixaHUD(W, H, dpr) {
     g.font = Math.min(64, W / 9) + 'px "Press Start 2P"'; g.textAlign = 'center'; g.lineWidth = 10; g.strokeStyle = '#000'; g.strokeText(J.gta.txt, 0, 0); g.fillStyle = J.gta.color; g.globalAlpha = k; g.fillText(J.gta.txt, 0, 0); g.restore(); g.textAlign = 'left'; g.globalAlpha = 1;
   }
   if (J.historia) dibuixaHistoria(g, W, H, petit, caixa);
+  dibuixaRalliHUD(g, W, H, caixa, petit);
   if (j.ciment) { g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#c9c1ad'; g.fillText('PORTES UN SAC DE CIMENT', W / 2, H - (tactil ? 240 : 130)); g.textAlign = 'left'; }
   if (j.vollDamm > 0) { const t2 = Math.ceil(j.vollDamm); g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#2fd38a'; g.fillText('VOLL-DAMM ' + Math.floor(t2 / 60) + ':' + String(t2 % 60).padStart(2, '0'), W / 2, H - (tactil ? 220 : 110)); g.textAlign = 'left'; }
   if (enSala()) { // marcador de la sala
@@ -5922,6 +5953,7 @@ function repEvent(d) {
       xarxaEvent('ensurt', j.x, j.y, { a: d.id });
     }
   }
+  if (d.tipus === 'volta') { const nom = String(d.nom).toUpperCase(); (J.rankRalli = J.rankRalli || {})[nom] = Math.min(J.rankRalli[nom] || 1e9, d.temps); textFlotant(j.x, j.y - 120, nom + ': VOLTA ' + fmtVolta(d.temps), '#ff9a3d', 9); }
   if (d.tipus === 'puja' && d.a === XARXA.jo) { anunci(String(d.nom).toUpperCase() + ' HA PUJAT AL TEU COTXE!', 1.8); so('porta'); }
   if (d.tipus === 'baixa' && d.a === XARXA.jo) { textFlotant(j.x, j.y - 90, String(d.nom).toUpperCase() + ' HA BAIXAT', '#fff', 9); so('porta'); }
   if (d.tipus === 'ensurt' && d.a === XARXA.jo) { J.punts += 300; so('punts'); anunci('HAS ESPANTAT EN ' + String(d.nom).toUpperCase() + '! +300', 2); }
@@ -6284,6 +6316,54 @@ function dibuixaSac(g, sc) {
   const b = Math.sin(performance.now() / 300) * 3; g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(sc.x, sc.y - 34 + b); g.lineTo(sc.x - 6, sc.y - 44 + b); g.lineTo(sc.x + 6, sc.y - 44 + b); g.fill();
 }
 
+// ---------- Ral·lis: voltes cronometrades passant per tots els punts de control ----------
+const ptRalli = i => ({ x: (RALLI.punts[i][0] + .5) * TS, y: (RALLI.punts[i][1] + .5) * TS });
+function millorRalli() { try { return +localStorage.getItem('ensurts-ralli-millor') || 0; } catch (e) { return 0; } }
+const fmtVolta = t => Math.floor(t / 60) + ':' + (t % 60).toFixed(1).padStart(4, '0');
+function actualitzaRalli(dt) {
+  if (J.zona || J.ciutat !== 'capellades' || !granMon()) return;
+  const j = J.jug, v = j.cotxe, R2 = J.ralli;
+  // la pols de la pista de terra
+  if (v && v.vel > 220 && tileA(v.x, v.y) === C.TERRA && Math.random() < dt * 25) J.particules.push({ x: v.x - Math.cos(v.ang) * 34, y: v.y - Math.sin(v.ang) * 34, vx: (Math.random() - .5) * 60, vy: -20 - Math.random() * 30, t: .9, c: 'rgba(170,130,90,.55)', m: 12 });
+  if (!v) { if (R2 && R2.actiu) { R2.actiu = false; anunci('VOLTA ANUL·LADA: HAS BAIXAT DEL COTXE', 1.6); } return; }
+  const s0 = ptRalli(0), aSortida = Math.hypot(v.x - s0.x, v.y - s0.y) < 3 * TS;
+  if (!R2 || !R2.actiu) { if (aSortida && (!R2 || !R2.dinsSortida)) { J.ralli = { actiu: true, t: 0, cp: 1, dinsSortida: true }; so('bip'); anunci('VOLTA COMENÇADA! PASSA PER TOTS ELS PUNTS DE CONTROL', 1.6); } else if (R2) R2.dinsSortida = aSortida; return; }
+  R2.t += dt; R2.dinsSortida = aSortida;
+  const n = RALLI.punts.length;
+  if (R2.cp < n) { const p = ptRalli(R2.cp); if (Math.hypot(v.x - p.x, v.y - p.y) < 3.6 * TS) { R2.cp++; so('punts'); textFlotant(v.x, v.y - 70, 'CONTROL ' + (R2.cp - 1) + '/' + (n - 1) + ' · ' + fmtVolta(R2.t), '#ffd23f', 10); } }
+  else if (aSortida) { // volta acabada
+    const temps = R2.t, millor = millorRalli(), rec = !millor || temps < millor;
+    if (rec) try { localStorage.setItem('ensurts-ralli-millor', temps.toFixed(2)); } catch (e) {}
+    const premi = Math.max(300, Math.round(3000 - temps * 20)); J.punts += premi; J.voltesRalli = (J.voltesRalli || 0) + 1;
+    so('paquet'); anunci((rec ? 'RÈCORD! ' : 'VOLTA: ') + fmtVolta(temps) + ' · +' + premi, 3);
+    xarxaEvent('volta', v.x, v.y, { temps });
+    (J.rankRalli = J.rankRalli || {})[nomJugador()] = Math.min((J.rankRalli || {})[nomJugador()] || 1e9, temps);
+    J.ralli = { actiu: true, t: 0, cp: 1, dinsSortida: true }; // la següent volta comença sola
+  }
+  if (R2.t > 600) J.ralli = null;
+}
+function dibuixaRalliHUD(g, W, H, caixa, petit) {
+  const R2 = J.ralli, j = J.jug, dins = !J.zona && J.ciutat === 'capellades' && Math.hypot(j.x - (RALLI.x0 + RALLI.x1) / 2 * TS, j.y - (RALLI.y0 + RALLI.y1) / 2 * TS) < 40 * TS;
+  if (!dins && !(R2 && R2.actiu)) return;
+  const rank = Object.entries(J.rankRalli || {}).sort((a, b) => a[1] - b[1]).slice(0, 5), bw = 210, bx = 12, by = petit ? 150 : 96, bh = 46 + rank.length * 14;
+  caixa(bx, by, bw, bh); g.font = '8px "Press Start 2P"'; g.fillStyle = '#ff9a3d'; g.fillText('RAL·LI', bx + 10, by + 15);
+  g.fillStyle = '#fff'; g.fillText(R2 && R2.actiu ? 'VOLTA ' + fmtVolta(R2.t) + '  CP ' + (R2.cp - 1) + '/' + (RALLI.punts.length - 1) : 'VES A LA SORTIDA', bx + 10, by + 30);
+  g.fillStyle = '#2fd38a'; g.font = '7px "Press Start 2P"'; g.fillText('MILLOR: ' + (millorRalli() ? fmtVolta(millorRalli()) : '--'), bx + 10, by + 43);
+  rank.forEach(([nom, t], i) => { g.fillStyle = i ? '#cfd8d2' : '#ffd23f'; g.fillText((i + 1) + '. ' + nom.slice(0, 9), bx + 10, by + 58 + i * 14); g.textAlign = 'right'; g.fillText(fmtVolta(t), bx + bw - 10, by + 58 + i * 14); g.textAlign = 'left'; });
+  if (R2 && R2.actiu) { // fletxa cap al punt de control següent
+    const p = ptRalli(R2.cp < RALLI.punts.length ? R2.cp : 0), a = Math.atan2(p.y - j.y, p.x - j.x), ax = W / 2, ay = petit ? 120 : 92;
+    g.save(); g.translate(ax, ay); g.rotate(a); g.fillStyle = '#ff9a3d'; g.strokeStyle = '#000'; g.lineWidth = 3; g.beginPath(); g.moveTo(22, 0); g.lineTo(-10, -14); g.lineTo(-4, 0); g.lineTo(-10, 14); g.closePath(); g.fill(); g.stroke(); g.restore();
+  }
+}
+function dibuixaControlsRalli(g, vist) { // banderoles als punts de control (el següent, més gros)
+  const R2 = J.ralli, t = performance.now() / 1000;
+  RALLI.punts.forEach((_, i) => {
+    const p = ptRalli(i); if (!vist(p)) return; const seg = R2 && R2.actiu && i === (R2.cp < RALLI.punts.length ? R2.cp : 0);
+    for (const k of [-1, 1]) { const x = p.x + k * 2.2 * TS, y = p.y; g.fillStyle = '#333'; g.fillRect(x - 2, y - 46, 4, 46); g.fillStyle = seg ? ((t * 4 | 0) % 2 ? '#ff9a3d' : '#ffd23f') : (i ? '#2a7de1' : '#fff'); g.beginPath(); g.moveTo(x + 2, y - 46); g.lineTo(x + 24 + Math.sin(t * 6 + i) * 3, y - 38); g.lineTo(x + 2, y - 30); g.fill(); }
+    if (seg) rotul(g, i ? 'CONTROL ' + i : 'META', p.x, p.y - 56, '#ff9a3d', 8);
+  });
+}
+
 // ---------- Rampes per fer salts amb el cotxe ----------
 const RAMPES = [[180, 15.5, 'h'], [330, 15.5, 'h'], [560, 15.5, 'h'], [210, 73.5, 'h'], [400, 73.5, 'h'], [65.5, 130, 'v'], [65.5, 260, 'v'], [65.5, 380, 'v']].map(([x, y, d], i) => ({ id: i, x: x * TS, y: y * TS, d }));
 function actualitzaRampes(dt) {
@@ -6357,6 +6437,7 @@ function pintaMapaGran() {
     for (const p of POBLES) rotul(p.nom, (p.x + p.w / 2) * TS, (p.y - 1) * TS, '#ffd23f');
     rotul('CAPELLADES', 30 * TS, 12 * TS, '#ffd23f'); rotul('BARCELONA', 100 * TS, 54 * TS, '#ffd23f'); rotul('MONTSERRAT', 20 * TS, 52 * TS, '#ffd23f', 8);
     rotul('MOSSOS', (COMISSARIA.x0 + COMISSARIA.x1) / 2 * TS, (COMISSARIA.y0 - 1) * TS, '#7fc3ff');
+    rotul('RAL·LIS', (RALLI.x0 + RALLI.x1) / 2 * TS, (RALLI.y1 + 3) * TS, '#ff9a3d');
     rotul('PAL ARINSAL', (ARINSAL.x0 + ARINSAL.x1) / 2 * TS, (ARINSAL.y1 + 3) * TS, '#fff');
     for (const gs of GASOLINERES) { punt((gs.x + 2) * TS, (gs.y + 2) * TS, 6, '#ff9a3d', '#000'); if (VM.z > 3) rotul('GASOLINERA', (gs.x + 2) * TS, (gs.y - .5) * TS, '#ff9a3d', 7); }
     for (const c2 of J.controlsPoli || []) punt(c2.x, c2.y, 5, '#2d6bff', '#fff');

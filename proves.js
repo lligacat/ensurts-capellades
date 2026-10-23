@@ -1,7 +1,7 @@
 // Proves automàtiques del joc. Obre la pàgina amb ?proves al final de l'adreça i els resultats surten a la pantalla i a la consola.
 // Fan servir les funcions i l'estat globals del joc, i deixen el moneder i la botiga tal com estaven.
 
-const CLAUS = ['ensurts-moneder', 'ensurts-skins', 'ensurts-explosions', 'ensurts-missions', 'ensurts-historia', 'ensurts-mode', 'ensurts-paquets'];
+const CLAUS = ['ensurts-ralli-millor', 'ensurts-moneder', 'ensurts-skins', 'ensurts-explosions', 'ensurts-missions', 'ensurts-historia', 'ensurts-mode', 'ensurts-paquets'];
 
 export async function executa() {
   const resultats = [], guardat = Object.fromEntries(CLAUS.map(k => [k, localStorage.getItem(k)]));
@@ -208,6 +208,14 @@ export async function executa() {
     const c = nouCotxe('policia', 300); c.estat = 'roda'; c.x = j.x + 40; c.y = j.y; J.cotxes = [c]; J.tPoliCotxe = 0;
     actualitzaVehicles(.05); actualitzaVehicles(.05);
     const ok = (c.estat === 'marxa' && j.cotxe && J.cotxes.filter(x => x.tipus === 'policia' && x.estat !== 'marxa').length === 0) || 'estat ' + c.estat; baixaVila(); return ok;
+  });
+  prova('Al circuit de ral·lis hi ha cotxes al paddock i una volta per tots els controls queda cronometrada', () => {
+    localStorage.removeItem('ensurts-ralli-millor'); const j = J.jug; if (j.cotxe) baixaVila();
+    const rc = J.aparcats.filter(c => c.tipus === 'ralli'); if (rc.length < 4) return 'cotxes: ' + rc.length;
+    if (mapa[RALLI.sortida[1]][RALLI.sortida[0]] !== C.TERRA) return 'la sortida no és de terra';
+    j.x = rc[0].x; j.y = rc[0].y; pujaVila(); const v = j.cotxe; if (!v || v.tipus !== 'ralli') return 'no condueixes un cotxe de ral·li';
+    J.ralli = null; for (let i = 0; i <= RALLI.punts.length; i++) { const p = ptRalli(i % RALLI.punts.length); v.x = j.x = p.x; v.y = j.y = p.y; for (let k = 0; k < 3; k++) actualitzaRalli(.5); }
+    const ok = millorRalli() > 0 || 'cap volta'; baixaVila(); return ok;
   });
   prova('La patrulla para i en baixen dos policies', () => {
     const j = J.jug; J.liada = true; const c = nouCotxe('policia', 300); c.aPeu = true; c.x = j.x + 150; c.y = j.y; J.cotxes = [c]; const n0 = J.agents.length;
