@@ -187,6 +187,17 @@ export async function executa() {
     for (let i = 0; i < 80 && !J.bombers; i++) actualitzaFocs(.1);
     return !!J.bombers || 'no han vingut els bombers';
   });
+  prova("En Guillem avisa abans d'arribar i després va recte", () => {
+    const j = J.jug; J.liada = true; J.guillem = null; J.tGuillem = 0; if (!j.cotxe) { const v = J.aparcats.find(v => v.tipus === 'carromato'); j.x = v.x; j.y = v.y; pujaVila(); }
+    j.cotxe.fx = 1; j.cotxe.fy = 0; actualitzaCarretera(.016); const g = J.guillem; if (!g) return 'no ha vingut';
+    const x0 = g.x; actualitzaCarretera(.5); if (g.avis <= 0 || g.x !== x0) return "no espera durant l'avís";
+    actualitzaCarretera(2); return (g.vx !== 0 || g.vy !== 0) || 'no arrenca';
+  });
+  prova('En Guillem fa drift i la policia et perd', () => {
+    baixaVila(); J.guillem = null; const j = J.jug; J.liada = true; J.drift = null; J.tDrift = 0; const a = Object.assign(nouAgent(), { x: j.x + 200, y: j.y, estat: 'persegueix', ultim: { x: j.x, y: j.y } }); J.agents = [a];
+    actualitzaDrift(.016); if (!J.drift) return 'no ha vingut'; actualitzaDrift(.1);
+    return a.estat === 'patrulla' || 'estat ' + a.estat;
+  });
   prova('La patrulla para i en baixen dos policies', () => {
     const j = J.jug; J.liada = true; const c = nouCotxe('policia', 300); c.aPeu = true; c.x = j.x + 150; c.y = j.y; J.cotxes = [c]; const n0 = J.agents.length;
     actualitzaVehicles(.05);

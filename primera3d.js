@@ -95,7 +95,8 @@ function preparaTextures() { Object.assign(TEXTURES, { paret: texParetCasa(), ta
 // ---------- Construcció d'una escena per a cada mapa ----------
 const mat = (o) => new THREE.MeshStandardMaterial(Object.assign({ roughness: .9, metalness: 0 }, o));
 
-let R = { x0: 0, y0: 0, x1: 42, y1: 30 }; // regió del mapa que té l'escena actual
+let R = { x0: 0, y0: 0, x1: 42, y1: 30 };
+let M_HT = () => 0; // alçada del terreny de l'escena que s'està construint // regió del mapa que té l'escena actual
 function construeix(nom) {
   const m = mapa, sc = new THREE.Scene(), zona = ZONES[nom];
   const nit = nom === 'patum' || nom === 'cabra', interior = nom === 'casa' || nom === 'cabra' || nom === 'lliga', vic = nom === 'vic';
@@ -105,7 +106,12 @@ function construeix(nom) {
   // Terra: el mateix mapa dibuixat, però sense edificis ni arbres
   const terra = terraReduida(nom, R);
   const tt = textura(terra); tt.repeat.set(1, 1); tt.wrapS = tt.wrapT = THREE.ClampToEdgeWrapping;
-  const sol = new THREE.Mesh(new THREE.PlaneGeometry(R.x1 - R.x0, R.y1 - R.y0), mat({ map: tt, roughness: .95 }));
+  const relleu = nom === 'capellades' && typeof altTerra === 'function';
+  const HT = (x, z) => relleu ? altTerra(x * TS, z * TS) : 0; // alçada del terreny (x, z en caselles)
+  M_HT = HT;
+  const geoSol = relleu ? new THREE.PlaneGeometry(R.x1 - R.x0, R.y1 - R.y0, R.x1 - R.x0, R.y1 - R.y0) : new THREE.PlaneGeometry(R.x1 - R.x0, R.y1 - R.y0);
+  if (relleu) { const p = geoSol.attributes.position, cx0 = (R.x0 + R.x1) / 2, cz0 = (R.y0 + R.y1) / 2; for (let i = 0; i < p.count; i++) p.setZ(i, HT(p.getX(i) + cx0, -p.getY(i) + cz0)); geoSol.computeVertexNormals(); }
+  const sol = new THREE.Mesh(geoSol, mat({ map: tt, roughness: .95 }));
   sol.rotation.x = -Math.PI / 2; sol.position.set((R.x0 + R.x1) / 2, 0, (R.y0 + R.y1) / 2); sol.receiveShadow = true; sc.add(sol);
   // Cel
   if (!interior) {
@@ -146,29 +152,34 @@ function construeix(nom) {
   if (nom === 'capellades') for (let y = Math.max(30, R.y0); y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) {
     if (m[y][x] !== C.ROCA) continue;
     vist[y][x] = true;
+    if (x >= 40 || y >= 72) continue; // fora de Montserrat, la muntanya ja la fa el terreny
     const alt = 1.6 + hash(x * 5, y * 3) * 4.5, r = .45 + hash(y, x) * .25;
     M.cubells.has(M.rocaMat) || M.cubells.set(M.rocaMat, { geos: [], ombra: true });
-    M.cubells.get(M.rocaMat).geos.push(new THREE.CylinderGeometry(r * .55, r, alt, 7).translate(x + .5, alt / 2, y + .5));
-    M.cubells.get(M.rocaMat).geos.push(new THREE.SphereGeometry(r * .58, 7, 5).translate(x + .5, alt, y + .5));
+    const h0 = M_HT(x + .5, y + .5);
+    M.cubells.get(M.rocaMat).geos.push(new THREE.CylinderGeometry(r * .55, r, alt, 7).translate(x + .5, h0 + alt / 2, y + .5));
+    M.cubells.get(M.rocaMat).geos.push(new THREE.SphereGeometry(r * .58, 7, 5).translate(x + .5, h0 + alt, y + .5));
   }
   for (let y = R.y0; y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) {
     const t = m[y][x]; if (vist[y][x] || !solids.has(t)) continue;
+    if (t === C.ROCA && nom === 'capellades' && (x >= 128 || y >= 30)) { vist[y][x] = true; continue; } // muntanyes de terreny
     // rectangle més gran possible del mateix tipus a partir d'aquí
     let w = 1; while (x + w < R.x1 && m[y][x + w] === t && !vist[y][x + w]) w++;
     let h = 1; while (y + h < R.y1 && [...Array(w)].every((_, k) => m[y + h][x + k] === t && !vist[y + h][x + k])) h++;
     for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) vist[yy][xx] = true;
-    afegeixBloc(sc, t, x, y, w, h, M);
+    const hb = M_HT(x + w / 2, y + h / 2);
+    if (hb > .05) { const abans = new Map([...M.cubells].map(([k, v]) => [k, v.geos.length])), fills = sc.children.length; afegeixBloc(sc, t, x, y, w, h, M); for (const [k, v] of M.cubells) for (let i = abans.get(k) || 0; i < v.geos.length; i++) v.geos[i].translate(0, hb, 0); for (let i = fills; i < sc.children.length; i++) sc.children[i].position.y += hb; }
+    else afegeixBloc(sc, t, x, y, w, h, M);
   }
   buidaCubells(sc, M.cubells);
   // Arbres
   const tronc = mat({ color: 0x5b3d25 });
-  const llocsArbre = []; for (let y = R.y0; y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) if (m[y][x] === C.ARBRE) llocsArbre.push({ x: x + .5, z: y + .5, s: 1.1 + hash(x, y) * .5, h: hash(x, y) });
+  const llocsArbre = []; for (let y = R.y0; y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) if (m[y][x] === C.ARBRE) llocsArbre.push({ x: x + .5, z: y + .5, s: 1.1 + hash(x, y) * .5, h: hash(x, y), y0: HT(x + .5, y + .5) });
   const boles = [];
   llocsArbre.forEach((a, k) => { for (let i = 0; i < 5; i++) boles.push({ a, r: .32 + hash(i, k * 7) * .22, ox: (hash(i, k) - .5) * .5, oy: .95 + hash(k, i) * .55, oz: (hash(k + i, 3) - .5) * .5 }); });
   const fullesM = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), mat({ map: textura(texFulles('#4c8f3e')), roughness: .85, flatShading: true }), Math.max(1, boles.length));
   const troncsM = new THREE.InstancedMesh(new THREE.CylinderGeometry(.06, .09, .9, 7), tronc, Math.max(1, llocsArbre.length));
   const tmp = new THREE.Matrix4(), col = new THREE.Color();
-  llocsArbre.forEach((a, i) => { tmp.makeScale(a.s, a.s, a.s).setPosition(a.x, .45 * a.s, a.z); troncsM.setMatrixAt(i, tmp); });
+  llocsArbre.forEach((a, i) => { tmp.makeScale(a.s, a.s, a.s).setPosition(a.x, a.y0 + .45 * a.s, a.z); troncsM.setMatrixAt(i, tmp); });
   boles.forEach((b, i) => fullesM.setColorAt(i, col.setHSL(.27 + b.a.h * .06, .45, .32 + (i % 5) * .03)));
   fullesM.count = boles.length; troncsM.count = llocsArbre.length;
   fullesM.castShadow = troncsM.castShadow = true; fullesM.receiveShadow = true; sc.add(fullesM, troncsM);
@@ -208,7 +219,7 @@ function construeix(nom) {
     const pal = new THREE.InstancedMesh(new THREE.CylinderGeometry(.025, .035, 1.5, 6), mat({ color: 0x2b2f33, metalness: .6, roughness: .4 }), llocs.length);
     const cap = new THREE.InstancedMesh(new THREE.SphereGeometry(.07, 8, 6), mat({ color: 0xfff3c0, emissive: 0xffe9a8, emissiveIntensity: .6 }), llocs.length);
     const mm = new THREE.Matrix4();
-    llocs.forEach(([x, y], i) => { mm.makeTranslation(x, .75, y); pal.setMatrixAt(i, mm); mm.makeTranslation(x, 1.52, y); cap.setMatrixAt(i, mm); });
+    llocs.forEach(([x, y], i) => { const h0 = HT(x, y); mm.makeTranslation(x, h0 + .75, y); pal.setMatrixAt(i, mm); mm.makeTranslation(x, h0 + 1.52, y); cap.setMatrixAt(i, mm); });
     pal.castShadow = true; sc.add(pal, cap);
   }
   // Pluja
@@ -380,9 +391,10 @@ export function dibuixa(w, h) {
   // Tercera persona: la càmera va darrere i per sobre, i s'apropa si hi ha una paret al mig
   const yaw = j.angCam ?? ang, px = j.x / TS, py = j.y / TS;
   let dist = j.cotxe ? 5 : 3.9; const hc = j.cotxe ? 2.3 : 1.9;
-  for (let d = .5; d <= dist; d += .2) { const tt = tileA((px - Math.cos(yaw) * d) * TS, (py - Math.sin(yaw) * d) * TS); if (tapaVista(tt) && tt !== C.ARBRE) { dist = Math.max(.7, d - .35); break; } }
-  camera.position.set(px - Math.cos(yaw) * dist + sac, hc * (dist / (j.cotxe ? 5 : 3.9)) * .55 + hc * .45 + bob * .4, py - Math.sin(yaw) * dist + sac);
-  camera.lookAt(px + Math.cos(yaw) * 1.4, j.cotxe ? .8 : .95, py + Math.sin(yaw) * 1.4);
+  for (let d = .5; d <= dist; d += .2) { const tt = tileA((px - Math.cos(yaw) * d) * TS, (py - Math.sin(yaw) * d) * TS); if (tapaVista(tt) && tt !== C.ARBRE && !(tt === C.ROCA && J.ciutat === 'capellades' && !J.zona)) { dist = Math.max(.7, d - .35); break; } }
+  const hj = altTerra(j.x, j.y), hcam = Math.max(hj, altTerra((px - Math.cos(yaw) * dist) * TS, (py - Math.sin(yaw) * dist) * TS));
+  camera.position.set(px - Math.cos(yaw) * dist + sac, hcam + hc * (dist / (j.cotxe ? 5 : 3.9)) * .55 + hc * .45 + bob * .4, py - Math.sin(yaw) * dist + sac);
+  camera.lookAt(px + Math.cos(yaw) * 1.4, hj + (j.cotxe ? .8 : .95), py + Math.sin(yaw) * 1.4);
   // Sol i ombres seguint el jugador
   // de nit es fa fosc: menys sol, cel i boira foscos
   if (E.sc.userData.diaNit && typeof nitFactor === 'function') {
@@ -396,7 +408,7 @@ export function dibuixa(w, h) {
   // Vent als arbres i ones a l'aigua
   { // vent: les copes es balancegen
     const { fullesM, boles } = E.arbresG, tmp = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), sc3 = new THREE.Vector3();
-    boles.forEach((b, i) => { const a = b.a, ox = Math.sin(t * 1.3 + a.x) * .05 * b.oy; v.set(a.x + (b.ox + ox) * a.s, b.oy * a.s, a.z + b.oz * a.s); sc3.setScalar(b.r * a.s); tmp.compose(v, q.setFromEuler(e.set(0, i, 0)), sc3); fullesM.setMatrixAt(i, tmp); });
+    boles.forEach((b, i) => { const a = b.a, ox = Math.sin(t * 1.3 + a.x) * .05 * b.oy; v.set(a.x + (b.ox + ox) * a.s, (a.y0 || 0) + b.oy * a.s, a.z + b.oz * a.s); sc3.setScalar(b.r * a.s); tmp.compose(v, q.setFromEuler(e.set(0, i, 0)), sc3); fullesM.setMatrixAt(i, tmp); });
     fullesM.instanceMatrix.needsUpdate = true;
   }
   if (E.aigua) E.aigua.map.offset.set(t * .02, t * .013);
@@ -406,7 +418,7 @@ export function dibuixa(w, h) {
   while (E.cotxes.length < llista.length) { const c = cotxe3d(); E.sc.add(c); E.cotxes.push(c); }
   E.cotxes.forEach((m, i) => {
     const c = llista[i]; m.visible = !!c; if (!c) return;
-    m.position.set(c.x / TS, 0, c.y / TS); m.rotation.y = -(c.ang || 0);
+    m.position.set(c.x / TS, altTerra(c.x, c.y), c.y / TS); m.rotation.y = -(c.ang || 0);
     const col = c.tipus === 'policia' ? '#f4f6fa' : c.tipus === 'subineta' ? '#2c5aa0' : c.tipus === 'vilamovil' ? '#f7f7f2' : c.tipus === 'carromato' ? '#0d0d10' : c.tipus === 'bestia' ? '#f4f4f2' : c.tipus === 'guillem' ? '#2f4a2a' : c.color;
     m.userData.cos.color.set(col); m.scale.setScalar(c.tipus === 'subineta' || c.tipus === 'guillem' ? 1.3 : 1);
     m.userData.llum.visible = c.tipus === 'policia'; if (c.tipus === 'policia') m.userData.llum.material.color.set(Math.floor(t * 6) % 2 ? 0xff2d2d : 0x2d6bff), m.userData.llum.material.emissive.copy(m.userData.llum.material.color);
@@ -441,8 +453,9 @@ export function dibuixa(w, h) {
       o.fn(g); tx.needsUpdate = true;
     }
     const ample = c.width / o.k / TS, alcada = c.height / o.k / TS;
-    s.scale.set(ample, alcada, 1); s.position.set(o.e.x / TS, 0, o.e.y / TS);
-    om.position.set(o.e.x / TS, .015, o.e.y / TS); om.scale.setScalar(o.k > 2 ? 1 : 1.6);
+    const hs = altTerra(o.e.x, o.e.y);
+    s.scale.set(ample, alcada, 1); s.position.set(o.e.x / TS, hs, o.e.y / TS);
+    om.position.set(o.e.x / TS, hs + .015, o.e.y / TS); om.scale.setScalar(o.k > 2 ? 1 : 1.6);
   });
   // Pluja al voltant de la càmera
   E.pluja.visible = J.pluja > 0;

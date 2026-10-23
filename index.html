@@ -52,7 +52,12 @@
   #instal .boto { font-size: 10px; background: #2c8d63; }
   .missions { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; max-width: 640px; padding: 14px; background: rgba(0,0,0,.35); border: 3px solid #3a4a40; }
   #codiSala { font-family: inherit; font-size: 16px; width: 120px; padding: 12px 8px; text-align: center; text-transform: uppercase; color: #fff; background: #111; border: 3px solid var(--verd); box-shadow: 0 0 0 2px #000; }
-  #estatSala { color: #ffd23f; min-height: 14px; text-align: center; }
+  #estatSala { color: #ffd23f; min-height: 14px; text-align: center; line-height: 1.8; }
+  #nomJugador { font-family: inherit; font-size: 12px; width: 240px; padding: 10px 8px; text-align: center; text-transform: uppercase; color: #fff; background: #111; border: 3px solid #3a4a40; }
+  #llistaSales { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  #llistaSales .sala { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; background: #111; border: 2px solid #3a4a40; font-size: 9px; color: #cfd8d2; }
+  #llistaSales .sala b { color: #fff; font-size: 12px; letter-spacing: 2px; }
+  #llistaSales .sala button { font-family: inherit; font-size: 9px; padding: 8px 12px; color: #000; background: #2fd38a; border: 2px solid #000; cursor: pointer; }
   #estatSala b { font-size: 20px; color: #fff; letter-spacing: 4px; }
   .missions h2 { font-size: clamp(12px, 2.2vw, 16px); color: var(--crema); text-shadow: 2px 2px 0 #000; }
   .missions ul { list-style: none; display: flex; flex-direction: column; gap: 9px; font-size: 9px; line-height: 1.6; color: #cfd8d2; width: 100%; }
@@ -126,9 +131,12 @@
   <p class="difs-desc" id="difDesc"></p>
   <div class="missions multi">
     <h2>MULTIJUGADOR</h2>
-    <p class="controls">Juga amb amics, cadascú des del seu mòbil: un crea la sala i els altres hi entren amb el codi (fins a 4).</p>
-    <div class="fila"><button class="boto" id="bCrearSala">CREAR SALA</button><button class="boto" id="bCompartirSala" style="display:none">COMPARTIR</button><input id="codiSala" maxlength="4" placeholder="CODI" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="boto sec" id="bUnirSala">ENTRAR</button></div>
+    <p class="controls">Juga amb amics, cadascú des del seu mòbil (wifi o dades). Crea una sala o entra a una de les que hi ha obertes.</p>
+    <div class="fila"><input id="nomJugador" maxlength="12" placeholder="EL TEU NOM" autocomplete="off" spellcheck="false"></div>
+    <div class="fila"><button class="boto" id="bCrearSala">CREAR SALA</button><input id="codiSala" maxlength="4" placeholder="CODI" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="boto sec" id="bUnirSala">ENTRAR</button></div>
+    <div class="fila"><button class="boto" id="bCompartirSala" style="display:none">COMPARTIR LA SALA</button><button class="boto sec" id="bSortirSala" style="display:none">SORTIR DE LA SALA</button></div>
     <p class="controls" id="estatSala"></p>
+    <div id="llistaSales"></div>
   </div>
   <p class="moneder" id="moneder"></p>
   <div class="cartes" id="cartes"></div>
@@ -1221,6 +1229,7 @@ function pintaEdifici(g, m, x, y, t, teulades, facanes) {
 
 const TROS = 12; // el fons es dibuixa en trossos de 12×12 caselles i només els que es veuen
 function pintaMapa(m, ciutat, nomesTerra = false, regio = { x0: 0, y0: 0, x1: MW, y1: MH }) {
+  const ALT = ciutat === 'capellades' && typeof CIUTATS !== 'undefined' && CIUTATS.capellades ? CIUTATS.capellades.alt : null;
   const fons = document.createElement('canvas'); fons.width = (regio.x1 - regio.x0) * TS; fons.height = (regio.y1 - regio.y0) * TS;
   const g = fons.getContext('2d');
   g.translate(-regio.x0 * TS, -regio.y0 * TS);
@@ -1343,6 +1352,15 @@ function pintaMapa(m, ciutat, nomesTerra = false, regio = { x0: 0, y0: 0, x1: MW
     } else if (EDIFS.has(t)) {
       pintaEdifici(g, m, x, y, t, teulades, facanes);
     }
+    if (passada === 0 && ALT && x > 0 && y > 0 && x < MW - 1 && y < MH - 1) {
+      const i = y * MW + x, a = ALT[i], s = (ALT[i - 1] + ALT[i - MW] - ALT[i + 1] - ALT[i + MW]) * .5;
+      if (Math.abs(s) > .02) { g.fillStyle = s > 0 ? 'rgba(255,248,215,' + Math.min(.38, s * .13).toFixed(3) + ')' : 'rgba(15,22,8,' + Math.min(.48, -s * .15).toFixed(3) + ')'; g.fillRect(X, Y, TS, TS); }
+      if (a > .3) { // corbes de nivell cada 2 caselles d'alçada, com en un mapa de muntanya
+        const nv = Math.floor(a / 2); g.fillStyle = 'rgba(60,40,20,.16)';
+        if (Math.floor(ALT[i + 1] / 2) !== nv) g.fillRect(X + TS - 2, Y, 2, TS);
+        if (Math.floor(ALT[i + MW] / 2) !== nv) g.fillRect(X, Y + TS - 2, TS, 2);
+      }
+    }
   }
   }
   // Arbres i bancs
@@ -1407,13 +1425,17 @@ function pintaMapa(m, ciutat, nomesTerra = false, regio = { x0: 0, y0: 0, x1: MW
   return fons;
 }
 
-function pintaMinimapa(m) {
+function pintaMinimapa(m, alt) {
   const mini = document.createElement('canvas'); mini.width = MW * 4; mini.height = MH * 4;
   const mm = mini.getContext('2d');
   const colors = { [C.CARRER]: '#8d8a85', [C.EDIF]: '#9b5a40', [C.AIGUA]: '#3f86b8', [C.GESPA]: '#6fa04f', [C.ARBRE]: '#2f6e36', [C.ROCA]: '#9a7b5c', [C.MOLI]: '#7a5136', [C.ESGL]: '#8f8a80', [C.PLACA]: '#c4b49a', [C.BANC]: '#6fa04f',
     [C.GARATGE]: '#f2c230', [C.TANCA]: '#c0c8d0', [C.RAVE]: '#3a2a6a', [C.ALTAVEU]: '#111', [C.ESCENARI]: '#5a3a2a', [C.PORTA]: '#ff3b3b', [C.PARET]: '#d9cdb8', [C.PARQUET]: '#b98a5a', [C.BUIT]: '#0d0f0e', [C.TERRA]: '#a07850', [C.BOSC]: '#2d5a2a',
     [C.SORRA]: '#e8d3a2', [C.MAR]: '#1f5f8f', [C.SAGRADA]: '#d9b26a', [C.GLORIES]: '#4fa3ff', [C.PEDRERA]: '#f4efe4', [C.ESTADI]: '#a50044', [C.CAMP]: '#4aa956', [C.MONESTIR]: '#cfc3a5', [C.COMISSARIA]: '#1d3f8f', [C.RUNA]: '#6e6862', [C.PARQUING]: '#4a4d51', [C.NEU]: '#f4f8fc' };
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) { mm.fillStyle = (m.auto && m.auto[y][x]) ? '#5d6066' : colors[m[y][x]]; mm.fillRect(x * 4, y * 4, 4, 4); }
+  if (alt) for (let y = 1; y < MH - 1; y++) for (let x = 1; x < MW - 1; x++) { // ombres de les muntanyes (la llum ve del nord-oest)
+    const i = y * MW + x, s = (alt[i - 1] + alt[i - MW] - alt[i + 1] - alt[i + MW]) * .5; if (Math.abs(s) < .04) continue;
+    mm.fillStyle = s > 0 ? 'rgba(255,248,220,' + Math.min(.4, s * .14).toFixed(3) + ')' : 'rgba(20,25,10,' + Math.min(.5, -s * .16).toFixed(3) + ')'; mm.fillRect(x * 4, y * 4, 4, 4);
+  }
   return mini;
 }
 
@@ -1579,6 +1601,47 @@ function canviaCasella(x, y, t) {
   if (typeof M3D !== 'undefined' && M3D && M3D.invalida) M3D.invalida(ciutatActiva);
 }
 
+// Relleu (en caselles d'alçada): turons als camps, muntanyes on hi ha roca i tot el massís de Pal Arinsal.
+// Els carrers, les cases i l'aigua queden plans, i el terreny hi baixa de mica en mica.
+function calculaRelleu(m) {
+  const W = MW, H = MH, N = W * H, alt = new Float32Array(N);
+  const natural = t => t === C.GESPA || t === C.ARBRE || t === C.TERRA || t === C.ROCA || t === C.NEU;
+  const bfs = (dist, origen, entra, max) => {
+    const cua = new Int32Array(N); let a = 0, b = 0;
+    for (let i = 0; i < N; i++) if (origen(i)) { dist[i] = 0; cua[b++] = i; }
+    while (a < b) { const i = cua[a++], d = dist[i]; if (d >= max) continue; const x = i % W, y = (i / W) | 0;
+      for (const n of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1]) if (n >= 0 && dist[n] > d + 1 && entra(n)) { dist[n] = d + 1; cua[b++] = n; } }
+  };
+  const t = i => m[(i / W) | 0][i % W];
+  const dPla = new Uint8Array(N).fill(255), dRoca = new Uint8Array(N).fill(255);
+  bfs(dPla, i => !natural(t(i)), () => true, 12);
+  bfs(dRoca, i => t(i) !== C.ROCA, i => t(i) === C.ROCA, 20);
+  for (let i = 0; i < N; i++) {
+    const x = i % W, y = (i / W) | 0, tt = t(i);
+    if (x < 128 && y < 30) continue; // el poble de Capellades de sempre, com era
+    let h = 0;
+    if (natural(tt)) { const n = Math.sin(x * .043 + 1.3) * Math.cos(y * .051 - .7) + .6 * Math.sin((x + y) * .021 + 2) + .35 * Math.sin(x * .11 - y * .083); h = Math.max(0, n + .35) * 1.7 * Math.min(1, Math.max(0, dPla[i] - 1) / 6); }
+    if (tt === C.ROCA) h += Math.min(dRoca[i], 16) * .85 + hash(x * 3, y * 5) * .7;
+    const al = alcadaT(x, y); if (al > 0) h = al * 14 + (tt === C.ROCA ? Math.min(dRoca[i], 6) * .3 : 0);
+    alt[i] = h;
+  }
+  // suavitzat (els llocs plans es queden plans, excepte la carretera d'Arinsal que puja)
+  for (let p = 0; p < 2; p++) {
+    const c = alt.slice();
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+      const i = y * W + x; if (!natural(t(i)) && alcadaT(x, y) <= 0) continue;
+      let sm = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) sm += c[i + dy * W + dx]; alt[i] = sm / 9;
+    }
+  }
+  return alt;
+}
+// Alçada del terreny en un punt (en píxels del món) → caselles d'alçada, interpolant entre caselles
+function altTerra(px, py) {
+  const c = CIUTATS && CIUTATS.capellades, A = c && c.alt; if (!A || !J || J.zona || J.ciutat !== 'capellades') return 0;
+  const W = c.mw, H = c.mh, fx = px / TS - .5, fy = py / TS - .5, x0 = Math.max(0, Math.min(W - 2, Math.floor(fx))), y0 = Math.max(0, Math.min(H - 2, Math.floor(fy))), u = Math.max(0, Math.min(1, fx - x0)), v = Math.max(0, Math.min(1, fy - y0));
+  const a = A[y0 * W + x0], b = A[y0 * W + x0 + 1], cc = A[(y0 + 1) * W + x0], d = A[(y0 + 1) * W + x0 + 1];
+  return (a * (1 - u) + b * u) * (1 - v) + (cc * (1 - u) + d * u) * v;
+}
 function construeixCiutat(nom) {
   [MW, MH] = MIDES[nom] || [42, 30];
   const m = generaMapa(nom), cas = [], bc = [], arb = [], aig = [];
@@ -1591,7 +1654,8 @@ function construeixCiutat(nom) {
   // Índex per trossos per fer aparèixer coses a prop del jugador
   const cubs = new Map(), cub = (x, y) => { const k = Math.floor(x / TROS) + ',' + Math.floor(y / TROS); if (!cubs.has(k)) cubs.set(k, { cas: [], car: [] }); return cubs.get(k); };
   for (const [x, y] of cas) { const b = cub(x, y); b.cas.push([x, y]); if (m[y][x] === C.CARRER) b.car.push([x, y]); }
-  return { nom, mw: MW, mh: MH, mapa: m, caselles: cas, bancs: bc, carrers: cas.filter(([x, y]) => m[y][x] === C.CARRER), trossos: new Map(), minimapa: pintaMinimapa(m), arbres: arb, aigues: aig, cubs };
+  const alt = nom === 'capellades' ? calculaRelleu(m) : null;
+  return { nom, mw: MW, mh: MH, alt, mapa: m, caselles: cas, bancs: bc, carrers: cas.filter(([x, y]) => m[y][x] === C.CARRER), trossos: new Map(), minimapa: pintaMinimapa(m, alt), arbres: arb, aigues: aig, cubs };
 }
 
 let mapa, caselles, bancs, carrers, minimapa, arbres, aigues, ciutatActiva = 'capellades';
@@ -2441,11 +2505,11 @@ function koAgent(a, txt = 'K.O.!') {
 // Pujant una muntanya, el cotxe va més lent; baixant, més ràpid (la definició real és a la part de la muntanya)
 // Velocitat punta de cada vehicle (px/s). 4,2 px/s = 1 km/h, així el més ràpid fa 150 km/h
 const VMAX = { carromato: 630, bestia: 610, robat: 590, policia: 600, vilamovil: 520 }, KMH = 4.2;
-function pendent(v, dx, dy) { return typeof alcada === 'function' && !J.zona && J.ciutat === 'capellades' ? 1 - Math.max(-.35, Math.min(.6, (alcada(v.x + dx * 40, v.y + dy * 40) - alcada(v.x, v.y)) * 28)) : 1; }
+function pendent(v, dx, dy) { if (J.zona || J.ciutat !== 'capellades') return 1; const dh = altTerra(v.x + dx * 40, v.y + dy * 40) - altTerra(v.x, v.y); return 1 - Math.max(-.35, Math.min(.6, dh * 2.2)); }
 function actualitzaPistola(dt) {
   const j = J.jug;
   actualitzaBenziners(dt);
-  if ((tecles.KeyR || J.ratxa) && j.pistola && ARMES_FOC[j.pistola.tipus || 'pistola'].rec < .1) disparaPistola(); actualitzaPaquets(); actualitzaRampes(dt); actualitzaLlaunes(dt); actualitzaControls(dt); actualitzaFocs(dt); actualitzaPoliciaPeu(dt);
+  if ((tecles.KeyR || J.ratxa) && j.pistola && ARMES_FOC[j.pistola.tipus || 'pistola'].rec < .1) disparaPistola(); actualitzaPaquets(); actualitzaRampes(dt); actualitzaLlaunes(dt); actualitzaControls(dt); actualitzaFocs(dt); actualitzaPoliciaPeu(dt); actualitzaDrift(dt);
   for (const cd of J.conductors || []) { cd.t -= dt; cd.pas += dt * 14; mou(cd, cd.vx, cd.vy, dt, 10); } if (J.conductors) J.conductors = J.conductors.filter(cd => cd.t > 0);
   if (!J.zona && J.ciutat === 'capellades' && granMon()) actualitzaArinsal(dt);
   if (J.zona === 'arinsal') actualitzaPista(dt);
@@ -3547,16 +3611,22 @@ function actualitzaCarretera(dt) {
   }
   if (v && Math.hypot(v.x - VIC_SORTIDA.x, v.y - VIC_SORTIDA.y) < 110) return anarAVic();
   // En Guillem amb el tot terreny: apareix de cop i ve de cara
-  if (v && !J.guillem && (J.tGuillem -= dt) <= 0) {
-    J.tGuillem = 25 + Math.random() * 20;
-    J.guillem = { x: v.x + v.fx * 950, y: v.y + v.fy * 950, vx: 0, vy: 0, t: 5, ang: 0 };
-    anunci('COMPTE! EN GUILLEM AMB EL TOT TERRENY!', 1.6); so('pec'); so('motor');
+  if (v && J.liada && !J.guillem && (J.tGuillem -= dt) <= 0) {
+    J.tGuillem = 30 + Math.random() * 25;
+    const lat = (Math.random() - .5) * 1.2, a0 = Math.atan2(v.fy, v.fx) + lat; // ve de davant, una mica de costat
+    J.guillem = { x: v.x + Math.cos(a0) * 1250, y: v.y + Math.sin(a0) * 1250, vx: 0, vy: 0, t: 7, ang: 0, avis: 2.2 };
+    anunci('COMPTE! VE EN GUILLEM AMB EL TOT TERRENY!', 2); so('alarma');
   }
   const gu = J.guillem;
   if (gu) {
     gu.t -= dt;
     const objectiu = v || j, dx = objectiu.x - gu.x, dy = objectiu.y - gu.y, d = Math.hypot(dx, dy) || 1;
-    if (gu.t > 3.6) { gu.vx = dx / d * 540; gu.vy = dy / d * 540; } // apunta cap a tu i després ja no gira
+    if (gu.avis > 0) { // primer l'avís (fletxa vermella); quan s'acaba, apunta on ets i ja no gira
+      gu.avis -= dt; gu.ang = Math.atan2(dy, dx);
+      if ((gu.tBip = (gu.tBip || 0) - dt) <= 0) { gu.tBip = .3; so('bip'); }
+      if (gu.avis <= 0) { gu.vx = dx / d * 640; gu.vy = dy / d * 640; so('motor'); so('frenada'); }
+      return;
+    }
     gu.x += gu.vx * dt; gu.y += gu.vy * dt; gu.ang = Math.atan2(gu.vy, gu.vx);
     if (Math.random() < dt * 20) J.particules.push({ x: gu.x - gu.vx * .06, y: gu.y, vx: (Math.random() - .5) * 60, vy: -30, t: .5, c: '#b89b72', m: 8 });
     if (v && d < 58 && j.invul <= 0) { J.guillem = null; so('boom'); J.flash = .5; return perdVida("EN GUILLEM T'HA ENCASTAT!"); }
@@ -3740,7 +3810,7 @@ function actualitzaVehicles(dt) {
   if (v && v !== j.cotxe && ((v.estat === 'espatllat' && v.t > 4) || (v.estat === 'aparcat' && v.t > 35) || (v.estat === 'roda' && v.t > 50))) { J.vila = null; J.tVila = 22; }
 
   // La Subineta: furgoneta blava espatllada que si no t'apartes en 3 segons explota
-  if (!J.subi && (J.tSubi -= dt) <= 0) { J.subi = nouCotxe('subineta', 650); J.tSubi = 40; anunci('COMPTE: VE LA SUBINETA!', 1.8); so('motor'); }
+  if (!J.subi && J.liada && (J.tSubi -= dt) <= 0) { J.subi = nouCotxe('subineta', 650); J.tSubi = 40; anunci('COMPTE: VE LA SUBINETA!', 1.8); so('motor'); }
   const s = J.subi;
   if (s) {
     s.t += dt;
@@ -3912,7 +3982,7 @@ function actualitza(dt) {
   }
   // El nivell de cerca baixa a poc a poc si ningú et veu; si és alt, arriben reforços
   if (!J.agents.some(a => a.veu)) J.cerca = Math.max(0, J.cerca - dt * .04);
-  if (!J.zona && J.cerca >= 2 && (J.tReforc -= dt) <= 0) {
+  if (!J.zona && J.liada && J.cerca >= 2 && (J.tReforc -= dt) <= 0) {
     J.tReforc = 6;
     if (J.agents.length < DIF().policies * (MW > 42 ? 2 : 1) + Math.floor(J.cerca)) { const a = nouAgent(); a.estat = 'persegueix'; a.ultim = { x: j.x, y: j.y }; J.agents.push(a); textFlotant(a.x, a.y - 70, 'REFORÇOS!', '#7fc3ff', 10); }
   }
@@ -4081,6 +4151,7 @@ function actualitza(dt) {
   // Agents municipals: et veuen, et disparen, i si et perden de vista et busquen
   for (const a of J.agents) {
     if (a.carceller) { actualitzaCarceller(a, dt); continue; }
+    if (!J.liada && !a.mosso && a.estat === 'persegueix') { a.estat = 'patrulla'; a.cami = []; a.veu = false; } // encara no has fet res: passen de tu
     if (a.control && !(a.ko > 0)) { a.pas = 0; continue; }
     if (a.ko > 0) { a.ko -= dt; if (a.ko <= 0) { a.vida = a.vidaMax || 1; textFlotant(a.x, a.y - 70, 'ON SÓC?', '#7fc3ff', 9); } continue; }
     a.pas += dt * 10;
@@ -4987,6 +5058,7 @@ function dibuixa() {
   if (J.ciutat === 'vic' && !J.zona) dibuixaVic(cx);
   if (!J.zona) dibuixaPortals(cx);
   if (!J.zona) dibuixaLocals(cx);
+  if (!J.zona) for (const mq of J.marques || []) { cx.save(); cx.translate(mq.x, mq.y); cx.rotate(mq.ang); cx.fillStyle = 'rgba(20,20,20,.28)'; cx.fillRect(-26, -20, 8, 6); cx.fillRect(-26, 14, 8, 6); cx.restore(); }
   for (const cr of J.cremades) {
     const gr = cx.createRadialGradient(cr.x, cr.y, 4, cr.x, cr.y, cr.r); gr.addColorStop(0, 'rgba(15,10,8,.75)'); gr.addColorStop(1, 'rgba(15,10,8,0)'); cx.fillStyle = gr; cx.beginPath(); cx.ellipse(cr.x, cr.y, cr.r, cr.r * .7, 0, 0, TAU); cx.fill();
     if (cr.forat) { // el forat: vora de terra aixecada, fons fosc i trossos escampats
@@ -5028,6 +5100,7 @@ function dibuixa() {
   J.matons.forEach(m => ents.push([m.y, () => { cx.save(); cx.translate(m.x, m.y); cx.scale(1.6, 1.6); cx.translate(-m.x, -m.y); dibuixaMaton(cx, m); cx.restore(); }]));
   ents.push([j.y, () => dibuixaJugador(cx)]);
   if (J.guillem) ents.push([J.guillem.y, escalat(J.guillem, () => dibuixaGuillem(cx, J.guillem), 1.25)]);
+  if (J.drift && !J.zona) ents.push([J.drift.y, escalat(J.drift, () => { dibuixaGuillem(cx, J.drift); rotul(cx, 'GUILLEM', J.drift.x, J.drift.y - 60, '#2fd38a', 7); }, 1.25)]);
   for (const x of extres()) ents.push([x.e.y, escalat(x.e, () => x.fn(cx), x.k2)]);
   for (const c of [...J.cotxes, J.vila, J.subi, J.carro, J.bestia, ...aparcatsActius().filter(c => c === j.cotxe || vist(c))]) if (c) ents.push([c.y + 10, escalat(c, () => dibuixaCotxe(cx, c), 1.25)]);
   if (!J.zona && J.ciutat === 'capellades') for (const b of J.benziners || []) if (vist(b)) ents.push([b.y, escalat(b, () => dibuixaBenziner(cx, b))]);
@@ -5348,6 +5421,15 @@ function dibuixaHUD(W, H, dpr) {
     g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('MOSSOS K.O. ' + B.kos + ' / ' + B.objectiu + '   ONADA ' + B.onada, W / 2, y0 - 4);
     g.fillStyle = '#333'; g.fillRect(W / 2 - w / 2 + 10, y0 + 6, w - 20, 8); g.fillStyle = '#d62828'; g.fillRect(W / 2 - w / 2 + 10, y0 + 6, (w - 20) * B.kos / B.objectiu, 8); g.textAlign = 'left';
   }
+  if (J.guillem && !J.zona) { // l'avís d'en Guillem: d'on vindrà
+    const gu = J.guillem, a = Math.atan2(gu.y - j.y, gu.x - j.x), fl = (performance.now() / 160 | 0) % 2, r = Math.min(W, H) / 2 - 70;
+    const ax = W / 2 + Math.cos(a) * r, ay = H / 2 + Math.sin(a) * r * .85;
+    const gr = g.createRadialGradient(ax, ay, 10, ax, ay, 220); gr.addColorStop(0, 'rgba(255,0,0,' + (fl ? .45 : .25) + ')'); gr.addColorStop(1, 'rgba(255,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    g.save(); g.translate(ax, ay); g.rotate(a); g.fillStyle = fl ? '#ff1f1f' : '#ffd23f'; g.strokeStyle = '#000'; g.lineWidth = 4;
+    g.beginPath(); g.moveTo(40, 0); g.lineTo(-20, -30); g.lineTo(-8, 0); g.lineTo(-20, 30); g.closePath(); g.fill(); g.stroke(); g.restore();
+    g.font = '10px "Press Start 2P"'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; const txt = gu.avis > 0 ? 'GUILLEM!' : "ESQUIVA'L!";
+    g.strokeText(txt, ax, ay + 50); g.fillStyle = '#ff1f1f'; g.fillText(txt, ax, ay + 50); g.textAlign = 'left';
+  }
   if (J.gta && performance.now() < J.gta.fins) { // a l'estil GTA
     const k = Math.min(1, (performance.now() - J.gta.des) / 400);
     g.fillStyle = 'rgba(20,20,20,' + (.45 * k) + ')'; g.fillRect(0, 0, W, H);
@@ -5358,7 +5440,7 @@ function dibuixaHUD(W, H, dpr) {
   if (J.historia) dibuixaHistoria(g, W, H, petit, caixa);
   if (j.vollDamm > 0) { const t2 = Math.ceil(j.vollDamm); g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#2fd38a'; g.fillText('VOLL-DAMM ' + Math.floor(t2 / 60) + ':' + String(t2 % 60).padStart(2, '0'), W / 2, H - (tactil ? 220 : 110)); g.textAlign = 'left'; }
   if (enSala()) { // marcador de la sala
-    const llista = [{ nom: triat.nom, punts: J.punts, color: '#fff' }, ...[...XARXA.altres.values()].filter(r => r.vist && performance.now() - r.vist < 6000)].sort((a, b) => b.punts - a.punts);
+    const llista = [{ nom: nomJugador(), punts: J.punts, color: '#fff' }, ...[...XARXA.altres.values()].filter(r => r.vist && r.tx !== undefined && performance.now() - r.vist < 6000)].sort((a, b) => b.punts - a.punts);
     const bw = 170, bx = W - bw - 14, by = petit ? 250 : 286;
     caixa(bx, by, bw, 22 + llista.length * 16); g.font = '7px "Press Start 2P"'; g.fillStyle = '#ffd23f'; g.fillText('SALA ' + XARXA.codi, bx + 10, by + 15);
     llista.forEach((r, i) => { g.fillStyle = r.color; g.fillText(String(r.nom).slice(0, 10), bx + 10, by + 32 + i * 16); g.textAlign = 'right'; g.fillText(formatPunts(r.punts || 0), bx + bw - 10, by + 32 + i * 16); g.textAlign = 'left'; });
@@ -5577,81 +5659,152 @@ function dibuixaNit(camX, camY, Wv, Hv, zoom) {
   for (const [x, y] of fanals) { cx.fillStyle = '#2b2f36'; cx.fillRect(x + 22, y - 40, 4, 44); cx.fillStyle = 'rgba(255,226,150,' + (.4 + n * .6) + ')'; cx.beginPath(); cx.arc(x + 24, y - 42, 5, 0, TAU); cx.fill(); }
 }
 
-// ---------- Multijugador en línia (PeerJS): sala amb codi, l'amfitrió reenvia els missatges a tothom ----------
-const XARXA = { peer: null, host: false, codi: null, jo: null, conns: new Map(), altres: new Map(), tEnvia: 0 };
-const COLORS_XARXA = ['#ff5c8a', '#2fd38a', '#7fc3ff', '#ffd23f'];
-const idSala = c => 'ensurts-capellades-' + c.toLowerCase();
-const OPCIONS_PEER = { debug: 1, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' }] } };
-// Si el mòbil deixa la pàgina en segon pla (per exemple per enviar el codi per WhatsApp), es perd el servidor: s'hi torna a connectar sol
-function vigilaPeer(peer) {
-  peer.on('disconnected', () => { if (XARXA.peer === peer && !peer.destroyed) setTimeout(() => { try { if (peer.disconnected && !peer.destroyed) peer.reconnect(); } catch (e) {} }, 800); });
+// ---------- Multijugador en línia ----------
+// Els missatges passen per un servidor MQTT públic (per WebSocket segur), així funciona igual amb wifi que amb dades mòbils.
+// Cada sala és un tema: ensurts-capellades/v2/sala/CODI/m. La llista de sales obertes es guarda al servidor (missatges retinguts).
+const BROKERS = ['wss://broker.hivemq.com:8884/mqtt', 'wss://broker.emqx.io:8084/mqtt', 'wss://test.mosquitto.org:8081/mqtt'];
+const ARREL = 'ensurts-capellades/v2';
+const COLORS_XARXA = ['#ff5c8a', '#2fd38a', '#7fc3ff', '#ffd23f', '#c77dff', '#ff9a3d'];
+const XARXA = { mqs: new Map(), pendents: new Set(), vistos: new Set(), seq: 0, codi: null, creador: false, jo: 'j' + Math.random().toString(36).slice(2, 10), altres: new Map(), sales: new Map(), tEnvia: 0, tHola: 0, tSala: 0, connectant: null };
+const ENC = new TextEncoder(), DEC = new TextDecoder();
+// Un client MQTT 3.1.1 mínim (connectar, publicar, subscriure's i pings), sense llibreries
+class MiniMQTT {
+  constructor(url, id) { this.url = url; this.id = id; this.obert = false; this.buf = new Uint8Array(0); this.pid = 0; this.onmsg = null; this.onclose = null; }
+  static s(t) { const b = ENC.encode(t); return [b.length >> 8, b.length & 255, ...b]; }
+  static p(cap, cos) { const l = []; let n = cos.length; do { let d = n % 128; n = Math.floor(n / 128); if (n > 0) d |= 128; l.push(d); } while (n > 0); return new Uint8Array([cap, ...l, ...cos]); }
+  connecta() {
+    return new Promise((ok, ko) => {
+      let ws; try { ws = new WebSocket(this.url, 'mqtt'); } catch (e) { return ko(e); }
+      ws.binaryType = 'arraybuffer'; this.ws = ws;
+      const to = setTimeout(() => { ko(new Error('temps')); try { ws.close(); } catch (e) {} }, 7000);
+      ws.onopen = () => ws.send(MiniMQTT.p(0x10, [...MiniMQTT.s('MQTT'), 4, 2, 0, 40, ...MiniMQTT.s(this.id)]));
+      ws.onmessage = e => this.rep(new Uint8Array(e.data), () => { clearTimeout(to); ok(this); });
+      ws.onclose = () => { clearTimeout(to); clearInterval(this.ping); const era = this.obert; this.obert = false; if (!era) ko(new Error('tancat')); else if (this.onclose) this.onclose(); };
+      ws.onerror = () => {};
+    });
+  }
+  rep(dades, quanConnecti) {
+    const b = new Uint8Array(this.buf.length + dades.length); b.set(this.buf); b.set(dades, this.buf.length); this.buf = b;
+    while (this.buf.length >= 2) {
+      let i = 1, mul = 1, len = 0, d;
+      do { if (i >= this.buf.length) return; d = this.buf[i++]; len += (d & 127) * mul; mul *= 128; } while (d & 128);
+      if (this.buf.length < i + len) return;
+      const cap = this.buf[0], cos = this.buf.slice(i, i + len); this.buf = this.buf.slice(i + len);
+      const tipus = cap >> 4;
+      if (tipus === 2 && cos[1] === 0) { this.obert = true; this.ping = setInterval(() => this.envia(new Uint8Array([0xc0, 0])), 20000); quanConnecti(); }
+      if (tipus === 3) { const tl = (cos[0] << 8) | cos[1], tema = DEC.decode(cos.slice(2, 2 + tl)), q = (cap >> 1) & 3; if (this.onmsg) this.onmsg(tema, DEC.decode(cos.slice(2 + tl + (q ? 2 : 0)))); }
+    }
+  }
+  envia(u8) { if (this.ws && this.ws.readyState === 1) this.ws.send(u8); }
+  publica(tema, text, reten = false) { this.envia(MiniMQTT.p(0x30 | (reten ? 1 : 0), [...MiniMQTT.s(tema), ...ENC.encode(text)])); }
+  subscriu(filtre) { this.pid = this.pid % 60000 + 1; this.envia(MiniMQTT.p(0x82, [this.pid >> 8, this.pid & 255, ...MiniMQTT.s(filtre), 0])); }
+  dessubscriu(filtre) { this.pid = this.pid % 60000 + 1; this.envia(MiniMQTT.p(0xa2, [this.pid >> 8, this.pid & 255, ...MiniMQTT.s(filtre)])); }
+  tanca() { this.onclose = null; try { this.envia(new Uint8Array([0xe0, 0])); this.ws.close(); } catch (e) {} }
 }
-document.addEventListener('visibilitychange', () => { const p = XARXA.peer; if (document.visibilityState === 'visible' && p && p.disconnected && !p.destroyed) try { p.reconnect(); } catch (e) {} if (document.visibilityState === 'visible' && XARXA.codi && !XARXA.host && !enSala() && XARXA.peer) connectaAmfitrio(); });
-function connectaAmfitrio(intents = 0) {
-  const peer = XARXA.peer; if (!peer || peer.destroyed) return;
-  const conn = peer.connect(idSala(XARXA.codi), { reliable: true });
-  let obert = false;
-  conn.on('open', () => { obert = true; XARXA.conns.set('host', conn); XARXA.intents = 0; so('punts'); pintaSala(); if (J) anunci('CONNECTAT A LA SALA ' + XARXA.codi, 1.6); });
-  conn.on('data', d => repDades(d, conn));
-  conn.on('close', () => { XARXA.conns.delete('host'); XARXA.altres.clear(); if (XARXA.peer !== peer || peer.destroyed) return; pintaSala('RECONNECTANT...'); setTimeout(() => connectaAmfitrio(), 2500); });
-  setTimeout(() => { if (!obert && XARXA.peer === peer && !peer.destroyed && !enSala()) { if (intents < 8) { pintaSala('CONNECTANT... (' + (intents + 2) + ')'); try { conn.close(); } catch (e) {} connectaAmfitrio(intents + 1); } else pintaSala("NO S'HA POGUT CONNECTAR. MIREU QUE L'AMFITRIÓ TINGUI EL JOC OBERT I PROVEU AMB WIFI"); } }, 6000);
+const temaSala = c => ARREL + '/sala/' + c + '/m', temaLlista = c => ARREL + '/sales/' + c;
+// connectat a tots els servidors que responguin; els missatges van per tots i es descarten els repetits
+const servidorsOberts = () => [...XARXA.mqs.values()].filter(m => m.obert);
+const enSala = () => !!(XARXA.codi && servidorsOberts().length);
+function publicaTots(tema, text, reten) { for (const m of servidorsOberts()) m.publica(tema, text, reten); }
+function nomJugador() { const v = (document.getElementById('nomJugador').value || '').trim().toUpperCase(); return v || (triat ? String(triat.nom).toUpperCase() : 'JUGADOR'); }
+function connectaUn(url) {
+  if ((XARXA.mqs.get(url) || {}).obert || XARXA.pendents.has(url)) return;
+  XARXA.pendents.add(url);
+  new MiniMQTT(url, XARXA.jo + Math.random().toString(36).slice(2, 5)).connecta().then(mq => {
+    XARXA.mqs.set(url, mq); mq.onmsg = repMissatge;
+    mq.onclose = () => { XARXA.mqs.delete(url); pintaSala(); setTimeout(() => connectaUn(url), 2000); };
+    mq.subscriu(ARREL + '/sales/+');
+    if (XARXA.codi) { mq.subscriu(temaSala(XARXA.codi)); envia({ t: 'hola', id: XARXA.jo, nom: nomJugador() }); anunciaSala(); }
+    pintaSala();
+  }).catch(() => setTimeout(() => connectaUn(url), 8000)).finally(() => XARXA.pendents.delete(url));
+}
+// Es connecta a tots els servidors alhora i torna quan n'hi ha almenys un d'obert (o al cap de 8 segons)
+async function connectaServidor() {
+  BROKERS.forEach(connectaUn);
+  for (let i = 0; i < 32 && !servidorsOberts().length; i++) await new Promise(r => setTimeout(r, 250));
+  if (!servidorsOberts().length) { pintaSala("NO ES POT CONNECTAR AL SERVIDOR. MIRA LA CONNEXIÓ A INTERNET"); return false; }
+  return true;
+}
+function envia(msg) { if (enSala()) { msg.k = XARXA.jo + ':' + (++XARXA.seq); publicaTots(temaSala(XARXA.codi), JSON.stringify(msg)); } }
+function anunciaSala() { // la sala surt a la llista mentre el creador hi és
+  if (XARXA.creador && XARXA.codi) publicaTots(temaLlista(XARXA.codi), JSON.stringify({ codi: XARXA.codi, nom: nomJugador(), n: 1 + membres().length, t: Date.now() }), true);
+}
+const membres = () => [...XARXA.altres.values()].filter(r => r.vist && performance.now() - r.vist < 12000);
+async function crearSala() {
+  if (!(await connectaServidor())) return;
+  if (XARXA.codi) sortirSala();
+  const lletres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let codi;
+  do codi = Array.from({ length: 4 }, () => lletres[Math.floor(Math.random() * lletres.length)]).join(''); while (XARXA.sales.has(codi));
+  Object.assign(XARXA, { codi, creador: true }); XARXA.altres.clear();
+  for (const m of servidorsOberts()) m.subscriu(temaSala(codi)); anunciaSala(); so('punts'); pintaSala();
+}
+async function unirSala(codi) {
+  codi = (codi || '').trim().toUpperCase(); if (codi.length !== 4) return pintaSala('EL CODI TÉ 4 LLETRES O NÚMEROS');
+  if (!(await connectaServidor())) return;
+  if (XARXA.codi && XARXA.codi !== codi) sortirSala();
+  Object.assign(XARXA, { codi, creador: false }); XARXA.altres.clear();
+  for (const m of servidorsOberts()) m.subscriu(temaSala(codi)); envia({ t: 'hola', id: XARXA.jo, nom: nomJugador() }); so('punts'); pintaSala();
+}
+function sortirSala() {
+  if (!XARXA.codi) return;
+  envia({ t: 'adeu', id: XARXA.jo });
+  if (XARXA.creador) publicaTots(temaLlista(XARXA.codi), '', true); for (const m of servidorsOberts()) m.dessubscriu(temaSala(XARXA.codi));
+  Object.assign(XARXA, { codi: null, creador: false }); XARXA.altres.clear(); pintaSala();
+}
+const tancaSala = sortirSala;
+function repMissatge(tema, text) {
+  if (tema.startsWith(ARREL + '/sales/')) { // la llista de sales obertes
+    const codi = tema.slice(tema.lastIndexOf('/') + 1);
+    if (!text) XARXA.sales.delete(codi); else try { const d = JSON.parse(text); if (Date.now() - d.t < 60000) XARXA.sales.set(codi, d); else XARXA.sales.delete(codi); } catch (e) {}
+    pintaLlistaSales(); return;
+  }
+  if (!XARXA.codi || tema !== temaSala(XARXA.codi)) return;
+  let d; try { d = JSON.parse(text); } catch (e) { return; }
+  if (!d || d.id === XARXA.jo) return;
+  if (d.k) { if (XARXA.vistos.has(d.k)) return; XARXA.vistos.add(d.k); if (XARXA.vistos.size > 800) XARXA.vistos = new Set([...XARXA.vistos].slice(-400)); } // ja arribat per un altre servidor
+  repDades(d);
+}
+function pintaLlistaSales() {
+  const cont = document.getElementById('llistaSales'); if (!cont) return;
+  const obertes = [...XARXA.sales.values()].filter(d => Date.now() - d.t < 60000 && d.codi !== XARXA.codi).sort((a, b) => b.t - a.t).slice(0, 8);
+  cont.innerHTML = obertes.length ? '<p class="controls" style="text-align:center">SALES OBERTES</p>' : '';
+  for (const d of obertes) {
+    const fila = document.createElement('div'); fila.className = 'sala';
+    fila.innerHTML = '<span><b>' + d.codi + '</b> · ' + String(d.nom || '').replace(/[<>&]/g, '') + ' · ' + d.n + (d.n === 1 ? ' JUGADOR' : ' JUGADORS') + '</span>';
+    const b = document.createElement('button'); b.textContent = 'ENTRAR'; b.onclick = () => unirSala(d.codi); fila.appendChild(b); cont.appendChild(fila);
+  }
+}
+function pintaSala(txt) {
+  document.getElementById('bCompartirSala').style.display = XARXA.codi ? '' : 'none';
+  document.getElementById('bSortirSala').style.display = XARXA.codi ? '' : 'none';
+  const ms = membres();
+  document.getElementById('estatSala').innerHTML = txt !== undefined ? txt : !servidorsOberts().length ? 'CONNECTANT AL SERVIDOR...' : !XARXA.codi ? 'CONNECTAT · CREA UNA SALA O ENTRA EN UNA' :
+    'ETS A LA SALA <b>' + XARXA.codi + '</b><br>' + (ms.length ? 'AMB: ' + ms.map(r => String(r.nom).replace(/[<>&]/g, '')).join(', ') : 'ESPERANT AMICS... PASSA\'LS EL CODI') + '<br>TRIA PERSONATGE I JUGA';
+  pintaLlistaSales();
 }
 function enllacSala() { return location.origin + location.pathname + '?sala=' + XARXA.codi; }
 async function comparteixSala() {
-  const url = enllacSala(), text = 'Entra a la meva sala d\'Ensurts a Capellades! Codi: ' + XARXA.codi;
+  const url = enllacSala(), text = "Entra a la meva sala d'Ensurts a Capellades! Codi: " + XARXA.codi;
   try { if (navigator.share) { await navigator.share({ title: 'Ensurts a Capellades', text, url }); return; } } catch (e) { return; }
   try { await navigator.clipboard.writeText(text + ' ' + url); pintaSala('ENLLAÇ COPIAT! ENGANXA\'L AL XAT · SALA <b>' + XARXA.codi + '</b>'); } catch (e) { pintaSala('ENVIA AQUEST ENLLAÇ: ' + url); }
 }
-const enSala = () => XARXA.conns.size > 0;
-function carregaPeer() {
-  if (window.Peer) return Promise.resolve();
-  return new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = 'lib/peerjs.min.js'; sc.onload = ok; sc.onerror = () => ko(new Error('no es pot carregar PeerJS')); document.head.appendChild(sc); });
-}
-function pintaSala(txt) {
-  document.getElementById('bCompartirSala').style.display = XARXA.host && XARXA.codi ? '' : 'none';
-  document.getElementById('estatSala').innerHTML = txt !== undefined ? txt : !XARXA.peer ? '' : XARXA.host ? 'SALA <b>' + XARXA.codi + '</b><br>Passa el codi als amics · ' + (XARXA.conns.size + 1) + ' a la sala' : enSala() ? 'CONNECTAT A LA SALA <b>' + XARXA.codi + '</b> · tria personatge i juga' : 'CONNECTANT...';
-}
-function tancaSala() { try { XARXA.peer && XARXA.peer.destroy(); } catch (e) {} Object.assign(XARXA, { peer: null, host: false, codi: null, jo: null }); XARXA.conns.clear(); XARXA.altres.clear(); }
-async function crearSala(intent = 0) {
-  try { await carregaPeer(); } catch (e) { return pintaSala('NO HI HA CONNEXIÓ A INTERNET'); }
-  tancaSala(); pintaSala('CREANT LA SALA...');
-  const lletres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', codi = Array.from({ length: 4 }, () => lletres[Math.floor(Math.random() * lletres.length)]).join('');
-  const peer = new Peer(idSala(codi), OPCIONS_PEER); vigilaPeer(peer);
-  peer.on('open', id => { Object.assign(XARXA, { peer, host: true, codi, jo: id }); pintaSala(); });
-  peer.on('error', e => { if (e.type === 'unavailable-id' && intent < 4 && !XARXA.codi) { peer.destroy(); crearSala(intent + 1); } else if (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error' || e.type === 'socket-closed') pintaSala('PROBLEMA DE XARXA, RECONNECTANT...'); else pintaSala('ERROR DE CONNEXIÓ (' + e.type + ')'); });
-  peer.on('connection', conn => {
-    conn.on('open', () => {
-      if (XARXA.conns.size >= 3) { conn.send({ t: 'ple' }); setTimeout(() => conn.close(), 400); return; }
-      XARXA.conns.set(conn.peer, conn); so('punts'); pintaSala();
-    });
-    conn.on('data', d => repDades(d, conn));
-    conn.on('close', () => { XARXA.conns.delete(conn.peer); treuJugador(conn.peer); envia({ t: 'adeu', id: conn.peer }); pintaSala(); });
-  });
-}
-async function unirSala(codi) {
-  codi = (codi || '').trim().toUpperCase(); if (codi.length !== 4) return pintaSala('EL CODI TÉ 4 LLETRES');
-  try { await carregaPeer(); } catch (e) { return pintaSala('NO HI HA CONNEXIÓ A INTERNET'); }
-  tancaSala(); pintaSala('CONNECTANT...');
-  const peer = new Peer(OPCIONS_PEER); vigilaPeer(peer);
-  peer.on('open', id => { const primer = !XARXA.jo; Object.assign(XARXA, { peer, jo: XARXA.jo || id, codi }); if (primer) connectaAmfitrio(); });
-  peer.on('error', e => { if (e.type === 'peer-unavailable') pintaSala('ESPERANT LA SALA ' + codi + '... (QUE L\'AMFITRIÓ TINGUI EL JOC OBERT)'); else if (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error' || e.type === 'socket-closed') pintaSala('PROBLEMA DE XARXA, RECONNECTANT...'); else pintaSala('ERROR DE CONNEXIÓ (' + e.type + ')'); });
-}
-function envia(msg) { for (const c of XARXA.conns.values()) if (c.open) try { c.send(msg); } catch (e) {} }
-function treuJugador(id) { const r = XARXA.altres.get(id); XARXA.altres.delete(id); if (r && J) anunci(r.nom.toUpperCase() + ' HA MARXAT DE LA SALA', 1.8); pintaSala(); }
-function repDades(d, conn) {
-  if (!d || typeof d !== 'object') return;
-  if (XARXA.host && d.id) for (const c of XARXA.conns.values()) if (c !== conn && c.open) try { c.send(d); } catch (e) {} // l'amfitrió ho reenvia als altres
-  if (d.t === 'ple') { pintaSala('LA SALA ÉS PLENA (MÀXIM 4)'); return; }
+function treuJugador(id) { const r = XARXA.altres.get(id); XARXA.altres.delete(id); if (r && J) anunci(String(r.nom).toUpperCase() + ' HA MARXAT DE LA SALA', 1.8); pintaSala(); }
+function repDades(d) {
   if (d.t === 'adeu') return treuJugador(d.id);
-  if (d.t === 'estat' && d.id && d.id !== XARXA.jo) {
-    let r = XARXA.altres.get(d.id);
-    if (!r) { r = { x: d.x, y: d.y, pas: 0, color: COLORS_XARXA[(XARXA.altres.size + 1) % 4] }; XARXA.altres.set(d.id, r); if (J) anunci(String(d.nom).toUpperCase() + ' ÉS A LA SALA!', 2); pintaSala(); }
-    const { x, y, ...resta } = d; Object.assign(r, resta); r.tx = x; r.ty = y; r.vist = performance.now();
-    if (Math.hypot(r.tx - r.x, r.ty - r.y) > 1500) { r.x = x; r.y = y; } // si ha saltat lluny, no el fem volar
+  let r = XARXA.altres.get(d.id);
+  if (!r) { r = { pas: 0, color: COLORS_XARXA[XARXA.altres.size % COLORS_XARXA.length] }; XARXA.altres.set(d.id, r); if (J) anunci(String(d.nom).toUpperCase() + ' ÉS A LA SALA!', 2); so('punts'); }
+  r.nom = d.nom || r.nom; r.vist = performance.now();
+  if (d.t === 'hola') { if (!r.saludat) { r.saludat = true; envia({ t: 'hola', id: XARXA.jo, nom: nomJugador() }); } pintaSala(); }
+  if (d.t === 'estat') {
+    const { x, y, ...resta } = d; Object.assign(r, resta);
+    if (r.x === undefined || Math.hypot(x - r.x, y - r.y) > 1500) { r.x = x; r.y = y; } // si ha saltat lluny, no el fem volar
+    r.tx = x; r.ty = y;
   }
-  if (d.t === 'ev' && d.id !== XARXA.jo) repEvent(d);
+  if (d.t === 'ev') repEvent(d);
 }
-function xarxaEvent(tipus, x, y, extra) { if (enSala() && J) envia(Object.assign({ t: 'ev', id: XARXA.jo, tipus, x, y, ciutat: J.ciutat, zona: J.zona || null, nom: triat.nom }, extra)); }
+// Si el mòbil torna de segon pla i s'ha perdut la connexió, s'hi torna a connectar
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') BROKERS.forEach(connectaUn); });
+function xarxaEvent(tipus, x, y, extra) { if (enSala() && J) envia(Object.assign({ t: 'ev', id: XARXA.jo, tipus, x, y, ciutat: J.ciutat, zona: J.zona || null, nom: nomJugador() }, extra)); }
 const mateixLloc = r => J && r.ciutat === J.ciutat && (r.zona || null) === (J.zona || null);
 function repEvent(d) {
   if (!J || estat !== 'joc' && estat !== 'busted') return;
@@ -5679,13 +5832,15 @@ function xarxaPas(dt) {
     const dx = r.tx - r.x, dy = r.ty - r.y, k = Math.min(1, dt * 10);
     r.x += dx * k; r.y += dy * k; if (Math.hypot(dx, dy) > 3) r.pas = (r.pas || 0) + dt * 12;
   }
-  if (!enSala() || !J || estat !== 'joc') return;
-  if ((XARXA.tEnvia -= dt) > 0) return; XARXA.tEnvia = .1;
+  if (!enSala()) return;
+  if ((XARXA.tSala -= dt) <= 0) { XARXA.tSala = 15; anunciaSala(); } // la sala segueix a la llista
+  if (!J || estat !== 'joc') { if ((XARXA.tHola -= dt) <= 0) { XARXA.tHola = 4; envia({ t: 'hola', id: XARXA.jo, nom: nomJugador() }); if (estat === 'menu') pintaSala(); } return; }
+  if ((XARXA.tEnvia -= dt) > 0) return; XARXA.tEnvia = .16;
   const j = J.jug, c = j.cotxe;
-  envia({ t: 'estat', id: XARXA.jo, nom: triat.nom, skin: triat.id, x: Math.round(j.x), y: Math.round(j.y), fx: j.fx, fy: j.fy, mou: !!j.mou, ciutat: J.ciutat, zona: J.zona || null,
+  envia({ t: 'estat', id: XARXA.jo, nom: nomJugador(), skin: triat.id, x: Math.round(j.x), y: Math.round(j.y), fx: j.fx, fy: j.fy, mou: !!j.mou, ciutat: J.ciutat, zona: J.zona || null,
     cotxe: c ? { tipus: c.tipus, ang: c.ang, color: c.color } : null, punts: J.punts, festa: !!J.festa, bici: !!j.bici, salt: j.salt || 0 });
 }
-const altresVisibles = () => [...XARXA.altres.values()].filter(r => r.vist && performance.now() - r.vist < 6000 && mateixLloc(r));
+const altresVisibles = () => [...XARXA.altres.values()].filter(r => r.vist && r.tx !== undefined && performance.now() - r.vist < 6000 && mateixLloc(r));
 // Un altre jugador es dibuixa igual que tu, amb la seva cara
 function dibuixaRemot(g, r) {
   if (r.cotxe) { dibuixaCotxe(g, { x: r.x, y: r.y, ang: r.cotxe.ang, tipus: r.cotxe.tipus, color: r.cotxe.color, estat: 'conduit', fx: Math.cos(r.cotxe.ang), fy: Math.sin(r.cotxe.ang) }); rotul(g, r.nom, r.x, r.y - 64, r.color, 7); return; }
@@ -5697,13 +5852,17 @@ function dibuixaRemot(g, r) {
   Object.assign(jr, { x: r.x, y: r.y, fx: r.fx || 1, fy: r.fy || 0, pas: r.pas || 0, mou: r.mou, cotxe: null, vespa: null, bici: r.bici, salt: r.salt, buh: 0, invul: 0, poder: 0 });
   triat = skin; J.festa = r.festa; J.disfressa = false;
   try { dibuixaJugador(g); } finally { Object.assign(jr, guard); triat = triatAbans; J.festa = festaAbans; J.disfressa = disfAbans; }
+  rotul(g, String(r.nom || '').slice(0, 12), r.x, r.y + 22, r.color, 6);
 }
 document.getElementById('bCrearSala').onclick = () => crearSala();
 document.getElementById('bCompartirSala').onclick = comparteixSala;
-// si entres amb l'enllaç d'una sala (?sala=ABCD), t'hi connectes sol
-{ const m = /[?&]sala=([A-Za-z0-9]{4})/.exec(location.search); if (m) { document.getElementById('codiSala').value = m[1].toUpperCase(); setTimeout(() => { unirSala(m[1]); document.querySelector('.multi').scrollIntoView({ block: 'center' }); }, 300); } }
+document.getElementById('bSortirSala').onclick = () => sortirSala();
 document.getElementById('bUnirSala').onclick = () => unirSala(document.getElementById('codiSala').value);
 document.getElementById('codiSala').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') unirSala(e.target.value); });
+{ const n = document.getElementById('nomJugador'); try { n.value = localStorage.getItem('ensurts-nom') || ''; } catch (e) {} n.addEventListener('keydown', e => e.stopPropagation()); n.addEventListener('input', () => { try { localStorage.setItem('ensurts-nom', n.value.trim()); } catch (e) {} }); }
+// en obrir el joc ja es connecta per mostrar les sales obertes; amb l'enllaç ?sala=ABCD hi entra sol
+setTimeout(() => connectaServidor().then(() => { const m = /[?&]sala=([A-Za-z0-9]{4})/.exec(location.search); if (m) { document.getElementById('codiSala').value = m[1].toUpperCase(); unirSala(m[1]); document.querySelector('.multi').scrollIntoView({ block: 'center' }); } }), 600);
+addEventListener('pagehide', () => { if (XARXA.codi) { envia({ t: 'adeu', id: XARXA.jo }); if (XARXA.creador) publicaTots(temaLlista(XARXA.codi), '', true); } });
 
 // ---------- Paquets amagats (com al GTA): es guarden d'una partida a l'altra ----------
 const NPAQUETS = 25;
@@ -5865,6 +6024,29 @@ function actualitzaPoliciaPeu(dt) {
   for (const a of J.agents) if (a.estat === 'persegueix') { a.ultim = { x: j.x, y: j.y }; a.perdut = 0; } // des de dalt et veuen sempre
   if ((h.tRotor = (h.tRotor || 0) - dt) <= 0) { h.tRotor = .11; if (Math.hypot(h.x - j.x, h.y - j.y) < 1100) so('rotor'); }
   if (!modeDetencio() && (h.tTir -= dt) <= 0 && j.invul <= 0) { h.tTir = 1.6; so('tret'); for (const da of [-.1, 0, .1]) { const a = Math.atan2(j.y - 30 - h.y, j.x - h.x) + da; J.bales.push({ x: h.x, y: h.y, vx: Math.cos(a) * 500, vy: Math.sin(a) * 500, t: 1.2 }); } }
+}
+
+// ---------- Quan et persegueix la policia, de vegades apareix en Guillem fent drift i els despista ----------
+function actualitzaDrift(dt) {
+  if (J.zona || J.ciutat !== 'capellades' || !granMon() || J.batalla) return;
+  const j = J.jug;
+  const perseguidors = J.agents.filter(a => a.estat === 'persegueix' && !(a.ko > 0) && !a.mosso && !a.carceller), cotxesPoli = J.cotxes.filter(c => c.tipus === 'policia' && c.estat !== 'marxa' && !c.buit);
+  if (!J.drift && J.liada && (perseguidors.length || cotxesPoli.length) && (J.tDrift = (J.tDrift ?? 18) - dt) <= 0) {
+    J.tDrift = 35 + Math.random() * 25;
+    const p = perseguidors[0] || cotxesPoli[0], cx2 = (p.x + j.x) / 2, cy2 = (p.y + j.y) / 2;
+    J.drift = { cx: cx2, cy: cy2, a: Math.random() * TAU, t: 6.5, x: cx2, y: cy2, ang: 0, tFre: 0, tMarca: 0 };
+    anunci('EN GUILLEM FA DRIFT I DESPISTA LA POLICIA!', 2.4); so('frenada'); so('motor');
+  }
+  const d = J.drift; if (!d) return;
+  d.t -= dt; d.a += dt * 3.2;
+  d.x = d.cx + Math.cos(d.a) * 160; d.y = d.cy + Math.sin(d.a) * 110; d.ang = d.a + Math.PI / 2 + .75; // va de costat, derrapant
+  if ((d.tFre -= dt) <= 0) { d.tFre = .6; so('frenada'); }
+  if ((d.tMarca -= dt) <= 0) { d.tMarca = .04; (J.marques = J.marques || []).push({ x: d.x, y: d.y, ang: d.ang }); if (J.marques.length > 400) J.marques.splice(0, 60); }
+  if (Math.random() < dt * 30) J.particules.push({ x: d.x + (Math.random() - .5) * 40, y: d.y, vx: (Math.random() - .5) * 60, vy: -30, t: .9, c: 'rgba(220,220,220,.7)', m: 12 });
+  for (const a of J.agents) if (!a.mosso && !a.carceller && Math.hypot(a.x - d.x, a.y - d.y) < 700 && a.estat === 'persegueix') { a.estat = 'patrulla'; a.cami = []; a.veu = false; a.glacat = 2.5; textFlotant(a.x, a.y - 70, tria(['QUÈ FA AQUEST BOIG?!', 'ON ÉS?!', 'MIRA QUIN DRIFT!']), '#7fc3ff', 9); }
+  for (const c of J.cotxes) if (c.tipus === 'policia' && Math.hypot(c.x - d.x, c.y - d.y) < 800 && c.estat !== 'aparcat') { c.glacat = 3; c.estat = 'marxa'; }
+  J.cerca = Math.max(0, J.cerca - dt * .6);
+  if (d.t <= 0) { J.drift = null; J.punts += 300; textFlotant(j.x, j.y - 100, 'GRÀCIES GUILLEM! +300', '#2fd38a', 10); }
 }
 
 // ---------- Rampes per fer salts amb el cotxe ----------
