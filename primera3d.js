@@ -415,12 +415,16 @@ export function dibuixa(w, h) {
   // Cotxes
   const llista = [...J.cotxes, J.vila, J.subi, J.carro, J.bestia, ...aparcatsActius().filter(c => Math.hypot(c.x - j.x, c.y - j.y) < 40 * TS), J.guillem && Object.assign(J.guillem, { tipus: 'guillem' })].filter(c => c); // en tercera persona també es veu el cotxe que condueixes
   if (!J.zona) llista.push({ x: TAXI.x, y: TAXI.y, ang: 0, tipus: 'taxi', color: '#f2c230' });
+  if (propVic()) llista.push({ x: TAXI_VIC.x, y: TAXI_VIC.y, ang: 0, tipus: 'taxi', color: '#f2c230' });
+  for (const r of altresVisibles()) if (r.cotxe && !r.passatger) llista.push({ x: r.x, y: r.y, ang: r.cotxe.ang, tipus: r.cotxe.tipus, color: r.cotxe.color || '#c33' }); // els cotxes dels altres jugadors
   while (E.cotxes.length < llista.length) { const c = cotxe3d(); E.sc.add(c); E.cotxes.push(c); }
   E.cotxes.forEach((m, i) => {
     const c = llista[i]; m.visible = !!c; if (!c) return;
     m.position.set(c.x / TS, altTerra(c.x, c.y), c.y / TS); m.rotation.y = -(c.ang || 0);
     const col = c.tipus === 'policia' ? '#f4f6fa' : c.tipus === 'subineta' ? '#2c5aa0' : c.tipus === 'vilamovil' ? '#f7f7f2' : c.tipus === 'carromato' ? '#0d0d10' : c.tipus === 'bestia' ? '#f4f4f2' : c.tipus === 'guillem' ? '#2f4a2a' : c.color;
-    m.userData.cos.color.set(col); m.scale.setScalar(c.tipus === 'subineta' || c.tipus === 'guillem' ? 1.3 : 1);
+    m.userData.cos.color.set(col);
+    if (c.tipus === 'subineta' || c.tipus === 'guillem') m.scale.setScalar(1.3);
+    else { const md = modelDe(c), alt = md.forma === 'camio' ? 1.9 : md.forma === 'furgo' ? 1.45 : md.forma === 'esport' ? .82 : 1; m.scale.set(md.L / 36, alt, md.A / 17); }
     m.userData.llum.visible = c.tipus === 'policia'; if (c.tipus === 'policia') m.userData.llum.material.color.set(Math.floor(t * 6) % 2 ? 0xff2d2d : 0x2d6bff), m.userData.llum.material.emissive.copy(m.userData.llum.material.color);
   });
   // Gent i coses: les més properes que es veuen, com a cartells drets
@@ -433,7 +437,7 @@ export function dibuixa(w, h) {
   J.pintors.forEach(p => posa(p, 2, g => dibuixaPintor(g, p)));
   J.armes.forEach(a => posa(a, 2, g => dibuixaArmaTerra(g, a)));
   J.vespes.forEach(v => !v.ocupada && posa(v, 2.2, g => dibuixaVespa(g, v)));
-  if (J.ciutat === 'vic' && !J.zona) { J.control.forEach(c => posa(c, 2.3, g => dibuixaControl(g, c))); J.tendes.forEach(tn => posa(tn, 1.4, g => dibuixaTenda(g, tn))); }
+  if (propVic()) { J.control.forEach(c => posa(c, 2.3, g => dibuixaControl(g, c))); J.tendes.forEach(tn => posa(tn, 1.4, g => dibuixaTenda(g, tn))); }
   J.gegants.forEach(ge => posa(ge, 1, g => dibuixaGegant(g, ge)));
   if (J.guita) posa(J.guita, 1, g => dibuixaGuita(g, J.guita));
   for (const x of extres()) posa(x.e, x.k3, g => x.fn(g));

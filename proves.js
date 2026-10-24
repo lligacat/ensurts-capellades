@@ -81,18 +81,18 @@ export async function executa() {
     const v = Object.assign(nouBestia(), { x: VIC_SORTIDA.x, y: VIC_SORTIDA.y, estat: 'conduit' }); j.cotxe = v; J.bestia = v; j.x = v.x; j.y = v.y;
     J.autostop = { x: v.x, y: v.y, estat: 'dins' }; const abans = J.punts;
     actualitzaCarretera(.016);
-    return (J.ciutat === 'vic' && J.autostopOk && J.punts - abans === 2500) || 'ciutat ' + J.ciutat + ', punts +' + (J.punts - abans);
+    return (J.vicVisitat && J.autostopOk && J.punts - abans === 2500) || 'a Vic: ' + !!J.vicVisitat + ', punts +' + (J.punts - abans);
   });
   J.cobrat = true; tornaAlMenu();
 
   // --- El món gran ---
   const modeAbans = modeJoc; modeJoc = 'arcade';
   comenca(PERSONATGES[0]);
-  prova('El món fa 640x480 i comences a casa del Ramon', () => (MW === 640 && MH === 480 && Math.hypot(J.jug.x - CASA_LLOC.x, J.jug.y - CASA_LLOC.y) < 1) || MW + 'x' + MH + ' a ' + [J.jug.x / TS, J.jug.y / TS]);
+  prova('El món fa 960x720 i comences a casa del Ramon', () => (MW === 960 && MH === 720 && Math.hypot(J.jug.x - CASA_LLOC.x, J.jug.y - CASA_LLOC.y) < 1) || MW + 'x' + MH + ' a ' + [J.jug.x / TS, J.jug.y / TS]);
   prova('Des de casa es pot arribar a peu a tots els pobles i a la comissaria', () => {
     const vist = new Uint8Array(MW * MH), cua = [Math.floor(CASA_LLOC.y / TS) * MW + Math.floor(CASA_LLOC.x / TS)]; vist[cua[0]] = 1;
     for (let k = 0; k < cua.length; k++) { const i = cua[k], x = i % MW, y = (i / MW) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= MW || ny >= MH) continue; const n = ny * MW + nx; if (!vist[n] && transitable(mapa[ny][nx])) { vist[n] = 1; cua.push(n); } } }
-    const llocs = POBLES.map(p => [p.nom, p.x + 8 * Math.floor(p.w / 16), p.y + 7 * Math.floor(p.h / 14)]).concat([['COMISSARIA', COMISSARIA.porta, COMISSARIA.y0 + 2], ['LLOGUER DE BICIS', Math.floor(LLOGUER_BICIS.x / TS), Math.floor(LLOGUER_BICIS.y / TS) + 1], ['TELECADIRA', Math.floor(TELECADIRA.baix.x / TS), Math.floor(TELECADIRA.baix.y / TS)]], GASOLINERES.map((g, i) => ['GASOLINERA ' + i, g.x + 1, g.y + 2]));
+    const llocs = POBLES.map(p => [p.nom, p.x + 8 * Math.floor(p.w / 16), p.y + 7 * Math.floor(p.h / 14)]).concat([['VIC', VIC.x0 + 17, VIC.y0 + 11], ['COMISSARIA', COMISSARIA.porta, COMISSARIA.y0 + 2], ['LLOGUER DE BICIS', Math.floor(LLOGUER_BICIS.x / TS), Math.floor(LLOGUER_BICIS.y / TS) + 1], ['TELECADIRA', Math.floor(TELECADIRA.baix.x / TS), Math.floor(TELECADIRA.baix.y / TS)]], GASOLINERES.map((g, i) => ['GASOLINERA ' + i, g.x + 1, g.y + 2]));
     const no = llocs.filter(([, x, y]) => ![0, 1].some(a => [0, 1].some(b => vist[(y + b) * MW + x + a]))).map(l => l[0]);
     return no.length === 0 || 'no hi arribes: ' + no.join(', ');
   });
@@ -169,10 +169,10 @@ export async function executa() {
     const ap = accioPropera(); if (!ap || ap.boto !== 'PUJAR') return 'acció: ' + (ap && ap.text);
     ap.fer(); return (j.cotxe === c && J.liada) || 'no condueixes el cotxe';
   });
-  prova('Cap vehicle passa dels 150 km/h', () => {
-    const j = J.jug, v = j.cotxe; tecles.KeyD = true; v.fx = 1; v.fy = 0; v.va = 0; let max = 0;
-    for (let i = 0; i < 80; i++) { actualitza(.05); max = Math.max(max, v.va); } tecles.KeyD = false;
-    return (Math.round(max / KMH) <= 150 && max > 0) || 'velocitat ' + Math.round(max / KMH) + ' km/h';
+  prova('Cada model té la seva velocitat punta real (un esportiu arriba als 230 km/h)', () => {
+    const j = J.jug, v = j.cotxe, punta = model => { v.model = model; v.x = 200 * TS; v.y = 16.5 * TS; v.ang = 0; v.va = 0; v.benzina = 100; j.x = v.x; j.y = v.y; let max = 0; tecles.KeyW = true; for (let i = 0; i < 1000; i++) { condueix(v, j, 0, 0, 0, .03); max = Math.max(max, v.va); v.x = 200 * TS; } tecles.KeyW = false; return Math.round(max / KMH); };
+    const e = punta('esportiu'), c = punta('camio'), u = punta('utilitari'); v.model = undefined;
+    return (e >= 220 && e <= 232 && c <= 106 && c > 80 && u > 150 && u <= 171) || 'esportiu ' + e + ', camió ' + c + ', utilitari ' + u;
   });
   prova("Si et quedes davant un cotxe gaire estona, t'atropella", () => {
     baixaVila(); const j = J.jug; J.vides = 3; j.invul = 0; const c = nouCotxe('normal', 300); c.estat = 'roda'; c.fx = 1; c.fy = 0; c.ang = 0; c.cami = [{ x: c.x + 999, y: c.y }]; J.cotxes = [c]; j.x = c.x + 70; j.y = c.y;
