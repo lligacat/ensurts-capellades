@@ -815,6 +815,13 @@ const POBLES = [
 ];
 const COMISSARIA = { x0: 584, y0: 160, x1: 624, y1: 192, porta: 604 }; // la porta és a dalt, a tocar de l'autopista
 const CASA_LLOC = { x: 46.5 * TS, y: 21.5 * TS };
+// El garatge del Ramon (en caselles) i el concessionari de cotxes de tuning
+const GARATGE_RAMON = { x0: 51, y0: 18, x1: 57, y1: 24 };
+const CONCESSIONARI = { x0: 70, y0: 19, x1: 84, y1: 28 };
+const EXPOSICIO = ['skyline', 'supra', 'rx7', 'nsx', 'evo', 'impreza', 'silvia', 'civic'].map((model, i) => ({ model, x: (CONCESSIONARI.x0 + 1.6 + (i % 4) * 3.6) * TS, y: (CONCESSIONARI.y0 + 1.6 + Math.floor(i / 4) * 3.4) * TS }));
+const placesGaratge = () => [0, 1, 2, 3, 4, 5].map(i => ({ x: (GARATGE_RAMON.x0 + 1 + (i % 3) * 2.1) * TS, y: (GARATGE_RAMON.y0 + 1.8 + Math.floor(i / 3) * 3.2) * TS }));
+const garatge = () => { try { return JSON.parse(localStorage.getItem('ensurts-garatge') || '[]'); } catch (e) { return []; } };
+function desaGaratge(l) { try { localStorage.setItem('ensurts-garatge', JSON.stringify(l)); } catch (e) {} }
 const pobleDe = (x, y) => POBLES.find(p => x >= p.x && x < p.x + p.w && y >= p.y && y < p.y + p.h);
 const quadricula = (x, y) => { if (MW <= 42) return [x, y]; if (dinsVicT(x, y)) return [x - VIC.x0, y - VIC.y0]; if (x >= BCN.x0 && x <= BCN.x1 && y >= BCN.y0 && y <= BCN.y1) return [x - BCN.x0, y - BCN.y0]; const p = pobleDe(x, y); return p ? [x - p.x, y - p.y] : [x, y]; };
 // la costa: baixa en diagonal des de Barcelona i, passat Lleida, es gira cap a l'est (tot el sud-est és mar)
@@ -1070,6 +1077,9 @@ function generaMon(m) {
     for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) pre[(y + 1) * (MW + 1) + x + 1] = eraRoca[y * MW + x] + pre[y * (MW + 1) + x + 1] + pre[(y + 1) * (MW + 1) + x] - pre[y * (MW + 1) + x];
     const suma = (x0, y0, x1, y1) => { x0 = Math.max(0, x0); y0 = Math.max(0, y0); x1 = Math.min(MW, x1); y1 = Math.min(MH, y1); return pre[y1 * (MW + 1) + x1] - pre[y0 * (MW + 1) + x1] - pre[y1 * (MW + 1) + x0] + pre[y0 * (MW + 1) + x0]; };
     for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) if (m[y][x] === C.CARRER && !(x < 128 && y < 96) && alcadaT(x, y) <= 0 && !dinsVicT(x, y) && suma(x - R, y - R, x + R + 1, y + R + 1) > (2 * R + 1) ** 2 * .5) m.tunel[y * MW + x] = 1; }
+  // El garatge del Ramon (al costat de casa) i el concessionari de tuning, a tocar de l'A-2
+  omple(GARATGE_RAMON.x0, GARATGE_RAMON.y0, GARATGE_RAMON.x1, GARATGE_RAMON.y1, C.PARQUING);
+  { const Q = CONCESSIONARI; omple(Q.x0, Q.y0, Q.x1, Q.y1, C.PARQUING); omple(Q.x0, Q.y1 - 2, Q.x1, Q.y1, C.EDIF); omple(Q.x0 + 6, Q.y0 - 1, Q.x0 + 7, Q.y0 - 1, C.CARRER); }
   // La presó de l'illa, enmig del mar (només s'hi arriba detingut) i el port dels trasllats, al final de l'AP-7
   for (let y = 596; y <= 630; y++) for (let x = 790; x <= 840; x++) { const d = Math.hypot((x - 815) / 22, (y - 613) / 15); if (d < 1 - hash(x, y) * .08 && esMar(x, y)) m[y][x] = d > .8 ? C.SORRA : d > .7 ? C.ROCA : C.GESPA; }
   omple(806, 606, 824, 620, C.TANCA); omple(807, 607, 823, 619, C.PLACA); omple(809, 608, 821, 612, C.EDIF); omple(806, 606, 807, 607, C.EDIF); omple(823, 619, 824, 620, C.EDIF);
@@ -1698,7 +1708,7 @@ function pintaEmblemes(g, nomesTerra) {
 // Rètols de cada mapa (es pinten al tros que els toca)
 const RETOLS = {
   capellades: [['TAXIS', 12.5, 4.4, '#f2c230'], ['CAPELLADES', 5, 6.7], ['ABRIC ROMANÍ', 20.5, 1], ['LA BASSA', 17, 11.5], ["PLAÇA DE L'ESGLÉSIA", 29, 20.6], ['MOLÍ PAPERER', 37, 23.5], ['PARC', 5, 16.5],
-    ['C-15 → BARCELONA', 47, 13.5, '#2a7de1'], ['VINYES DEL PENEDÈS', 53, 19.6], ['MONTSERRAT', 20, 31.5, '#c9a27a'], ['MONESTIR DE MONTSERRAT', 19.5, 50.5, '#c9a27a'],
+    ['C-15 → BARCELONA', 47, 13.5, '#2a7de1'], ['VINYES DEL PENEDÈS', 59, 33.6], ['MONTSERRAT', 20, 31.5, '#c9a27a'], ['MONESTIR DE MONTSERRAT', 19.5, 50.5, '#c9a27a'],
     ['BARCELONA', 80, 20.5, '#e63946'], ['SAGRADA FAMÍLIA', 88.5, 30.4, '#d9b26a'], ['TORRE GLÒRIES', 104.5, 30.4, '#4fa3ff'], ['LA PEDRERA', 96.5, 44.4], ['PLAÇA CATALUNYA', 112.5, 44.4],
     ['CAMP NOU', 84.5, 51.4, '#a50044'], ['PARC DE LA CIUTADELLA', 120.5, 23.4], ['PLATJA DE LA BARCELONETA', 92, 87.6, '#f2c230'], ['AP-7', 65.5, 40, '#2a7de1'], ['A-2', 40, 73.5, '#2a7de1']],
   vic: [['TAXIS', 12.5, 4.4, '#f2c230'], ['VIC', 5, 6.7], ['PLAÇA MAJOR', 17, 11.5], ['CÀMPING', 5, 16.5], ['RAVE', 36, 13.5, '#ff2bd6'], ['CABRÓ ROCK', 28.5, 15.4, '#ff5c2a']],
@@ -1714,7 +1724,7 @@ for (const gs of GASOLINERES) RETOLS.capellades.push(['GASOLINERA', gs.x + 3, gs
 for (const p of POBLES) { const q = parquingDe(p); RETOLS.capellades.push(['PÀRQUING', (q.x0 + q.x1 + 1) / 2, q.y1 + 1.6, '#7fc3ff']); }
 RETOLS.capellades.push(['CASA DEL RAMON', 46.5, 17.6, '#2fd38a'], ['COMISSARIA DELS MOSSOS', (COMISSARIA.x0 + COMISSARIA.x1) / 2, COMISSARIA.y0 - .6, '#2d6bff'], ['AP-7', 66, 200, '#2a7de1'], ['C-16', 302, 60, '#2a7de1'], ['N-II', 502, 100, '#2a7de1'],
   ['C-25 → VIC', 406, 62, '#2a7de1'], ['C-25', 470, 205.3, '#2a7de1'], ['C-25 VIC', 830, 205.3, '#2a7de1'], ['TÚNEL DEL COLL', 666, 204.6, '#ffd23f'], ['C-17', 762, 270, '#2a7de1'], ['AP-7', 400, 639.3, '#2a7de1'],
-  ['VIC', 868, 197.3, '#2fd38a'], ["PRESÓ DE L'ILLA", 815, 603.4, '#ff5c5c'], ['PORT · TRASLLATS', 750, 627.4, '#7fc3ff'], ['BOSC VERGE DEL COLLSACABRA', 820, 270, '#2fd38a'], ['ELS PORTS', 600, 470, '#c9a27a']);
+  ['VIC', 868, 197.3, '#2fd38a'], ['GARATGE DEL RAMON', 54.5, 17.4, '#2fd38a'], ['CONCESSIONARI JDM · TUNING', 77.5, 18.4, '#ff2bd6'], ["PRESÓ DE L'ILLA", 815, 603.4, '#ff5c5c'], ['PORT · TRASLLATS', 750, 627.4, '#7fc3ff'], ['BOSC VERGE DEL COLLSACABRA', 820, 270, '#2fd38a'], ['ELS PORTS', 600, 470, '#c9a27a']);
 
 // Rotondes vistes des de dalt: anell d'asfalt, illeta amb gespa i un olivera, i les entrades
 function patro(g, nom) { const c = textures()[nom]; if (!c.pat || c.ctx !== g) { c.pat = g.createPattern(c, 'repeat'); c.ctx = g; if (c.escala) c.pat.setTransform(new DOMMatrix().scaleSelf(c.escala)); } return c.pat; }
@@ -2179,6 +2189,8 @@ function llocActual() {
   const x = J.jug.x / TS, y = J.jug.y / TS, p = pobleDe(x, y);
   if (p) return p.nom;
   if (dinsVicT(x, y)) return 'VIC';
+  if (x >= CONCESSIONARI.x0 && x <= CONCESSIONARI.x1 + 1 && y >= CONCESSIONARI.y0 - 1 && y <= CONCESSIONARI.y1 + 1) return 'CONCESSIONARI';
+  if (x >= GARATGE_RAMON.x0 && x <= GARATGE_RAMON.x1 + 1 && y >= GARATGE_RAMON.y0 && y <= GARATGE_RAMON.y1 + 1) return 'GARATGE';
   if (mapa.tunel && mapa.tunel[Math.floor(y) * MW + Math.floor(x)]) return 'TÚNEL';
   if ((x >= C25.x && x < C25.x + 4 && y >= C25.y0 && y < C25.y + 4) || (y >= C25.y && y < C25.y + 4 && x >= C25.x && x < VIC.x0)) return 'C-25';
   if (alcadaT(x, y) > 0) return 'PAL ARINSAL';
@@ -2484,6 +2496,21 @@ function accioIlla() {
   if (dinsCellaIlla(j)) return { boto: 'ESPERAR', text: 'CONDEMNA: ' + Math.ceil(I.condemna) + ' S (O ESCAPA-TE A L\'HORA DEL PATI)', fer: () => {} };
   return null;
 }
+function accioConcessionari(e) {
+  const md = MODELS[e.model], teu = garatge().some(g2 => g2.model === e.model);
+  if (teu) return { boto: 'TEU', text: md.nom + ': JA ÉS TEU, ÉS AL GARATGE DE CASA', fer: () => {} };
+  return { boto: 'COMPRAR', text: 'COMPRAR ' + md.nom + ' · ' + md.punta + ' KM/H · ' + formatPunts(md.preu) + ' PUNTS (MONEDER: ' + formatPunts(moneder.get()) + ')', fer: () => compraCotxe(e.model) };
+}
+function compraCotxe(model) {
+  const md = MODELS[model], l = garatge();
+  if (l.some(g2 => g2.model === model)) return;
+  if (moneder.get() < md.preu) { so('bip'); return anunci('NO TENS PROU PUNTS AL MONEDER (' + formatPunts(moneder.get()) + ')', 2.2); }
+  if (l.length >= 6) return anunci('EL GARATGE ÉS PLE (6 COTXES)', 2);
+  moneder.suma(-md.preu); l.push({ model, color: md.color }); desaGaratge(l); pintaMoneder();
+  const pl = placesGaratge()[l.length - 1], c = vehicleAparcat('propi', pl.x, pl.y, Math.PI / 2); c.model = model; c.color = md.color; c.benzina = 100; (J.aparcats = J.aparcats || []).push(c);
+  so('punts'); so('motor'); J.flash = .3;
+  anunci(md.nom + ' COMPRAT! JA ÉS AL GARATGE DEL RAMON', 3);
+}
 function surtIlla(fuga) {
   const I = J.illa; J.illa = null;
   mostraVideo(() => {
@@ -2491,6 +2518,24 @@ function surtIlla(fuga) {
     if (fuga) { J.punts += 5000; J.liada = true; J.cerca = Math.max(J.cerca || 0, 3.5); so('sirena'); anunci("T'HAS ESCAPAT DE LA PRESÓ DE L'ILLA! +5000", 3); }
     else { J.gravetat = 0; J.cerca = 0; J.liada = false; const R2 = J.pistolaRequisada; if (R2) { J.jug.pistola = R2.actual; J.jug.armesFoc = R2.totes; J.pistolaRequisada = null; } anunci('HAS COMPLERT LA CONDEMNA. ETS LLIURE!', 3); }
   }, [[5, (g, t, D, un) => escenaVaixell(g, t, un, fuga ? 'fuga' : 'llibertat')]]);
+}
+function dibuixaConcessionari(g, vist) {
+  const t = performance.now() / 1000;
+  if (vist({ x: (GARATGE_RAMON.x0 + 3.5) * TS, y: (GARATGE_RAMON.y0 + 3.5) * TS })) { // el garatge: pilars i sostre a ratlles
+    const x0 = GARATGE_RAMON.x0 * TS, y0 = GARATGE_RAMON.y0 * TS, w = (GARATGE_RAMON.x1 - GARATGE_RAMON.x0 + 1) * TS, h = (GARATGE_RAMON.y1 - GARATGE_RAMON.y0 + 1) * TS;
+    g.strokeStyle = '#5b5f66'; g.lineWidth = 8; g.strokeRect(x0 + 4, y0 + 4, w - 8, h - 8);
+    g.fillStyle = 'rgba(40,44,50,.18)'; for (let x = x0 + 30; x < x0 + w; x += 60) g.fillRect(x, y0 + 8, 14, h - 16);
+    for (const p of placesGaratge()) { g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 3; g.strokeRect(p.x - 38, p.y - 70, 76, 140); }
+  }
+  for (const e of EXPOSICIO) {
+    if (!vist(e)) continue;
+    const md = MODELS[e.model], teu = garatge().some(g2 => g2.model === e.model);
+    g.fillStyle = '#d9dde3'; g.beginPath(); g.ellipse(e.x, e.y + 4, 64, 40, 0, 0, TAU); g.fill(); g.strokeStyle = '#ff2bd6'; g.lineWidth = 3; g.stroke(); // plataforma giratòria
+    g.fillStyle = 'rgba(255,255,255,.12)'; g.beginPath(); g.moveTo(e.x - 30, e.y - 120); g.lineTo(e.x - 60, e.y + 20); g.lineTo(e.x + 60, e.y + 20); g.lineTo(e.x + 30, e.y - 120); g.fill(); // focus
+    dibuixaCotxe(g, { x: e.x, y: e.y, ang: t * .5 + EXPOSICIO.indexOf(e), tipus: 'expo', model: e.model, color: md.color, estat: 'conduit', fx: 1, fy: 0 });
+    rotul(g, md.nom, e.x, e.y - 62, teu ? '#2fd38a' : '#ff2bd6', 7);
+    rotul(g, teu ? 'JA ÉS TEU' : formatPunts(md.preu) + ' PUNTS · ' + md.punta + ' KM/H', e.x, e.y + 58, teu ? '#2fd38a' : '#ffd23f', 6);
+  }
 }
 function dibuixaIlla(g) {
   const I = J.illa; if (!I) return;
@@ -2963,14 +3008,14 @@ const MODELS = {
   esportiu:  { nom: 'ESPORTIU', punta: 230, acc: 20, L: 37, A: 17, forma: 'esport' },
   camio:     { nom: 'CAMIÓ', punta: 105, acc: 4, L: 64, A: 21, forma: 'camio' },
   // els del concessionari de tuning
-  skyline:   { nom: 'SKYLINE GT-R R34', punta: 255, acc: 24, L: 37, A: 17, forma: 'esport', tuning: true, preu: 42000, franja: '#e9edf0', neo: '#2bf0ff', color: '#2b4fd8' },
-  supra:     { nom: 'SUPRA MK4', punta: 260, acc: 23, L: 37, A: 17, forma: 'esport', tuning: true, preu: 45000, franja: '#111', neo: '#ff7a2b', color: '#ff8c1a' },
-  rx7:       { nom: 'RX-7 FD', punta: 245, acc: 22, L: 35, A: 17, forma: 'esport', tuning: true, preu: 36000, franja: '#111', neo: '#ff2bd6', color: '#d71f2b' },
-  evo:       { nom: 'LANCER EVO IX', punta: 240, acc: 23, L: 36, A: 17, forma: 'turisme', tuning: true, preu: 32000, franja: '#d71f2b', neo: '#b6ff2b', color: '#f4f6fa' },
-  impreza:   { nom: 'IMPREZA WRX STI', punta: 238, acc: 22, L: 36, A: 17, forma: 'turisme', tuning: true, preu: 30000, franja: '#f2c230', neo: '#2b8cff', color: '#1d3fa0' },
-  silvia:    { nom: 'SILVIA S15', punta: 235, acc: 20, L: 35, A: 16, forma: 'esport', tuning: true, preu: 24000, franja: '#fff', neo: '#b46bff', color: '#7b2cbf' },
-  civic:     { nom: 'CIVIC TYPE R', punta: 225, acc: 18, L: 33, A: 16, forma: 'turisme', tuning: true, preu: 16000, franja: '#d71f2b', neo: '#ff2d2d', color: '#f4f6fa' },
-  nsx:       { nom: 'NSX', punta: 270, acc: 25, L: 37, A: 17, forma: 'esport', tuning: true, preu: 60000, franja: '#111', neo: '#ffe12b', color: '#f2c230' },
+  skyline:   { nom: 'SKYLINE GT-R R34', punta: 255, acc: 24, L: 37, A: 17, forma: 'esport', tuning: true, preu: 22000, franja: '#e9edf0', neo: '#2bf0ff', color: '#2b4fd8' },
+  supra:     { nom: 'SUPRA MK4', punta: 260, acc: 23, L: 37, A: 17, forma: 'esport', tuning: true, preu: 24000, franja: '#111', neo: '#ff7a2b', color: '#ff8c1a' },
+  rx7:       { nom: 'RX-7 FD', punta: 245, acc: 22, L: 35, A: 17, forma: 'esport', tuning: true, preu: 18000, franja: '#111', neo: '#ff2bd6', color: '#d71f2b' },
+  evo:       { nom: 'LANCER EVO IX', punta: 240, acc: 23, L: 36, A: 17, forma: 'turisme', tuning: true, preu: 16000, franja: '#d71f2b', neo: '#b6ff2b', color: '#f4f6fa' },
+  impreza:   { nom: 'IMPREZA WRX STI', punta: 238, acc: 22, L: 36, A: 17, forma: 'turisme', tuning: true, preu: 15000, franja: '#f2c230', neo: '#2b8cff', color: '#1d3fa0' },
+  silvia:    { nom: 'SILVIA S15', punta: 235, acc: 20, L: 35, A: 16, forma: 'esport', tuning: true, preu: 12000, franja: '#fff', neo: '#b46bff', color: '#7b2cbf' },
+  civic:     { nom: 'CIVIC TYPE R', punta: 225, acc: 18, L: 33, A: 16, forma: 'turisme', tuning: true, preu: 8000, franja: '#d71f2b', neo: '#ff2d2d', color: '#f4f6fa' },
+  nsx:       { nom: 'NSX', punta: 270, acc: 25, L: 37, A: 17, forma: 'esport', tuning: true, preu: 30000, franja: '#111', neo: '#ffe12b', color: '#f2c230' },
 };
 const MODEL_TIPUS = { // vehicles especials del joc
   vilamovil: { nom: 'VILAMOVIL', punta: 130, acc: 12, L: 36, A: 17, forma: 'turisme' }, carromato: { nom: 'CARROMATO', punta: 160, acc: 13, L: 36, A: 17, forma: 'turisme' },
@@ -3724,6 +3769,7 @@ function actualitzaTaxi(dt) {
 function accioPropera() {
   const j = J.jug;
   if (J.zona === 'illa') return accioIlla();
+  if (!j.cotxe && !J.zona && J.ciutat === 'capellades' && granMon()) { const e = EXPOSICIO.find(e => Math.hypot(e.x - j.x, e.y - j.y) < 80); if (e) return accioConcessionari(e); }
   if (J.tir) return { boto: 'PLEGAR', text: 'DEIXAR EL CONCURS', fer: () => { J.tir = null; anunci('CONCURS ABANDONAT', 1.2); } };
   if (!j.cotxe && !J.zona && J.ciutat === 'capellades' && granMon()) { for (const mode of ['precisio', 'plat']) { const sp = CAMP_TIR[mode]; if (Math.hypot(sp.x * TS - j.x, sp.y * TS - j.y) < 80) return { boto: 'CONCURS', text: mode === 'precisio' ? 'CONCURS DE PRECISIÓ (10 TIRS A LES DIANES)' : 'TIR AL PLAT (10 PLATS)', fer: () => comencaTir(mode) }; } }
   if (j.passatger) { const r = XARXA.altres.get(j.passatger); return { boto: 'BAIXAR', text: 'BAIXAR DEL COTXE' + (r ? ' DE ' + String(r.nom).toUpperCase() : ''), fer: baixaPassatger }; }
@@ -3822,6 +3868,7 @@ const LOCALS = {
   vic: [{ tipus: 'bar', x: 4.5, y: 14.45 }, { tipus: 'disfresses', x: 12.5, y: 28.45 }],
 };
 LOCALS.capellades.push({ tipus: 'armeria', x: 40.5, y: 103.45 }); // la del camp de tir
+for (const l of LOCALS.vic) LOCALS.capellades.push(Object.assign({}, l, { x: l.x + VIC.x0, y: l.y + VIC.y0 })); // els de Vic, que ara és dins el món
 // armeries també als pobles grans
 for (const nom of ['IGUALADA', 'MANRESA', 'LLEIDA', 'GIRONA', 'TARRAGONA', 'REUS']) { const p = POBLES.find(q => q.nom === nom); LOCALS.capellades.push({ tipus: 'armeria', x: p.x + 20.5, y: p.y + 6.45 }); }
 const TIPUS_LOCAL = {
@@ -4108,6 +4155,7 @@ function vehicleAparcat(tipus, x, y, ang = 0) {
 function posaAparcats() {
   J.aparcats = [];
   if (!granMon()) return;
+  const pl = placesGaratge(); garatge().slice(0, 6).forEach((g2, i) => { const c = vehicleAparcat('propi', pl[i].x, pl[i].y, Math.PI / 2); c.model = g2.model; c.color = g2.color || MODELS[g2.model].color; c.benzina = 100; J.aparcats.push(c); });
   POBLES.forEach((p, i) => {
     const q = parquingDe(p), places = [];
     for (let y = q.y0; y <= q.y1; y += 2) for (let x = q.x0; x <= q.x1; x += 2) places.push([(x + 1) * TS, (y + 1) * TS]);
@@ -4164,7 +4212,7 @@ function pujaVila() {
   so('motor'); anunci(v.tipus === 'carromato' ? 'CARROMATO! ESPAI PER LLANÇAR MÍSSILS' : 'AL VILAMOVIL!', 1.8);
 }
 const nomCotxe = v => v && v.model && MODELS[v.model] ? MODELS[v.model].nom + (v.tipus === 'robat' ? ' (ROBAT)' : '') : v && v.tipus === 'carromato' ? 'CARROMATO' : v && v.tipus === 'bestia' ? 'LA BÈSTIA' : v && v.tipus === 'ralli' ? 'COTXE DE RAL·LI' : v && v.tipus === 'robat' ? 'COTXE (ROBAT)' : v && v.tipus === 'policia' ? 'COTXE DE POLICIA' : 'VILAMOVIL';
-const pujable = c => c && (c.tipus === 'ralli' || c.tipus === 'vilamovil' || c.tipus === 'carromato' || c.tipus === 'bestia' || c.tipus === 'robat' || (c.tipus === 'policia' && c.buit));
+const pujable = c => c && (c.tipus === 'propi' || c.tipus === 'ralli' || c.tipus === 'vilamovil' || c.tipus === 'carromato' || c.tipus === 'bestia' || c.tipus === 'robat' || (c.tipus === 'policia' && c.buit));
 // El conductor surt corrent cridant i el cotxe queda aturat amb la porta oberta
 function abandonaCotxe(c) {
   J.cotxes = J.cotxes.filter(x => x !== c);
@@ -5837,6 +5885,7 @@ function dibuixa() {
   const vent = a => Math.sin(t * 1.3 + a.x * .004) * .04 + Math.sin(t * 3.4 + a.y * .01) * .015;
   for (const a of arbres) if (vist(a)) ents.push([a.y + 18, () => pintaCopa(cx, a.x, a.y, a.h, vent(a))]);
   if (!J.zona && J.ciutat === 'capellades') afegeixSenyals(ents, vist); // semàfors i senyals de trànsit
+  if (!J.zona && J.ciutat === 'capellades') ents.push([-1e9, () => dibuixaConcessionari(cx, vist)]); // a sota de tot (el terra del concessionari)
   J.clons.forEach(c => ents.push([c.y, () => { cx.globalAlpha = .55; const jr = J.jug, gx = jr.x, gy = jr.y, gp = jr.pas, gm = jr.mou; Object.assign(jr, { x: c.x, y: c.y, pas: c.pas, mou: true }); dibuixaJugador(cx); Object.assign(jr, { x: gx, y: gy, pas: gp, mou: gm }); cx.globalAlpha = 1; }]));
   J.sorpreses.forEach(e => SORPRESES[e.tipus].dibuixa && ents.push([e.y, escalat(e, () => SORPRESES[e.tipus].dibuixa(cx, e), e.tipus === 'gallina' || e.tipus === 'gat' ? 1.5 : 1.2)]));
   J.ous.forEach(o => ents.push([o.y, () => { cx.fillStyle = '#fff7e0'; cx.beginPath(); cx.ellipse(o.x, o.y - 18, 6, 8, 0, 0, TAU); cx.fill(); }]));

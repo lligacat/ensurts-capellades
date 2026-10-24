@@ -416,6 +416,7 @@ export function dibuixa(w, h) {
   const llista = [...J.cotxes, J.vila, J.subi, J.carro, J.bestia, ...aparcatsActius().filter(c => Math.hypot(c.x - j.x, c.y - j.y) < 40 * TS), J.guillem && Object.assign(J.guillem, { tipus: 'guillem' })].filter(c => c); // en tercera persona també es veu el cotxe que condueixes
   if (!J.zona) llista.push({ x: TAXI.x, y: TAXI.y, ang: 0, tipus: 'taxi', color: '#f2c230' });
   if (propVic()) llista.push({ x: TAXI_VIC.x, y: TAXI_VIC.y, ang: 0, tipus: 'taxi', color: '#f2c230' });
+  if (!J.zona && J.ciutat === 'capellades') for (const e of EXPOSICIO) if (Math.hypot(e.x - j.x, e.y - j.y) < 30 * TS) llista.push({ x: e.x, y: e.y, ang: t * .5, tipus: 'expo', model: e.model, color: MODELS[e.model].color }); // el concessionari
   for (const r of altresVisibles()) if (r.cotxe && !r.passatger) llista.push({ x: r.x, y: r.y, ang: r.cotxe.ang, tipus: r.cotxe.tipus, color: r.cotxe.color || '#c33' }); // els cotxes dels altres jugadors
   while (E.cotxes.length < llista.length) { const c = cotxe3d(); E.sc.add(c); E.cotxes.push(c); }
   E.cotxes.forEach((m, i) => {

@@ -1,7 +1,7 @@
 // Proves automàtiques del joc. Obre la pàgina amb ?proves al final de l'adreça i els resultats surten a la pantalla i a la consola.
 // Fan servir les funcions i l'estat globals del joc, i deixen el moneder i la botiga tal com estaven.
 
-const CLAUS = ['ensurts-tir', 'ensurts-ralli-millor', 'ensurts-moneder', 'ensurts-skins', 'ensurts-explosions', 'ensurts-missions', 'ensurts-historia', 'ensurts-mode', 'ensurts-paquets'];
+const CLAUS = ['ensurts-tir', 'ensurts-ralli-millor', 'ensurts-moneder', 'ensurts-skins', 'ensurts-explosions', 'ensurts-missions', 'ensurts-historia', 'ensurts-mode', 'ensurts-paquets', 'ensurts-garatge'];
 
 export async function executa() {
   const resultats = [], guardat = Object.fromEntries(CLAUS.map(k => [k, localStorage.getItem(k)]));
@@ -191,6 +191,14 @@ export async function executa() {
       I.condemna = .01; actualitza(.05); const lliure = !J.illa; acabaVideo(); estat = 'joc';
       return (lliure && J.zona === null && Math.hypot(j.x - PORT_ILLA.x, j.y - PORT_ILLA.y) < 50) || 'zona ' + J.zona;
     } finally { if (J.zona === 'illa') { J.illa = null; sortirZona(); } if (VID) acabaVideo(); estat = 'joc'; }
+  });
+  prova('Al concessionari es compra un cotxe de tuning i queda al garatge del Ramon', () => {
+    const j = J.jug; localStorage.removeItem('ensurts-garatge'); moneder.suma(-moneder.get()); moneder.suma(25000);
+    const e = EXPOSICIO.find(e => e.model === 'skyline'); j.cotxe = null; j.x = e.x; j.y = e.y + 60; const ac = accioPropera();
+    if (!ac || ac.boto !== 'COMPRAR') return 'acció: ' + (ac && ac.boto); ac.fer();
+    const c = J.aparcats.find(c => c.tipus === 'propi' && c.model === 'skyline'), pl = placesGaratge()[0];
+    if (!c || Math.hypot(c.x - pl.x, c.y - pl.y) > 5 || moneder.get() !== 3000) return 'cotxe ' + !!c + ', moneder ' + moneder.get();
+    J.aparcats = []; posaAparcats(); return (J.aparcats.some(c => c.tipus === 'propi' && c.model === 'skyline') && accioConcessionari(e).boto === 'TEU') || 'no hi és a la partida següent';
   });
   prova('Hi ha semàfors, senyals i rotondes, i el trànsit para en vermell', () => {
     llestSenyals(); const S = [...SEMAFORS.values()].find(s => s.llums); if (!S || SENYALS.length < 50 || !mapa.rotondes.length) return 'semàfors ' + SEMAFORS.size + ', senyals ' + SENYALS.length;
