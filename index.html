@@ -13,7 +13,7 @@
 <link rel="icon" href="icona-192.png">
 <link rel="apple-touch-icon" href="icona-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root { --verd: #2fd38a; --fosc: #141414; --rosa: #ff5c8a; --crema: #f6efe2; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -113,6 +113,62 @@
     #bAjustos { top: 194px; }
     #pAjustos { top: 150px; }
   }
+  /* ---------- Rebranding: sobri i realista, com un joc de món obert ---------- */
+  :root { --or: #f0c850; --diners: #72cc72; --fons: #0b0d10; --linia: rgba(255,255,255,.12); }
+  html, body { background: var(--fons); font-family: 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: .02em; }
+  .pantalla { background: radial-gradient(ellipse at 50% -10%, rgba(240,200,80,.10), transparent 55%), linear-gradient(180deg, rgba(8,10,13,.82), rgba(8,10,13,.96)); gap: 20px; padding: 28px 16px; }
+  h1 { font-family: 'Anton', 'Oswald', sans-serif; font-weight: 400; font-size: clamp(46px, 10vw, 104px); line-height: .92; letter-spacing: .01em; color: #fff; text-shadow: 0 6px 0 rgba(0,0,0,.55); -webkit-text-stroke: 2px #000; paint-order: stroke fill; }
+  h1 em { color: var(--or); }
+  .sub { font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; color: #c4c9d0; max-width: 560px; }
+  .boto { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 15px; letter-spacing: .1em; text-transform: uppercase; padding: 12px 24px; background: #f4f4f4; color: #0b0d10; border: 0; border-radius: 2px; box-shadow: none; transition: background .15s; }
+  .boto:hover { background: var(--or); }
+  .boto.sec { background: transparent; color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); }
+  .boto.sec:hover { background: rgba(255,255,255,.08); }
+  .boto:active { transform: none; box-shadow: none; }
+  .difs { gap: 0; background: rgba(255,255,255,.05); border: 1px solid var(--linia); border-radius: 3px; }
+  .difs button { font-family: 'Oswald', sans-serif; font-weight: 500; font-size: 15px; letter-spacing: .08em; padding: 11px 20px; background: transparent; color: #c4c9d0; border: 0; box-shadow: none; border-radius: 0; }
+  .difs button + button { border-left: 1px solid var(--linia); }
+  .difs button.triat { background: #f4f4f4; color: #0b0d10; border-color: #f4f4f4; }
+  .difs-desc { font-family: 'Inter', sans-serif; font-size: 13px; color: #9aa1ab; }
+  .carta { background: rgba(22,25,30,.92); border: 1px solid var(--linia); border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,.35); transition: transform .15s, border-color .15s; }
+  .carta:hover, .carta:focus-visible { transform: translateY(-3px); border-color: var(--or); }
+  .carta .nom { font-size: 20px; font-weight: 600; letter-spacing: .05em; }
+  .carta .poder { font-size: 13px; color: var(--or); letter-spacing: .05em; }
+  .carta .desc { font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.5; color: #9aa1ab; }
+  .carta .preu { font-size: 13px; font-weight: 600; letter-spacing: .06em; padding: 6px 12px; background: #f4f4f4; color: #0b0d10; box-shadow: none; border-radius: 2px; }
+  .carta .preu.teu { background: var(--diners); color: #0b0d10; }
+  .carta canvas { animation: none; }
+  .controls { font-family: 'Inter', sans-serif; font-size: 13px; line-height: 1.8; color: #9aa1ab; }
+  .controls b { font-family: 'Oswald', sans-serif; font-weight: 500; background: #22262d; border: 1px solid #3a3f47; border-bottom-width: 2px; border-radius: 3px; padding: 1px 7px; }
+  .missions { background: rgba(255,255,255,.035); border: 1px solid var(--linia); border-radius: 4px; padding: 18px; }
+  .missions h2, .botiga h2 { font-size: 20px; font-weight: 600; letter-spacing: .14em; color: #fff; text-shadow: none; }
+  .missions ul { font-family: 'Inter', sans-serif; font-size: 13px; color: #c4c9d0; }
+  .missions li b { color: var(--or); font-weight: 600; }
+  .missions li.feta { color: var(--diners); }
+  .botiga { border-top: 1px solid var(--linia); }
+  .moneder { font-size: 24px; font-weight: 600; color: var(--diners); text-shadow: 0 2px 0 #000; letter-spacing: .06em; }
+  #nomJugador, #codiSala { font-family: 'Oswald', sans-serif; font-size: 17px; letter-spacing: .1em; background: #111418; border: 1px solid #3a3f47; border-radius: 2px; box-shadow: none; }
+  #codiSala:focus, #nomJugador:focus { outline: none; border-color: var(--or); }
+  #estatSala { color: var(--or); font-family: 'Oswald', sans-serif; }
+  #llistaSales .sala { background: #111418; border: 1px solid #2a2e35; border-radius: 3px; font-family: 'Inter', sans-serif; font-size: 13px; }
+  #llistaSales .sala button { font-family: 'Oswald', sans-serif; font-size: 13px; background: #f4f4f4; border: 0; border-radius: 2px; }
+  .resultat { font-family: 'Anton', sans-serif; font-size: clamp(40px, 8vw, 72px); color: var(--diners); text-shadow: 0 4px 0 #000; }
+  .titol-rang { font-size: 18px; letter-spacing: .08em; color: var(--or); }
+  #bAcabar, #bVista, #bAjustos { font-family: 'Oswald', sans-serif; font-weight: 500; font-size: 13px; letter-spacing: .08em; color: #fff; background: rgba(10,12,16,.6); border: 1px solid rgba(255,255,255,.18); border-radius: 3px; box-shadow: none; backdrop-filter: blur(4px); }
+  #bVista { color: var(--or); }
+  #pAjustos { background: rgba(12,14,18,.94); border: 1px solid var(--linia); border-radius: 4px; box-shadow: 0 20px 50px rgba(0,0,0,.5); font-family: 'Oswald', sans-serif; letter-spacing: .06em; }
+  #pAjustos button { font-family: 'Oswald', sans-serif; font-size: 14px; letter-spacing: .08em; background: #f4f4f4; color: #0b0d10; border: 0; border-radius: 2px; }
+  #pAjustos button.sec { background: transparent; color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); }
+  #pAjustos .volum { font-family: 'Inter', sans-serif; font-size: 12px; }
+  #pAjustos input[type=range] { accent-color: var(--or); }
+  #pMapa { background: rgba(6,8,10,.96); }
+  #pMapa canvas { border: 1px solid var(--linia); box-shadow: none; border-radius: 4px; image-rendering: auto; }
+  #pMapa p { font-family: 'Inter', sans-serif; font-size: 12px; }
+  #bSkip { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: .1em; background: rgba(10,12,16,.7); color: #fff; border: 1px solid rgba(255,255,255,.3); box-shadow: none; border-radius: 3px; }
+  #tactil button { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: .04em; color: #fff; background: rgba(10,12,16,.55); border: 2px solid rgba(255,255,255,.55); box-shadow: none; backdrop-filter: blur(4px); }
+  #tactil button#bBuh { background: rgba(240,200,80,.85); color: #0b0d10; border-color: #fff; font-size: 15px; }
+  #tactil button#bBomba, #tactil button#bAgafar, #tactil button#bPistola, #tactil button#bCanvia { background: rgba(10,12,16,.55); color: #fff; font-size: 11px; }
+  #tactil button#bAgafar { color: var(--or); }
 </style>
 </head>
 <body>
@@ -120,9 +176,9 @@
 
 <div class="pantalla" id="pInici">
   <h1>ENSURTS A<br><em>CAPELLADES</em></h1>
-  <p class="sub">Les parelles felices passegen per La Bassa, seuen als bancs, es fan petons i fins i tot es casen a la Plaça de l'Església. Tria el teu monstre i fes-los un bon ensurt. Compte: els municipals disparen!</p>
+  <p class="sub">Un món obert de Capellades a Vic per la C-25, amb Barcelona, Montserrat, la costa i la presó de l'illa. Espanta les parelles, fuig dels Mossos i fes-te un nom.</p>
   <div class="difs" id="modes">
-    <button data-m="arcade">ARCADE</button><button data-m="historia">MODE HISTÒRIA</button><button data-m="pacific">PACÍFIC</button>
+    <button data-m="arcade">CONTRARELLOTGE</button><button data-m="historia">HISTÒRIA</button><button data-m="pacific">PACÍFIC</button>
   </div>
   <p class="difs-desc" id="modeDesc"></p>
   <div class="difs" id="difs">
@@ -145,7 +201,7 @@
     <ul id="missions"></ul>
   </div>
   <div class="botiga">
-    <h2>BOTIGA DE PERSONATGES</h2>
+    <h2>PERSONATGES</h2>
     <p class="controls">Cada partida suma els teus punts al moneder. Cada personatge nou val 1000 punts i té el seu poder.</p>
     <div class="cartes" id="botiga"></div>
   </div>
@@ -169,7 +225,7 @@
   <p class="sub" id="fDetall"></p>
   <div class="fila">
     <button class="boto" id="bRepetir">TORNA-HI</button>
-    <button class="boto sec" id="bCanviar">CANVIA DE MONSTRE</button>
+    <button class="boto sec" id="bCanviar">CANVIA DE PERSONATGE</button>
   </div>
 </div>
 
@@ -205,6 +261,9 @@
 <script>
 'use strict';
 const TAU = Math.PI * 2;
+// Lletra de la interfície (com els jocs de món obert: condensada i neta)
+const FONT_UI = '"Oswald", "Arial Narrow", sans-serif';
+const fnt = px => '600 ' + Math.round(px * 1.45) + 'px ' + FONT_UI;
 const cv = document.getElementById('joc'), cx = cv.getContext('2d');
 
 // ---------- Personatges (retalls de la foto original, en píxels de 1448×1086) ----------
@@ -1770,10 +1829,10 @@ function pintaRetolsTros(g, ciutat, regio) {
   for (const [txt, tx, ty, vora] of RETOLS[ciutat] || []) {
     const x = tx * TS, y = ty * TS;
     if (x < (regio.x0 - 4) * TS || x > (regio.x1 + 4) * TS || y < (regio.y0 - 1) * TS || y > (regio.y1 + 1) * TS) continue;
-    g.font = '13px "Press Start 2P", monospace'; const w = g.measureText(txt).width + 22;
-    g.fillStyle = '#000'; g.fillRect(x - w / 2 - 3, y - 17, w + 6, 34);
-    g.fillStyle = '#141414'; g.fillRect(x - w / 2, y - 14, w, 28);
-    g.strokeStyle = vora || '#2fd38a'; g.lineWidth = 3; g.strokeRect(x - w / 2 + 2, y - 12, w - 4, 24);
+    g.font = fnt(13); const w = g.measureText(txt).width + 26;
+    g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(x - w / 2 + 3, y - 13, w, 30);
+    g.fillStyle = '#16191e'; g.fillRect(x - w / 2, y - 16, w, 30);
+    g.fillStyle = vora || '#2fd38a'; g.fillRect(x - w / 2, y - 16, w, 3);
     g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, x, y + 1);
     g.textBaseline = 'alphabetic';
   }
@@ -2346,7 +2405,7 @@ function dibuixaVenedor(g, v) {
   const fuig = v.fuig > 18;
   personaPetita(g, v.x, v.y - (fuig ? Math.abs(Math.sin(v.pas)) * 5 : 0), { pell: '#f1c7a3', cabell: '#5a3a22', roba: '#2a7de1' }, fuig ? v.pas : 0, fuig, false);
   g.fillStyle = '#ffd23f'; g.fillRect(v.x - 9, v.y - 45, 18, 5);
-  if (fuig) { g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('LES BICIS!', v.x, v.y - 58); }
+  if (fuig) { g.font = fnt(7); g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('LES BICIS!', v.x, v.y - 58); }
 }
 function dibuixaPista(g) { // peralts i salts de la zona
   for (const p of PERALTS) { g.save(); g.translate(p.x, p.y); g.strokeStyle = '#d62828'; g.lineWidth = 14; g.setLineDash([22, 18]); g.beginPath(); g.arc(0, 0, 120, 0, TAU); g.stroke(); g.restore(); }
@@ -2376,14 +2435,14 @@ function dibuixaArmaFoc(g, t, x, y, k = 1) {
 function dibuixaArmeria(g) {
   const t = performance.now() / 1000;
   g.fillStyle = '#2a1a10'; g.fillRect(9 * TS, 7 * TS, 24 * TS, 1.6 * TS); // la paret de les armes
-  g.fillStyle = '#d62828'; g.font = 'bold 34px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('ARMERIA EL BOOM', 21 * TS, 7.9 * TS);
+  g.fillStyle = '#d62828'; g.font = fnt(34); g.textAlign = 'center'; g.fillText('ARMERIA EL BOOM', 21 * TS, 7.9 * TS);
   personaPetita(g, 21 * TS, 8.9 * TS, { pell: '#e0ac85', cabell: '#111', roba: '#3d4a2a' }, 0, false, false); // el botiguer, amb samarreta de camuflatge
   for (const v of VITRINES) {
     const A = ARMES_FOC[v.tipus], teva = J.jug.armesFoc && J.jug.armesFoc[v.tipus];
     g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(v.x - 46, v.y + 6, 92, 10);
     g.fillStyle = '#5a5a5a'; g.fillRect(v.x - 44, v.y - 40, 88, 50); g.fillStyle = 'rgba(160,210,255,.35)'; g.fillRect(v.x - 40, v.y - 36, 80, 30);
     dibuixaArmaFoc(g, v.tipus, v.x, v.y - 22 + Math.sin(t * 2 + v.x) * 2, 1.2);
-    g.font = '8px "Press Start 2P"'; g.fillStyle = A.color; g.fillText(A.curt, v.x, v.y + 28); g.fillStyle = teva ? '#2fd38a' : '#ffd23f'; g.fillText(teva ? 'MUNICIÓ ' + formatPunts(Math.max(100, Math.round(A.preu / 3))) : A.preu ? formatPunts(A.preu) + ' P' : 'GRATIS A CASA', v.x, v.y + 42);
+    g.font = fnt(8); g.fillStyle = A.color; g.fillText(A.curt, v.x, v.y + 28); g.fillStyle = teva ? '#2fd38a' : '#ffd23f'; g.fillText(teva ? 'MUNICIÓ ' + formatPunts(Math.max(100, Math.round(A.preu / 3))) : A.preu ? formatPunts(A.preu) + ' P' : 'GRATIS A CASA', v.x, v.y + 42);
   }
   g.textAlign = 'left';
 }
@@ -2735,7 +2794,7 @@ function dibuixaSegurata(g, sg) {
 function dibuixaAmpolla(g, a) {
   const bob = Math.sin(performance.now() / 300) * 3;
   g.fillStyle = 'rgba(46,125,50,.85)'; rodaRect(g, a.x - 8, a.y - 34 + bob, 16, 28, 5); g.fill(); g.fillRect(a.x - 3, a.y - 44 + bob, 6, 12);
-  g.fillStyle = '#fff'; g.fillRect(a.x - 7, a.y - 24 + bob, 14, 9); g.fillStyle = '#c0392b'; g.font = '6px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('GIN', a.x, a.y - 17 + bob);
+  g.fillStyle = '#fff'; g.fillRect(a.x - 7, a.y - 24 + bob, 14, 9); g.fillStyle = '#c0392b'; g.font = fnt(6); g.textAlign = 'center'; g.fillText('GIN', a.x, a.y - 17 + bob);
   rotul(g, 'GINEBRA', a.x, a.y - 58, '#2fd38a', 6);
 }
 
@@ -2746,7 +2805,7 @@ function poblaLliga() {
 function dibuixaDiners(g, d) {
   const bob = Math.sin(performance.now() / 250 + d.x) * 3;
   for (let k = 0; k < 3; k++) { g.fillStyle = k % 2 ? '#3f9a4a' : '#5cc26a'; g.fillRect(d.x - 12, d.y - 14 - k * 4 + bob, 24, 10); }
-  g.fillStyle = '#e8f5e9'; g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('€', d.x, d.y - 15 + bob);
+  g.fillStyle = '#e8f5e9'; g.font = fnt(7); g.textAlign = 'center'; g.fillText('€', d.x, d.y - 15 + bob);
 }
 
 // ---------- Vic: en Sofian, en Mandíbules i el Mercedes encallat ----------
@@ -2759,7 +2818,7 @@ function dibuixaSofian(g, so2) {
 function dibuixaMandi(g, mn) {
   personaPetita(g, mn.x, mn.y, { pell: '#f1c7a3', cabell: '#5a3a22', roba: '#6a4c93', llarg: false }, mn.pas, false, false);
   g.fillStyle = '#f1c7a3'; rodaRect(g, mn.x - 8, mn.y - 31, 16, 10, 4); g.fill(); g.fillStyle = 'rgba(0,0,0,.15)'; g.fillRect(mn.x - 6, mn.y - 24, 12, 2); // mandíbula
-  if (mn.canta > 0) { g.fillStyle = '#ffd23f'; g.font = '10px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('♪', mn.x + 14 + Math.sin(performance.now() / 200) * 4, mn.y - 50); }
+  if (mn.canta > 0) { g.fillStyle = '#ffd23f'; g.font = fnt(10); g.textAlign = 'center'; g.fillText('♪', mn.x + 14 + Math.sin(performance.now() / 200) * 4, mn.y - 50); }
   rotul(g, 'MANDÍBULES', mn.x, mn.y - 66, '#c77dff', 6);
 }
 function dibuixaMercedes(g, me) {
@@ -3177,10 +3236,10 @@ function dibuixaHistoria(g, W, H0, petit, caixa) {
   const ample = W - 490 >= 380, w = ample ? Math.min(560, W - 490) : W - 164, x0 = ample ? W / 2 - w / 2 : 12, y0 = ample ? 14 : petit ? 96 : 72, cxm = x0 + w / 2;
   caixa(x0, y0, w, 50);
   g.textAlign = 'center';
-  if (!m) { g.font = '9px "Press Start 2P"'; g.fillStyle = '#ffd23f'; g.fillText('HISTÒRIA COMPLETADA!', cxm, y0 + 30); g.textAlign = 'left'; return; }
-  g.font = '8px "Press Start 2P"'; g.fillStyle = '#ffd23f'; let tit = 'MISSIÓ ' + (H.i + 1) + '/' + MISSIONS_HISTORIA.length + ' · ' + m.titol; if (g.measureText(tit).width > w - 16) tit = (H.i + 1) + '/' + MISSIONS_HISTORIA.length + ' ' + m.titol; g.fillText(tit, cxm, y0 + 18);
+  if (!m) { g.font = fnt(9); g.fillStyle = '#ffd23f'; g.fillText('HISTÒRIA COMPLETADA!', cxm, y0 + 30); g.textAlign = 'left'; return; }
+  g.font = fnt(8); g.fillStyle = '#ffd23f'; let tit = 'MISSIÓ ' + (H.i + 1) + '/' + MISSIONS_HISTORIA.length + ' · ' + m.titol; if (g.measureText(tit).width > w - 16) tit = (H.i + 1) + '/' + MISSIONS_HISTORIA.length + ' ' + m.titol; g.fillText(tit, cxm, y0 + 18);
   let txt = m.text + (m.n > 1 ? '  (' + Math.min(m.n, Math.max(0, H.prog)) + '/' + m.n + ')' : '');
-  let mida = 7; g.font = mida + 'px "Press Start 2P"'; while (g.measureText(txt).width > w - 20 && mida > 5) { mida--; g.font = mida + 'px "Press Start 2P"'; }
+  let mida = 7; g.font = fnt(mida); while (g.measureText(txt).width > w - 20 && mida > 5) { mida--; g.font = fnt(mida); }
   g.fillStyle = '#fff'; g.fillText(txt, cxm, y0 + 38);
   // Fletxa cap a l'objectiu
   const o = m.on && m.on();
@@ -3190,7 +3249,7 @@ function dibuixaHistoria(g, W, H0, petit, caixa) {
       const a = Math.atan2(o.y - j.y, o.x - j.x), ay = y0 + 78;
       g.save(); g.translate(cxm, ay); g.rotate(a); g.fillStyle = '#ffd23f'; g.strokeStyle = '#000'; g.lineWidth = 3;
       g.beginPath(); g.moveTo(24, 0); g.lineTo(-10, -15); g.lineTo(-4, 0); g.lineTo(-10, 15); g.closePath(); g.fill(); g.stroke(); g.restore();
-      g.font = '8px "Press Start 2P"'; g.fillStyle = '#fff'; g.fillText(Math.round(d / TS * 4) + ' M', cxm, ay + 34);
+      g.font = fnt(8); g.fillStyle = '#fff'; g.fillText(Math.round(d / TS * 4) + ' M', cxm, ay + 34);
     }
   }
   g.textAlign = 'left';
@@ -3233,7 +3292,7 @@ const VIDEO_ILLA = () => [[5, escenaDetencio], [5.5, (g, t, D, un) => escenaFitx
 // La fitxa policial: davant del regle d'alçades, amb el cartell del número, de cara i de perfil, i el flaix
 function escenaFitxa(g, t, un, illa) {
   g.fillStyle = '#c9cdd2'; g.fillRect(0, 0, 800, 450);
-  g.strokeStyle = '#7b8189'; g.lineWidth = 2; g.font = '9px "Press Start 2P"'; g.fillStyle = '#4a5058';
+  g.strokeStyle = '#7b8189'; g.lineWidth = 2; g.font = fnt(9); g.fillStyle = '#4a5058';
   for (let i = 0; i <= 8; i++) { const y = 70 + i * 40; g.beginPath(); g.moveTo(140, y); g.lineTo(660, y); g.stroke(); g.fillText(String(200 - i * 10), 90, y + 4); }
   const perfil = t > 2.6, x = 400;
   g.save(); if (perfil) { g.translate(x, 0); g.scale(-1, 1); g.translate(-x, 0); }
@@ -3242,8 +3301,8 @@ function escenaFitxa(g, t, un, illa) {
   // el cartell amb el número
   const num = 'MOSSOS ' + (illa ? 'Nº 0311-' : 'Nº 0') + (2026 + (J ? J.detencions : 1) * 37) % 10000;
   g.fillStyle = '#111'; g.fillRect(x - 110, 338, 220, 70); g.strokeStyle = '#fff'; g.lineWidth = 2; g.strokeRect(x - 104, 344, 208, 58);
-  g.fillStyle = '#fff'; g.font = '10px "Press Start 2P"'; g.textAlign = 'center'; g.fillText(num, x, 366); g.fillText(nomJugador().toUpperCase().slice(0, 16), x, 388); g.textAlign = 'left';
-  g.fillStyle = '#152447'; g.fillRect(0, 0, 800, 44); g.fillStyle = '#fff'; g.font = '13px "Press Start 2P"'; g.textAlign = 'center'; g.fillText(illa ? 'FITXA POLICIAL · DELICTE MOLT GREU' : 'FITXA POLICIAL', 400, 32); g.textAlign = 'left';
+  g.fillStyle = '#fff'; g.font = fnt(10); g.textAlign = 'center'; g.fillText(num, x, 366); g.fillText(nomJugador().toUpperCase().slice(0, 16), x, 388); g.textAlign = 'left';
+  g.fillStyle = '#152447'; g.fillRect(0, 0, 800, 44); g.fillStyle = '#fff'; g.font = fnt(13); g.textAlign = 'center'; g.fillText(illa ? 'FITXA POLICIAL · DELICTE MOLT GREU' : 'FITXA POLICIAL', 400, 32); g.textAlign = 'left';
   for (const tf of [1.1, 3.4]) { if (t > tf && un('flaix' + tf)) so('flash'); const k = t - tf; if (k > 0 && k < .45) { g.fillStyle = 'rgba(255,255,255,' + (1 - k / .45) + ')'; g.fillRect(0, 0, 800, 450); } }
   textVideo(g, perfil ? 'ARA DE PERFIL...' : 'MIRA LA CÀMERA!', 64, perfil ? t - 2.6 : t, 11, '#ffd23f');
 }
@@ -3268,7 +3327,7 @@ function escenaVaixell(g, t, un, tipus) {
   g.fillStyle = tipus === 'fuga' ? '#e9edf0' : '#1d3f8f'; g.beginPath(); g.moveTo(-120, -20); g.lineTo(120, -20); g.lineTo(150, 0); g.lineTo(110, 30); g.lineTo(-120, 30); g.closePath(); g.fill();
   g.fillStyle = '#f4f6fa'; g.fillRect(-60, -64, 110, 46); g.fillStyle = '#8fc3e8'; g.fillRect(-50, -56, 40, 26); g.fillRect(0, -56, 40, 26);
   const c = cares[triat.id]; if (c) { g.save(); g.beginPath(); g.rect(-50, -56, 40, 26); g.clip(); dibuixaCaraAnimada(g, c, -30, -24, 34, t, false); g.restore(); }
-  if (tipus !== 'fuga') { g.fillStyle = '#d62828'; g.fillRect(-120, 6, 270, 6); g.fillStyle = '#fff'; g.font = '10px "Press Start 2P"'; g.fillText('MOSSOS', -30, 24); }
+  if (tipus !== 'fuga') { g.fillStyle = '#d62828'; g.fillRect(-120, 6, 270, 6); g.fillStyle = '#fff'; g.font = fnt(10); g.fillText('MOSSOS', -30, 24); }
   g.restore();
   g.fillStyle = 'rgba(255,255,255,.5)'; for (let i = 0; i < 12; i++) { const sx = bx + (tipus === 'anada' ? -130 : 130) - (tipus === 'anada' ? 1 : -1) * i * 14; g.beginPath(); g.arc(sx, by + 30 + Math.sin(t * 9 + i) * 3, 8 - i * .5, 0, TAU); g.fill(); }
   textVideo(g, tipus === 'anada' ? "TRASLLAT A LA PRESÓ DE L'ILLA..." : tipus === 'fuga' ? 'FUGINT AMB LA BARCA DELS GUÀRDIES!' : 'CONDEMNA COMPLERTA: CAP A TERRA FERMA', 60, t, 12, tipus === 'fuga' ? '#ffd23f' : '#7fc3ff');
@@ -3283,7 +3342,7 @@ function escenaCellaTanca(g, t, un, illa) {
   const k = Math.min(1, Math.max(0, (t - .6) / .7)), x0 = -460 + k * 460; // la reixa entra des de l'esquerra
   g.fillStyle = '#20232a'; for (let x = 0; x < 800; x += 46) g.fillRect(x0 + x, 0, 12, 450); g.fillRect(x0, 60, 800, 14); g.fillRect(x0, 300, 800, 14);
   if (k >= 1 && un('clang')) { so('barrots'); so('xoc'); }
-  if (t > 1.3 && t < 2.2) { g.font = '40px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#000'; g.fillText('CLANG!', 404, 204); g.fillStyle = '#ffd23f'; g.fillText('CLANG!', 400, 200); g.textAlign = 'left'; }
+  if (t > 1.3 && t < 2.2) { g.font = fnt(40); g.textAlign = 'center'; g.fillStyle = '#000'; g.fillText('CLANG!', 404, 204); g.fillStyle = '#ffd23f'; g.fillText('CLANG!', 400, 200); g.textAlign = 'left'; }
   if (t > 2.2) textVideo(g, illa ? 'CONDEMNA: 4 MINUTS. O ESCAPA\'T... SI POTS' : 'AL CALABÓS... ESPANTA EL GUÀRDIA!', 120, t - 2.2, 12, '#fff');
 }
 function dibuixaVideo(dt) {
@@ -3310,7 +3369,7 @@ function dibuixaVideo(dt) {
 }
 function textVideo(g, txt, y, t, mida = 18, color = '#fff') {
   const n = Math.min(txt.length, Math.floor(t * 22));
-  g.font = mida + 'px "Press Start 2P"'; g.textAlign = 'center'; g.lineWidth = 6; g.strokeStyle = '#000'; g.strokeText(txt.slice(0, n), 400, y); g.fillStyle = color; g.fillText(txt.slice(0, n), 400, y); g.textAlign = 'left';
+  g.font = fnt(mida); g.textAlign = 'center'; g.lineWidth = 6; g.strokeStyle = '#000'; g.strokeText(txt.slice(0, n), 400, y); g.fillStyle = color; g.fillText(txt.slice(0, n), 400, y); g.textAlign = 'left';
 }
 function siluetaPoble(g, base, color, llavor) {
   g.fillStyle = color;
@@ -3404,13 +3463,13 @@ function escenaCita(g, t, un, n) {
   enamoratVideo(g, 400 + sep - mou * 1.15, 410 + salt, 'africa', fuig ? t * 16 + 1 : t + 1, crit, 1.05);
   if (!crit) {
     for (let i = 0; i < 4; i++) { const hy = 250 - ((t * 45 + i * 25) % 110); g.fillStyle = '#ff5c8a'; g.font = (14 + i * 4) + 'px sans-serif'; g.fillText('♥', 390 + Math.sin(t * 3 + i) * 22, hy); }
-    if (peto > .85) { g.font = '12px "Press Start 2P"'; g.fillStyle = '#ff5c8a'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; g.strokeText('MUA!', 400, 230); g.fillText('MUA!', 400, 230); g.textAlign = 'left'; }
+    if (peto > .85) { g.font = fnt(12); g.fillStyle = '#ff5c8a'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; g.strokeText('MUA!', 400, 230); g.fillText('MUA!', 400, 230); g.textAlign = 'left'; }
   } else {
     // el cor es trenca
     const k = Math.min(1, (t - ap - .2) * 2); g.save(); g.translate(400, 230); g.font = '44px sans-serif'; g.textAlign = 'center'; g.fillStyle = '#ff5c8a';
     g.save(); g.translate(-k * 18, k * 14); g.rotate(-k * .4); g.beginPath(); g.rect(-30, -40, 30, 60); g.clip(); g.fillText('♥', 0, 0); g.restore();
     g.save(); g.translate(k * 18, k * 14); g.rotate(k * .4); g.beginPath(); g.rect(0, -40, 30, 60); g.clip(); g.fillText('♥', 0, 0); g.restore(); g.restore(); g.textAlign = 'left';
-    if (fuig) { g.font = '12px "Press Start 2P"'; g.fillStyle = '#7fc3ff'; g.fillText('AAAAAH!', 330 - mou, 250); }
+    if (fuig) { g.font = fnt(12); g.fillStyle = '#7fc3ff'; g.fillText('AAAAAH!', 330 - mou, 250); }
   }
   // el Sanchez arriba (cada vegada d'un lloc diferent)
   if (t > ap - .4) {
@@ -3428,13 +3487,13 @@ function escenaCita(g, t, un, n) {
       g.save(); g.translate((Math.random() - .5) * 5, (Math.random() - .5) * 5);
       g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 4; g.beginPath(); g.roundRect(380, 70, 400, 74, 14); g.fill(); g.stroke();
       g.beginPath(); g.moveTo(580, 144); g.lineTo(600, 180); g.lineTo(610, 144); g.fill(); g.stroke();
-      g.fillStyle = '#d2452b'; g.font = '15px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('HOLAAA!', 580, 100); g.fillStyle = '#111'; g.font = '12px "Press Start 2P"'; g.fillText('EM DIC RAMOOOON!', 580, 128); g.textAlign = 'left';
+      g.fillStyle = '#d2452b'; g.font = fnt(15); g.textAlign = 'center'; g.fillText('HOLAAA!', 580, 100); g.fillStyle = '#111'; g.font = fnt(12); g.fillText('EM DIC RAMOOOON!', 580, 128); g.textAlign = 'left';
       g.restore();
     }
-    if (t > ap + 2.4) { g.font = '11px "Press Start 2P"'; g.fillStyle = '#ffe14d'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; g.strokeText('HEHEHE...', sx, sy - 210); g.fillText('HEHEHE...', sx, sy - 210); g.textAlign = 'left'; }
+    if (t > ap + 2.4) { g.font = fnt(11); g.fillStyle = '#ffe14d'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; g.strokeText('HEHEHE...', sx, sy - 210); g.fillText('HEHEHE...', sx, sy - 210); g.textAlign = 'left'; }
   }
   // rètol del lloc
-  g.font = '10px "Press Start 2P"'; g.fillStyle = 'rgba(0,0,0,.6)'; const w = g.measureText(L.nom).width + 24; g.fillRect(20, 46, w, 26); g.fillStyle = '#ffd23f'; g.fillText(L.nom, 32, 64);
+  g.font = fnt(10); g.fillStyle = 'rgba(0,0,0,.6)'; const w = g.measureText(L.nom).width + 24; g.fillRect(20, 46, w, 26); g.fillStyle = '#ffd23f'; g.fillText(L.nom, 32, 64);
   if (t > ap + 2.8) textVideo(g, ['CITA ARRUÏNADA!', 'UNA ALTRA VEGADA!', 'PERÒ QUÈ FA AQUÍ?!', 'JA N\'HI HA PROU!'][n], 120, t - ap - 2.8, 18, '#ff5c8a');
 }
 function escenaDetencio(g, t, D, un) {
@@ -3446,7 +3505,7 @@ function escenaDetencio(g, t, D, un) {
   // el cotxe dels Mossos, aparcat amb les llums
   g.save(); g.translate(520, 330);
   g.fillStyle = '#f4f6fa'; g.fillRect(0, 0, 230, 48); g.fillRect(40, -34, 130, 36); g.fillStyle = '#8fc3e8'; g.fillRect(52, -28, 50, 26); g.fillRect(110, -28, 50, 26);
-  g.fillStyle = '#1d3f8f'; g.fillRect(0, 22, 230, 12); g.fillStyle = '#d62828'; g.fillRect(0, 34, 230, 5); g.fillStyle = '#fff'; g.font = '10px "Press Start 2P"'; g.fillText('MOSSOS', 70, 32);
+  g.fillStyle = '#1d3f8f'; g.fillRect(0, 22, 230, 12); g.fillStyle = '#d62828'; g.fillRect(0, 34, 230, 5); g.fillStyle = '#fff'; g.font = fnt(10); g.fillText('MOSSOS', 70, 32);
   g.fillStyle = fl ? '#ff3b3b' : '#2d6bff'; g.fillRect(80, -44, 26, 10); g.fillStyle = fl ? '#2d6bff' : '#ff3b3b'; g.fillRect(106, -44, 26, 10);
   g.fillStyle = '#111'; g.beginPath(); g.arc(46, 50, 20, 0, TAU); g.arc(186, 50, 20, 0, TAU); g.fill();
   if (t > 2.6) { g.fillStyle = '#0d1424'; g.fillRect(56, -26, 44, 50); } // porta oberta
@@ -3458,7 +3517,7 @@ function escenaDetencio(g, t, D, un) {
     personaVideo(g, px, 414, triat, k ? t * 8 : 0, t, t > .6 && t < 2.2, .95);
     g.strokeStyle = '#c0c8d0'; g.lineWidth = 3; g.beginPath(); g.arc(px - 6, 330, 6, 0, TAU); g.arc(px + 6, 330, 6, 0, TAU); g.stroke(); // manilles
   }
-  if (t > .3 && t < 2.4) { g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 4; g.beginPath(); g.roundRect(60, 70, 330, 60, 12); g.fill(); g.stroke(); g.fillStyle = '#1d3f8f'; g.font = '13px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('QUEDES DETINGUT!', 225, 108); g.textAlign = 'left'; }
+  if (t > .3 && t < 2.4) { g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 4; g.beginPath(); g.roundRect(60, 70, 330, 60, 12); g.fill(); g.stroke(); g.fillStyle = '#1d3f8f'; g.font = fnt(13); g.textAlign = 'center'; g.fillText('QUEDES DETINGUT!', 225, 108); g.textAlign = 'left'; }
   if (t > 2.4 && t < 4) textVideo(g, 'HOLAAA... EM DIC RAMON...', 110, t - 2.4, 13, '#ffe14d');
 }
 function escenaTrasllat(g, t, D, un) {
@@ -3471,7 +3530,7 @@ function escenaTrasllat(g, t, D, un) {
   const cx0 = 900 - Math.max(0, t - 1.5) * 260;
   g.fillStyle = '#9fb3c8'; g.fillRect(cx0, 150, 360, 160); g.fillStyle = '#d62828'; g.fillRect(cx0, 150, 360, 10);
   g.fillStyle = '#3b6a8f'; for (let i = 0; i < 6; i++) for (let k = 0; k < 2; k++) g.fillRect(cx0 + 20 + i * 56, 180 + k * 54, 36, 36);
-  g.fillStyle = '#152447'; g.fillRect(cx0 + 90, 120, 180, 30); g.fillStyle = '#fff'; g.font = '16px "Press Start 2P"'; g.fillText('MOSSOS', cx0 + 128, 142);
+  g.fillStyle = '#152447'; g.fillRect(cx0 + 90, 120, 180, 30); g.fillStyle = '#fff'; g.font = fnt(16); g.fillText('MOSSOS', cx0 + 128, 142);
   // el cotxe amb el Ramon darrere
   const carX = Math.min(260, -260 + t * 260);
   g.save(); g.translate(carX, 330 + Math.sin(t * 25) * 1.2);
@@ -3502,8 +3561,8 @@ function escenaCarromato(g, t, D, un) {
   g.restore();
   if (un('motor')) so('poder');
   textVideo(g, 'CAP PARELLA ESTÀ A SALVO', 82, t - .3, 15, '#fff');
-  if (t > 2.4) { const k = Math.min(1, (t - 2.4) * 2); g.save(); g.globalAlpha = k; g.font = '30px "Press Start 2P"'; g.textAlign = 'center'; g.lineWidth = 8; g.strokeStyle = '#000'; g.strokeText('ENSURTS A CAPELLADES', 400, 150); g.fillStyle = '#ffe14d'; g.fillText('ENSURTS A CAPELLADES', 400, 150);
-    g.font = '16px "Press Start 2P"'; g.strokeText('MODE HISTÒRIA', 400, 186); g.fillStyle = '#ff5c8a'; g.fillText('MODE HISTÒRIA', 400, 186); g.restore(); g.textAlign = 'left'; }
+  if (t > 2.4) { const k = Math.min(1, (t - 2.4) * 2); g.save(); g.globalAlpha = k; g.font = fnt(30); g.textAlign = 'center'; g.lineWidth = 8; g.strokeStyle = '#000'; g.strokeText('ENSURTS A CAPELLADES', 400, 150); g.fillStyle = '#ffe14d'; g.fillText('ENSURTS A CAPELLADES', 400, 150);
+    g.font = fnt(16); g.strokeText('MODE HISTÒRIA', 400, 186); g.fillStyle = '#ff5c8a'; g.fillText('MODE HISTÒRIA', 400, 186); g.restore(); g.textAlign = 'left'; }
 }
 
 // ---------- L'assalt final: la Comissaria dels Mossos ----------
@@ -3606,7 +3665,7 @@ function dibuixaHeli(g, h) {
   g.fillStyle = '#152447'; g.beginPath(); g.ellipse(0, 0, 44, 22, 0, 0, TAU); g.fill();
   g.fillStyle = '#d62828'; g.fillRect(-36, 2, 72, 6);
   g.fillStyle = '#8fc3e8'; g.beginPath(); g.ellipse(24, -4, 16, 12, 0, 0, TAU); g.fill();
-  g.fillStyle = '#e6eef8'; g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('MOSSOS', -8, -4);
+  g.fillStyle = '#e6eef8'; g.font = fnt(7); g.textAlign = 'center'; g.fillText('MOSSOS', -8, -4);
   g.fillStyle = '#222'; g.fillRect(-30, 20, 60, 4);
   g.strokeStyle = 'rgba(30,30,30,.75)'; g.lineWidth = 5; const r = t * 30;
   for (let i = 0; i < 2; i++) { g.beginPath(); g.moveTo(Math.cos(r + i * Math.PI / 2) * 90, -24 + Math.sin(r + i * Math.PI / 2) * 22); g.lineTo(-Math.cos(r + i * Math.PI / 2) * 90, -24 - Math.sin(r + i * Math.PI / 2) * 22); g.stroke(); }
@@ -3618,7 +3677,7 @@ function dibuixaBatalla(g) {
   for (const c of B.caixes) {
     g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(c.x - 20, c.y - 2, 44, 8);
     g.fillStyle = c.t ? '#5a5a4a' : '#5c6b2e'; g.fillRect(c.x - 20, c.y - 24, 40, 24); g.fillStyle = '#2b3317'; g.fillRect(c.x - 20, c.y - 14, 40, 3);
-    if (!c.t) { g.fillStyle = '#ffd23f'; g.font = '6px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('MUNICIÓ', c.x, c.y - 28); }
+    if (!c.t) { g.fillStyle = '#ffd23f'; g.font = fnt(6); g.textAlign = 'center'; g.fillText('MUNICIÓ', c.x, c.y - 28); }
   }
   const fa = B.farmaciola;
   if (!fa.agafada) { g.fillStyle = '#fff'; g.fillRect(fa.x - 16, fa.y - 24, 32, 24); g.fillStyle = '#d62828'; g.fillRect(fa.x - 4, fa.y - 21, 8, 18); g.fillRect(fa.x - 11, fa.y - 15, 22, 7); }
@@ -3777,7 +3836,7 @@ function accioPropera() {
   if (j.cotxe && J.autostop && J.autostop.estat === 'espera' && Math.hypot(J.autostop.x - j.x, J.autostop.y - j.y) < 110) return { boto: 'RECOLLIR', text: 'RECOLLIR LES AUTOESTOPISTES', fer: recullAutostop };
   if (j.cotxe && propVic() && J.mercedes && J.mercedes.estat === 'encallat' && Math.hypot(J.mercedes.x - j.x, J.mercedes.y - j.y) < 130) return { boto: 'REMOLCAR', text: 'REMOLCAR EL MERCEDES DEL FANG', fer: remolcaMercedes };
   if (j.cotxe && (j.cotxe.benzina ?? 100) < 99) { const gs = gasolineraPropera(); if (gs) { const b = J.benziners.find(b => b.gs === gs); return b && b.fuig > 0 ? { boto: 'GRATIS', text: 'POSAR BENZINA GRATIS (EL BENZINER HA FUGIT)', fer: () => posaBenzina(true) } : { boto: 'BENZINA', text: 'POSAR BENZINA (300 PUNTS)', fer: () => posaBenzina(false) }; } }
-  if (j.cotxe) { const lt = localProper(); if (lt) return lt; return { boto: 'BAIXAR', text: 'BAIXAR DEL ' + nomCotxe(j.cotxe), fer: baixaVila }; }
+  if (j.cotxe) { const lt = localProper(); if (lt) return lt; return { boto: 'BAIXAR', text: 'BAIXAR ' + delCotxe(j.cotxe), fer: baixaVila }; }
   if (j.vespa) return { boto: 'BAIXAR', text: 'BAIXAR DE LA VESPA', fer: baixaVespa };
   const el = !j.cotxe && !J.zona && eloiProper(); if (el) return j.ciment ? { boto: 'FORMIGÓ', text: "ENFORMIGONAR EL LLOC ON SALTA L'ELOI", fer: () => enformigona(el) } : { boto: 'CIMENT?', text: "AGAFA EL SAC DE CIMENT PER ENFORMIGONAR-LI EL SALT", fer: () => anunci('EL SAC DE CIMENT ÉS AQUÍ AL COSTAT', 1.6) };
   const vt = vitrinaPropera(); if (vt) { const A = ARMES_FOC[vt.tipus], teva = j.armesFoc && j.armesFoc[vt.tipus]; if (vt.tipus === 'pistola' && !teva) return { boto: 'CASA', text: 'LA PISTOLA LA TENS A LA CAIXA DE CASA', fer: () => {} }; return { boto: teva ? 'MUNICIÓ' : 'COMPRAR', text: (teva ? 'MUNICIÓ PER ' : 'COMPRAR ') + A.nom + ' (' + formatPunts(teva ? Math.max(100, Math.round(A.preu / 3)) : A.preu) + ' PUNTS)', fer: () => compraArmaFoc(vt.tipus) }; }
@@ -3974,7 +4033,7 @@ const SORPRESES = {
       }
       g.fillStyle = '#b07a3e'; g.fillRect(e.x - 18 + bal, y - 30, 36, 30); g.strokeStyle = '#6b4a2f'; g.lineWidth = 3; g.strokeRect(e.x - 18 + bal, y - 30, 36, 30);
       g.beginPath(); g.moveTo(e.x - 18 + bal, y - 30); g.lineTo(e.x + 18 + bal, y); g.stroke();
-      g.fillStyle = '#ffd23f'; g.font = '14px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('?', e.x + bal, y - 9);
+      g.fillStyle = '#ffd23f'; g.font = fnt(14); g.textAlign = 'center'; g.fillText('?', e.x + bal, y - 9);
     },
   },
   gat: {
@@ -4199,7 +4258,7 @@ function dibuixaBenziner(g, b) {
   const fuig = b.fuig > 20;
   personaPetita(g, b.x, b.y - (fuig ? Math.abs(Math.sin(b.pas)) * 5 : 0), { pell: '#e0ac85', cabell: '#3a2416', roba: '#e85d04' }, fuig ? b.pas : 0, fuig, false);
   g.fillStyle = '#d62828'; g.fillRect(b.x - 9, b.y - 45, 18, 5); // gorra
-  if (fuig) { g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('SOCORS!', b.x, b.y - 58); }
+  if (fuig) { g.font = fnt(7); g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('SOCORS!', b.x, b.y - 58); }
 }
 function vilaPropera() {
   if (J.jug.cotxe || J.jug.vespa) return null;
@@ -4211,6 +4270,7 @@ function pujaVila() {
   J.jug.cotxe = v; v.cami = []; v.estat = 'conduit'; so('porta'); setTimeout(() => so('arrenca'), 250); J.jug.x = v.x; J.jug.y = v.y; J.tPoliCotxe = 3;
   so('motor'); anunci(v.tipus === 'carromato' ? 'CARROMATO! ESPAI PER LLANÇAR MÍSSILS' : 'AL VILAMOVIL!', 1.8);
 }
+const delCotxe = v => { const n = nomCotxe(v); return /^[AEIOUÀÈÉÍÒÓÚH]/.test(n) ? "DE L'" + n : "DEL " + n; }; // DE L'ESPORTIU, DEL CAMIÓ
 const nomCotxe = v => v && v.model && MODELS[v.model] ? MODELS[v.model].nom + (v.tipus === 'robat' ? ' (ROBAT)' : '') : v && v.tipus === 'carromato' ? 'CARROMATO' : v && v.tipus === 'bestia' ? 'LA BÈSTIA' : v && v.tipus === 'ralli' ? 'COTXE DE RAL·LI' : v && v.tipus === 'robat' ? 'COTXE (ROBAT)' : v && v.tipus === 'policia' ? 'COTXE DE POLICIA' : 'VILAMOVIL';
 const pujable = c => c && (c.tipus === 'propi' || c.tipus === 'ralli' || c.tipus === 'vilamovil' || c.tipus === 'carromato' || c.tipus === 'bestia' || c.tipus === 'robat' || (c.tipus === 'policia' && c.buit));
 // El conductor surt corrent cridant i el cotxe queda aturat amb la porta oberta
@@ -4308,7 +4368,7 @@ function dibuixaAutostop(g, a) {
     g.fillStyle = '#c0392b'; g.beginPath(); g.ellipse(a.x + dx, a.y - 42, 8, 3, 0, 0, TAU); g.fill(); // boina
     g.strokeStyle = pell; g.lineWidth = 3; g.beginPath(); g.moveTo(a.x + dx + 6, a.y - 22); g.lineTo(a.x + dx + 14, a.y - 30 + Math.sin(t * 4 + i) * 2); g.stroke(); // dit enlaire
   });
-  if (Math.sin(t * 2) > .3) { g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('À VIC, SIL VOUS PLAÎT!', a.x, a.y - 58); }
+  if (Math.sin(t * 2) > .3) { g.font = fnt(7); g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('À VIC, SIL VOUS PLAÎT!', a.x, a.y - 58); }
   rotul(g, 'AUTOESTOP', a.x, a.y - 72, '#2a7de1', 7);
 }
 function dibuixaGuillem(g, gu) {
@@ -5177,7 +5237,7 @@ function dibuixaParella(g, p) {
   }
   if (p.noiFora) { // la novia es queda sola animant-lo
     personaPetita(g, p.x + tr, p.y + salt, p.a, esp ? pas : 0, esp, false);
-    if (!esp) { g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#fff'; if (Math.sin(p.cor * 2) > .3) g.fillText('DONA-LI!', p.x, p.y - 52); }
+    if (!esp) { g.font = fnt(7); g.textAlign = 'center'; g.fillStyle = '#fff'; if (Math.sin(p.cor * 2) > .3) g.fillText('DONA-LI!', p.x, p.y - 52); }
     g.globalAlpha = 1; return;
   }
   if (!esp && p.tipus !== 'peto') { g.strokeStyle = p.a.pell; g.lineWidth = 3; g.beginPath(); g.moveTo(p.x - sep + 6 + tr, p.y - 16 + baixa); g.lineTo(p.x + sep - 6 + tr, p.y - 16 + baixa); g.stroke(); }
@@ -5195,7 +5255,7 @@ function dibuixaParella(g, p) {
   if (!esp) {
     const b = Math.sin(p.cor * 3) * 3;
     if (p.tipus === 'peto' || p.tipus === 'calents') { for (let i = 0; i < 3; i++) { const k = (p.cor * .8 + i / 3) % 1; g.globalAlpha = alfa * (1 - k); cor(g, p.x + Math.sin(k * 9 + i) * 10, p.y - 46 - k * 34, 10, '#ff5c8a'); } g.globalAlpha = alfa; }
-    else if (p.alerta >= 1) { g.font = '16px "Press Start 2P"'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText('!', p.x, p.y - 56); }
+    else if (p.alerta >= 1) { g.font = fnt(16); g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText('!', p.x, p.y - 56); }
     else if (p.alerta > 0.05) { g.fillStyle = '#000'; g.fillRect(p.x - 14, p.y - 62, 28, 6); g.fillStyle = '#ffd23f'; g.fillRect(p.x - 13, p.y - 61, 26 * p.alerta, 4); }
     else if (p.tipus === 'patum') cor(g, p.x, p.y - 58 + b, 11, '#ff5c8a');
     else if (p.tipus !== 'valents') cor(g, p.x, p.y - (p.tipus === 'boda' ? 92 : 64) + b, p.tipus === 'boda' ? 18 : 14, '#ff5c8a');
@@ -5208,7 +5268,7 @@ function dibuixaAgent(g, a) {
     g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(a.x, a.y, 30, 8, 0, 0, TAU); g.fill();
     g.save(); g.translate(a.x, a.y - 4); g.rotate(-Math.PI / 2); g.translate(-a.x, -(a.y - 4) - 26);
     dibuixaAgent(g, Object.assign({}, a, { ko: 0, estat: 'patrulla', glacat: 1, fuig: 0, vespa: null })); g.restore();
-    for (let i = 0; i < 3; i++) { const an = performance.now() / 300 + i * TAU / 3; g.fillStyle = '#ffd23f'; g.font = '10px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('*', a.x + 30 + Math.cos(an) * 14, a.y - 16 + Math.sin(an) * 5); }
+    for (let i = 0; i < 3; i++) { const an = performance.now() / 300 + i * TAU / 3; g.fillStyle = '#ffd23f'; g.font = fnt(10); g.textAlign = 'center'; g.fillText('*', a.x + 30 + Math.cos(an) * 14, a.y - 16 + Math.sin(an) * 5); }
     return;
   }
   if (a.vespa) { dibuixaVespa(g, a.vespa); a = Object.assign({}, a, { y: a.y - 10, pas: 0 }); }
@@ -5219,7 +5279,7 @@ function dibuixaAgent(g, a) {
   if (a.militar) return dibuixaSoldat(g, a, cama);
   g.fillStyle = a.mosso ? '#152447' : '#1f4f8f'; g.fillRect(a.x - 10, a.y - 36, 20, 23);
   g.fillStyle = a.mosso ? '#d62828' : '#e6f05a'; g.fillRect(a.x - 10, a.y - 28, 20, 4);
-  if (a.mosso) { g.fillStyle = '#0e1626'; g.fillRect(a.x - 11, a.y - 37, 22, 12); g.fillStyle = '#e8e8e8'; g.font = '5px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('MOSSOS', a.x, a.y - 30); } // armilla
+  if (a.mosso) { g.fillStyle = '#0e1626'; g.fillRect(a.x - 11, a.y - 37, 22, 12); g.fillStyle = '#e8e8e8'; g.font = fnt(5); g.textAlign = 'center'; g.fillText('MOSSOS', a.x, a.y - 30); } // armilla
   g.fillStyle = '#e0ac85'; g.beginPath(); g.arc(a.x, a.y - 44, 9, 0, TAU); g.fill();
   g.fillStyle = '#16223a'; g.fillRect(a.x - 11, a.y - 55, 22, 7); g.fillRect(a.x - 8, a.y - 59, 16, 5);
   g.fillStyle = a.mosso ? '#d62828' : '#e6c84a'; if (a.mosso) g.fillRect(a.x - 11, a.y - 51, 22, 3); else g.fillRect(a.x - 2, a.y - 57, 4, 4);
@@ -5228,7 +5288,7 @@ function dibuixaAgent(g, a) {
     g.fillStyle = '#e0ac85'; g.beginPath(); g.arc(px, py, 3.5, 0, TAU); g.fill();
     g.strokeStyle = '#111'; g.lineWidth = 4; g.beginPath(); g.moveTo(px, py); g.lineTo(px + a.fx * 12, py + a.fy * 12); g.stroke();
   }
-  g.font = '14px "Press Start 2P"'; g.textAlign = 'center';
+  g.font = fnt(14); g.textAlign = 'center';
   if (a.fuig > 0) { g.fillStyle = '#7fd3ff'; g.fillRect(a.x + 10, a.y - 54, 3, 6); g.fillRect(a.x - 13, a.y - 50, 3, 6); }
   else if (a.estat === 'persegueix' && a.glacat <= 0) { g.fillStyle = a.veu ? '#ff3b3b' : '#ffd23f'; g.fillText(a.veu ? '!' : '?', a.x, a.y - 66); }
   if (a.glacat > 0) { g.fillStyle = 'rgba(150,220,255,.45)'; g.fillRect(a.x - 14, a.y - 62, 28, 62); }
@@ -5244,7 +5304,7 @@ function dibuixaSoldat(g, a, cama) {
   g.fillStyle = '#4b5a2a'; g.beginPath(); g.arc(a.x, a.y - 47, 11, Math.PI, TAU); g.fill(); g.fillRect(a.x - 12, a.y - 48, 24, 4); // casc
   const px = a.x + a.fx * 10, py = a.y - 26 + a.fy * 6; // fusell
   g.strokeStyle = '#151515'; g.lineWidth = 5; g.beginPath(); g.moveTo(px - a.fx * 10, py - a.fy * 4); g.lineTo(px + a.fx * 24, py + a.fy * 14); g.stroke();
-  g.font = '14px "Press Start 2P"'; g.textAlign = 'center';
+  g.font = fnt(14); g.textAlign = 'center';
   if (a.estat === 'persegueix' && a.glacat <= 0) { g.fillStyle = a.veu ? '#ff3b3b' : '#ffd23f'; g.fillText(a.veu ? '!' : '?', a.x, a.y - 68); }
   if (a.glacat > 0) { g.fillStyle = 'rgba(150,220,255,.45)'; g.fillRect(a.x - 14, a.y - 62, 28, 62); }
   g.textAlign = 'left';
@@ -5256,7 +5316,7 @@ function dibuixaMaton(g, m) {
     g.globalAlpha = Math.min(1, m.ko);
     g.save(); g.translate(m.x, m.y - 6); g.rotate(-Math.PI / 2);
     personaPetita(g, 0, 18, pr, 0, true, false); g.restore();
-    for (let i = 0; i < 3; i++) { const a = performance.now() / 300 + i * TAU / 3; g.fillStyle = '#ffd23f'; g.font = '10px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('*', m.x - 18 + Math.cos(a) * 14, m.y - 18 + Math.sin(a) * 5); }
+    for (let i = 0; i < 3; i++) { const a = performance.now() / 300 + i * TAU / 3; g.fillStyle = '#ffd23f'; g.font = fnt(10); g.textAlign = 'center'; g.fillText('*', m.x - 18 + Math.cos(a) * 14, m.y - 18 + Math.sin(a) * 5); }
     g.globalAlpha = 1; return;
   }
   const xoc = m.cop > 0 ? (Math.random() - .5) * 6 : 0;
@@ -5277,12 +5337,11 @@ function dibuixaMaton(g, m) {
 function rodaRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 
 function rotul(g, txt, x, y, vora, mida) {
-  g.font = (mida || 9) + 'px "Press Start 2P"'; g.textAlign = 'center';
-  const w = g.measureText(txt).width + 16;
-  g.fillStyle = '#000'; g.fillRect(x - w / 2 - 2, y - 13, w + 4, 22);
-  g.fillStyle = '#141414'; g.fillRect(x - w / 2, y - 11, w, 18);
-  g.strokeStyle = vora; g.lineWidth = 2; g.strokeRect(x - w / 2 + 2, y - 9, w - 4, 14);
-  g.fillStyle = '#fff'; g.fillText(txt, x, y + 3);
+  g.font = fnt((mida || 9) * .9); g.textAlign = 'center';
+  const w = g.measureText(txt).width + 18;
+  g.fillStyle = 'rgba(12,14,18,.78)'; g.beginPath(); g.roundRect(x - w / 2, y - 12, w, 21, 3); g.fill();
+  g.fillStyle = vora; g.fillRect(x - w / 2, y - 12, 3, 21);
+  g.fillStyle = '#f2f2f2'; g.fillText(txt, x + 1, y + 4);
 }
 
 function dibuixaCotxe(g, c) {
@@ -5385,7 +5444,7 @@ function dibuixaCapCotxe(g, c) {
   }
   if (sub) {
     rotul(g, 'SUBINETA', c.x, c.y - 46, '#ff3b3b', 8);
-    if (c.estat === 'compte') { g.font = '28px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#000'; g.fillText(Math.ceil(c.compte), c.x + 3, c.y - 70); g.fillStyle = Math.floor(c.compte * 6) % 2 ? '#ff3b3b' : '#fff'; g.fillText(Math.ceil(c.compte), c.x, c.y - 73); }
+    if (c.estat === 'compte') { g.font = fnt(28); g.textAlign = 'center'; g.fillStyle = '#000'; g.fillText(Math.ceil(c.compte), c.x + 3, c.y - 70); g.fillStyle = Math.floor(c.compte * 6) % 2 ? '#ff3b3b' : '#fff'; g.fillText(Math.ceil(c.compte), c.x, c.y - 73); }
   }
 }
 
@@ -5507,7 +5566,7 @@ function dibuixaControl(g, c) {
   if (c.caigut) {
     g.save(); g.translate(c.x, c.y - 6); g.rotate(-Math.PI / 2); g.translate(-c.x, -(c.y - 6));
     dibuixaAgent(g, { x: c.x, y: c.y + 12, fx: 0, fy: 1, estat: 'patrulla', pas: 0, glacat: 0, fuig: 0, veu: false }); g.restore();
-    for (let i = 0; i < 3; i++) { const a = performance.now() / 300 + i * TAU / 3; g.fillStyle = '#ffd23f'; g.font = '10px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('*', c.x - 20 + Math.cos(a) * 14, c.y - 14 + Math.sin(a) * 5); }
+    for (let i = 0; i < 3; i++) { const a = performance.now() / 300 + i * TAU / 3; g.fillStyle = '#ffd23f'; g.font = fnt(10); g.textAlign = 'center'; g.fillText('*', c.x - 20 + Math.cos(a) * 14, c.y - 14 + Math.sin(a) * 5); }
     return;
   }
   dibuixaAgent(g, { x: c.x, y: c.y, fx: 0, fy: 1, estat: 'patrulla', pas: 0, glacat: 0, fuig: 0, veu: false });
@@ -5523,7 +5582,7 @@ function dibuixaTaxiParat(g, T = TAXI) {
   g.fillStyle = '#f2c230'; g.fillRect(x - 38, y - 22, 20, 38); g.fillRect(x + 18, y - 22, 20, 38);
   g.fillStyle = '#9fd3f0'; g.fillRect(x + 8, y - 18, 10, 30); g.fillRect(x - 28, y - 16, 8, 26);
   g.fillStyle = '#fff'; g.fillRect(x - 10, y - 10, 20, 12); g.fillStyle = '#2fd38a'; g.fillRect(x - 3, y - 13, 6, 3);
-  g.font = '6px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#111'; g.fillText('TAXI', x, y - 2);
+  g.font = fnt(6); g.textAlign = 'center'; g.fillStyle = '#111'; g.fillText('TAXI', x, y - 2);
   rotul(g, T === TAXI_VIC ? 'TAXI A CAPELLADES' : 'TAXI A VIC', x, y - 42, '#f2c230', 8);
 }
 
@@ -5565,7 +5624,7 @@ function dibuixaArmaTerra(g, a) {
 }
 
 function etiqueta(g, x, y, cara, nom) {
-  g.font = '10px "Press Start 2P"';
+  g.font = fnt(10);
   const w = g.measureText(nom).width + 42, h = 28;
   g.fillStyle = '#000'; g.fillRect(x - w / 2 - 2, y - h / 2 - 2, w + 4, h + 4);
   g.fillStyle = '#141414'; g.fillRect(x - w / 2, y - h / 2, w, h);
@@ -5655,7 +5714,7 @@ function texturaParet(t, variant) {
   } else if (t === C.GARATGE) {
     g.fillStyle = '#cfd2d6'; g.fillRect(0, 0, 64, h); g.fillStyle = '#6d7177'; g.fillRect(0, 0, 64, 10);
     g.fillStyle = '#9aa0a6'; g.fillRect(4, h - 70, 56, 70); g.fillStyle = '#7d838a'; for (let i = 0; i < 70; i += 5) g.fillRect(4, h - 70 + i, 56, 2);
-    g.fillStyle = '#f2c230'; g.fillRect(8, 30, 48, 18); g.fillStyle = '#111'; g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('TAXI', 32, 44);
+    g.fillStyle = '#f2c230'; g.fillRect(8, 30, 48, 18); g.fillStyle = '#111'; g.font = fnt(9); g.textAlign = 'center'; g.fillText('TAXI', 32, 44);
   } else if (t === C.ROCA) {
     g.fillStyle = '#9a7b5c'; g.fillRect(0, 0, 64, h); gra(g, 0, 0, 64, h, ['#86694c', '#a88a68', '#7a5f45'], 160, 6, variant * 7);
   } else if (t === C.TANCA || t === C.PORTA) {
@@ -5696,7 +5755,7 @@ function cotxeDeFront(g, c) {
   g.fillStyle = '#fff3a0'; g.fillRect(c.x - 40, c.y - 32, 12, 7); g.fillRect(c.x + 28, c.y - 32, 12, 7);
   if (c.tipus === 'policia') { const on = Math.floor(performance.now() / 160) % 2; g.fillStyle = on ? '#ff2d2d' : '#2d6bff'; g.fillRect(c.x - 14, c.y - 70, 28, 8); }
   if (c.tipus === 'vilamovil') { g.fillStyle = '#2a7de1'; g.fillRect(c.x - 44, c.y - 24, 88, 5); rotul(g, 'VILAMOVIL', c.x, c.y - 80, '#2a7de1', 8); }
-  if (c.tipus === 'subineta') { rotul(g, 'SUBINETA', c.x, c.y - 80, '#ff3b3b', 8); if (c.estat === 'compte') { g.font = '28px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#ff3b3b'; g.fillText(Math.ceil(c.compte), c.x, c.y - 100); } }
+  if (c.tipus === 'subineta') { rotul(g, 'SUBINETA', c.x, c.y - 80, '#ff3b3b', 8); if (c.estat === 'compte') { g.font = fnt(28); g.textAlign = 'center'; g.fillStyle = '#ff3b3b'; g.fillText(Math.ceil(c.compte), c.x, c.y - 100); } }
 }
 
 function dibuixaPrimera(W, H, dpr) {
@@ -5922,7 +5981,7 @@ function dibuixa() {
     for (const sc of J.sacs || []) if (!sc.agafat && vist(sc)) ents.push([sc.y, () => dibuixaSac(cx, sc)]);
     for (const c of J.controlsPoli || []) if (vist(c)) ents.push([c.y - 70, () => dibuixaControl2(cx, c)]);
     if (j.vollDamm > 0 && j.mou && !j.cotxe && Math.random() < .5) J.particules.push({ x: j.x - j.fx * 20, y: j.y - 10, vx: -j.fx * 60, vy: -20, t: .4, c: 'rgba(47,211,138,.6)', m: 6 });
-    for (const cd of J.conductors || []) ents.push([cd.y, escalat(cd, () => { personaPetita(cx, cd.x, cd.y, cd.pr, cd.pas, true, false); cx.font = '7px "Press Start 2P"'; cx.textAlign = 'center'; cx.fillStyle = '#fff'; cx.fillText('AAAH!', cd.x, cd.y - 56); })]);
+    for (const cd of J.conductors || []) ents.push([cd.y, escalat(cd, () => { personaPetita(cx, cd.x, cd.y, cd.pr, cd.pas, true, false); cx.font = fnt(7); cx.textAlign = 'center'; cx.fillStyle = '#fff'; cx.fillText('AAAH!', cd.x, cd.y - 56); })]);
     const fets = J.paquetsFets || paquetsTrobats(); for (const p of llistaPaquets()) if (!fets.has(p.id) && vist(p)) ents.push([p.y, () => dibuixaPaquet(cx, p)]);
   }
   ents.sort((a, b) => a[0] - b[0]).forEach(e => e[1]());
@@ -5968,7 +6027,7 @@ function dibuixa() {
     cx.fillStyle = 'rgba(255,255,255,.35)'; cx.beginPath(); cx.arc(b.x - 5, b.y - 12, 5, 0, TAU); cx.fill();
     cx.strokeStyle = '#8a6a3a'; cx.lineWidth = 3; cx.beginPath(); cx.moveTo(b.x + 8, b.y - 20); cx.quadraticCurveTo(b.x + 16, b.y - 32, b.x + 10, b.y - 36); cx.stroke();
     cx.fillStyle = tria(['#fff3a0', '#ffb000', '#ff5c2a']); cx.beginPath(); cx.arc(b.x + 10, b.y - 37, 4 + Math.random() * 3, 0, TAU); cx.fill();
-    cx.font = '14px "Press Start 2P"'; cx.textAlign = 'center'; cx.fillStyle = '#fff'; cx.fillText(Math.ceil(b.t), b.x, b.y - 48);
+    cx.font = fnt(14); cx.textAlign = 'center'; cx.fillStyle = '#fff'; cx.fillText(Math.ceil(b.t), b.x, b.y - 48);
   }
   for (const q of J.particules) {
     cx.globalAlpha = Math.min(1, q.t * 2);
@@ -5996,7 +6055,7 @@ function dibuixa() {
   dibuixaNit(camX, camY, W / zoom, H / zoom, zoom);
   cx.textAlign = 'center';
   for (const tx of J.textos) {
-    cx.globalAlpha = Math.min(1, tx.t * 2); cx.font = tx.mida + 'px "Press Start 2P"';
+    cx.globalAlpha = Math.min(1, tx.t * 2); cx.font = fnt(tx.mida);
     cx.fillStyle = '#000'; cx.fillText(tx.txt, tx.x + 2, tx.y + 2); cx.fillStyle = tx.color; cx.fillText(tx.txt, tx.x, tx.y);
   }
   cx.globalAlpha = 1;
@@ -6021,7 +6080,7 @@ function dibuixaVic(g) {
   }
   // Pancartes penjades a la tanca
   for (const [txt, px] of [['NO TINDER NO PROBLEM', 29.5], ['CATALUNYA TAMBÉ ÉS TRANCE', 36]]) {
-    g.font = '7px "Press Start 2P"'; const w = g.measureText(txt).width + 14;
+    g.font = fnt(7); const w = g.measureText(txt).width + 14;
     g.fillStyle = '#efe9dc'; g.fillRect(VX + px * TS - w / 2, VY + 3.15 * TS, w, 22); g.fillStyle = '#222'; g.textAlign = 'center'; g.fillText(txt, VX + px * TS, VY + 3.15 * TS + 14);
   }
   // Llums de la rave
@@ -6072,7 +6131,7 @@ function partirText(g, txt, ampla) {
 const cartell = (g, x, y, linies, fons, color) => {
   g.fillStyle = '#5a3b26'; g.fillRect(x + 20, y - 60, 6, 60); g.fillRect(x + 104, y - 60, 6, 60);
   g.fillStyle = fons; g.fillRect(x, y - 120, 130, 64); g.strokeStyle = '#000'; g.lineWidth = 3; g.strokeRect(x, y - 120, 130, 64);
-  g.fillStyle = color; g.font = '8px "Press Start 2P"'; g.textAlign = 'center';
+  g.fillStyle = color; g.font = fnt(8); g.textAlign = 'center';
   linies.forEach((l, i) => g.fillText(l, x + 65, y - 100 + i * 16));
 };
 const VORA = [
@@ -6083,14 +6142,14 @@ const VORA = [
     for (const lx of [6, 20, 46, 60]) g.fillRect(x + lx, y - 14, 6, 14);
     g.fillStyle = '#fff'; rodaRect(g, x + 62, y - 58, 30, 24, 8); g.fill(); g.fillStyle = '#f4a6b8'; g.fillRect(x + 80, y - 44, 14, 9);
     g.fillStyle = '#111'; g.fillRect(x + 66, y - 54, 22, 6);
-    g.fillStyle = '#fff'; g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; if (Math.sin(t * 4) > 0) g.fillText('MUUU!', x + 78, y - 66);
+    g.fillStyle = '#fff'; g.font = fnt(7); g.textAlign = 'center'; if (Math.sin(t * 4) > 0) g.fillText('MUUU!', x + 78, y - 66);
   },
   (g, x, y) => cartell(g, x, y, ['PROHIBIT', 'ESPANTAR', 'PARELLES'], '#fff', '#d62828'),
   (g, x, y, t) => { // la Subineta espatllada a la cuneta
     g.fillStyle = '#2c5aa0'; rodaRect(g, x, y - 48, 110, 40, 6); g.fill(); g.fillStyle = '#9fb7c9'; g.fillRect(x + 82, y - 42, 22, 16);
     g.fillStyle = '#111'; g.beginPath(); g.arc(x + 24, y - 8, 10, 0, TAU); g.arc(x + 88, y - 8, 10, 0, TAU); g.fill();
     for (let i = 0; i < 4; i++) { g.fillStyle = 'rgba(80,80,80,' + (.5 - i * .1) + ')'; g.beginPath(); g.arc(x + 60 + Math.sin(t * 3 + i) * 8, y - 60 - i * 18 - (t * 30) % 18, 10 + i * 4, 0, TAU); g.fill(); }
-    g.fillStyle = '#fff'; g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('SUBINETA', x + 55, y - 26);
+    g.fillStyle = '#fff'; g.font = fnt(7); g.textAlign = 'center'; g.fillText('SUBINETA', x + 55, y - 26);
   },
   (g, x, y) => cartell(g, x, y, ['ES VEN', 'LAMBORGHINI', '(GAIREBÉ NOU)'], '#f2c230', '#111'),
   (g, x, y, t) => { // un gegant fent autoestop
@@ -6098,7 +6157,7 @@ const VORA = [
     g.fillStyle = '#f1c7a3'; g.beginPath(); g.arc(x + 27, y - 98, 18, 0, TAU); g.fill();
     g.fillStyle = '#f2c230'; g.fillRect(x + 13, y - 122, 28, 8);
     g.strokeStyle = '#f1c7a3'; g.lineWidth = 6; g.beginPath(); g.moveTo(x + 40, y - 70); g.lineTo(x + 66, y - 86 + Math.sin(t * 6) * 4); g.stroke();
-    g.fillStyle = '#fff'; g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('A BERGA?', x + 27, y - 132);
+    g.fillStyle = '#fff'; g.font = fnt(7); g.textAlign = 'center'; g.fillText('A BERGA?', x + 27, y - 132);
   },
   (g, x, y, t) => { // un ovni que s'emporta una parella
     const oy = y - 190 + Math.sin(t * 3) * 6;
@@ -6114,7 +6173,7 @@ const VORA = [
     g.fillStyle = '#e0ac85'; g.beginPath(); g.arc(x + 50, y - 50, 10, 0, TAU); g.fill();
     g.fillStyle = '#16223a'; g.fillRect(x + 39, y - 64, 22, 7);
     g.fillStyle = '#111'; g.fillRect(x + 60, y - 52, 18, 6);
-    g.fillStyle = '#fff'; g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('PSST...', x + 50, y - 76);
+    g.fillStyle = '#fff'; g.font = fnt(7); g.textAlign = 'center'; g.fillText('PSST...', x + 50, y - 76);
   },
 ];
 
@@ -6146,7 +6205,7 @@ function dibuixaTaxi() {
   g.fillStyle = '#151515'; rodaRect(g, -110, -50, 220, 50, 12); g.fill();
   g.fillStyle = '#f2c230'; rodaRect(g, -80, -88, 150, 44, 14); g.fill(); g.fillRect(-110, -50, 50, 50); g.fillRect(60, -50, 50, 50);
   g.fillStyle = '#9fd3f0'; g.fillRect(-70, -82, 60, 34); g.fillRect(2, -82, 58, 34);
-  g.fillStyle = '#fff'; g.fillRect(-18, -102, 36, 14); g.fillStyle = '#111'; g.font = '8px "Press Start 2P"'; g.fillText('TAXI', 0, -91);
+  g.fillStyle = '#fff'; g.fillRect(-18, -102, 36, 14); g.fillStyle = '#111'; g.font = fnt(8); g.fillText('TAXI', 0, -91);
   g.fillStyle = '#2fd38a'; g.fillRect(14, -100, 4, 4);
   // Taxista (davant) i el teu personatge (darrere)
   const tb = Math.sin(t * 6) * 2;
@@ -6161,7 +6220,7 @@ function dibuixaTaxi() {
   // Bafarada del taxista
   if (V && V.frase >= 0) {
     const txt = FRASES_TAXI[V.frase].replace('{DESTI}', V.desti.toUpperCase());
-    const mida = w < 600 ? 10 : 14; g.font = mida + 'px "Press Start 2P"'; g.textAlign = 'left';
+    const mida = w < 600 ? 10 : 14; g.font = fnt(mida); g.textAlign = 'left';
     const linies = partirText(g, txt, Math.min(520, w - 60)), bw = Math.min(560, w - 32), bh = linies.length * (mida + 10) + 24;
     const bx = Math.max(16, Math.min(w - bw - 16, tx + 30 * k - bw / 2)), by = Math.max(70, ty - 110 * k - bh - 30);
     g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 3; rodaRect(g, bx, by, bw, bh, 10); g.fill(); g.stroke();
@@ -6172,7 +6231,7 @@ function dibuixaTaxi() {
   const pw = Math.min(420, w - 40), px = w / 2 - pw / 2, prog = V ? 1 - V.t / DURADA_TAXI : 1;
   g.fillStyle = '#000'; g.fillRect(px - 3, 17, pw + 6, 34); g.fillStyle = '#141414'; g.fillRect(px, 20, pw, 28);
   g.fillStyle = '#f2c230'; g.fillRect(px + 4, 24, (pw - 8) * prog, 20);
-  g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#fff';
+  g.font = fnt(9); g.textAlign = 'center'; g.fillStyle = '#fff';
   g.fillText((J.ciutat === 'capellades' ? 'CAPELLADES  >>  VIC' : 'VIC  >>  CAPELLADES'), w / 2, 39);
 }
 
@@ -6184,24 +6243,24 @@ function dibuixaHUD(W, H, dpr) {
   g.fillStyle = vin; g.fillRect(0, 0, W, H);
   dibuixaPluja(g, W, H);
   if (J.flash > 0) { g.fillStyle = `rgba(255,240,200,${J.flash * .8})`; g.fillRect(0, 0, W, H); }
-  const caixa = (x, y, w, h) => { g.fillStyle = '#000'; g.fillRect(x - 2, y - 2, w + 4, h + 4); g.fillStyle = 'rgba(20,20,20,.92)'; g.fillRect(x, y, w, h); g.strokeStyle = '#2fd38a'; g.lineWidth = 2; g.strokeRect(x + 2, y + 2, w - 4, h - 4); };
+  const caixa = (x, y, w, h) => { g.fillStyle = 'rgba(10,12,16,.62)'; g.beginPath(); g.roundRect(x, y, w, h, 4); g.fill(); };
   const petit = W < 600, tactil = document.body.classList.contains('tactil');
   const j = J.jug;
   // Punts i temps
   caixa(12, 12, 190, 62);
-  g.textAlign = 'left'; g.font = '14px "Press Start 2P"'; g.fillStyle = '#fff'; g.fillText(String(J.punts).padStart(6, '0'), 24, 38);
-  g.font = '10px "Press Start 2P"'; g.fillStyle = J.temps < 15 ? '#ff5c8a' : '#9fb0a5';
+  g.textAlign = 'left'; g.font = fnt(14); g.fillStyle = '#fff'; g.fillText(String(J.punts).padStart(6, '0'), 24, 38);
+  g.font = fnt(10); g.fillStyle = J.temps < 15 ? '#ff5c8a' : '#9fb0a5';
   const s = Math.ceil(J.temps); g.fillText(J.pacific ? 'MODE PACÍFIC' : J.historia ? 'HISTÒRIA' : 'TEMPS ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'), 24, 60);
-  g.font = '7px "Press Start 2P"'; g.fillStyle = '#f2c230'; g.textAlign = 'right'; g.fillText(llocActual(), 194, 28); g.textAlign = 'left';
+  g.font = fnt(7); g.fillStyle = '#f2c230'; g.textAlign = 'right'; g.fillText(llocActual(), 194, 28); g.textAlign = 'left';
   if (J.zona === 'illa' && J.illa) { // la condemna i l'hora del pati
     const I = J.illa, oy = petit ? 168 : 132, c = Math.ceil(I.condemna);
-    g.font = '8px "Press Start 2P"'; g.fillStyle = '#ff9a3d'; g.fillText('CONDEMNA ' + Math.floor(c / 60) + ':' + String(c % 60).padStart(2, '0'), 14, oy);
+    g.font = fnt(8); g.fillStyle = '#ff9a3d'; g.fillText('CONDEMNA ' + Math.floor(c / 60) + ':' + String(c % 60).padStart(2, '0'), 14, oy);
     g.fillStyle = I.alarma ? '#ff3b3b' : I.pati ? '#2fd38a' : '#9fb0a5'; g.fillText(I.alarma ? 'ALARMA! ET BUSQUEN' : (I.pati ? 'PATI: ' : 'PATI EN ') + Math.ceil(I.tPati) + ' S', 14, oy + 16);
     g.fillStyle = I.claus ? '#2fd38a' : '#9fb0a5'; g.fillText((I.claus ? '[OK] ' : '[  ] ') + 'CLAUS (SALA DE GUÀRDIA)', 14, oy + 32);
   }
   if (enVic()) {
     const oy = petit ? 168 : 132;
-    g.font = '8px "Press Start 2P"';
+    g.font = fnt(8);
     g.fillStyle = J.raveApagada ? '#2fd38a' : '#ff2bd6'; g.fillText((J.raveApagada ? '[OK] ' : '[  ] ') + 'RAVE: APAGA LA LLUM', 14, oy);
     g.fillStyle = J.festiEnces ? '#2fd38a' : '#ff9a3d'; g.fillText((J.festiEnces ? '[OK] ' : '[  ] ') + "CABRÓ ROCK: ENCÉN L'ALTAVEU", 14, oy + 16);
   }
@@ -6225,13 +6284,13 @@ function dibuixaHUD(W, H, dpr) {
     const a = Math.atan2(VIC_SORTIDA.y - j.y, VIC_SORTIDA.x - j.x), d = Math.round(Math.hypot(VIC_SORTIDA.x - j.x, VIC_SORTIDA.y - j.y) / TS);
     g.save(); g.translate(W / 2, petit ? 250 : 180); g.rotate(a); g.fillStyle = '#2fd38a'; g.strokeStyle = '#000'; g.lineWidth = 3;
     g.beginPath(); g.moveTo(26, 0); g.lineTo(-10, -16); g.lineTo(-4, 0); g.lineTo(-10, 16); g.closePath(); g.fill(); g.stroke(); g.restore();
-    g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('A LA RAVE DE VIC: ' + d + ' M', W / 2, (petit ? 250 : 180) + 38); g.textAlign = 'left';
+    g.font = fnt(9); g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('A LA RAVE DE VIC: ' + d + ' M', W / 2, (petit ? 250 : 180) + 38); g.textAlign = 'left';
   }
   if (J.batalla) {
     const B = J.batalla, y0 = petit ? 200 : 130, w = Math.min(420, W - 40);
     const fl = (performance.now() / 250 | 0) % 2; g.fillStyle = fl ? 'rgba(255,40,40,.16)' : 'rgba(40,90,255,.16)'; g.fillRect(0, 0, 18, H); g.fillRect(W - 18, 0, 18, H);
     caixa(W / 2 - w / 2, y0 - 22, w, 44);
-    g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('MOSSOS K.O. ' + B.kos + ' / ' + B.objectiu + '   ONADA ' + B.onada, W / 2, y0 - 4);
+    g.font = fnt(9); g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('MOSSOS K.O. ' + B.kos + ' / ' + B.objectiu + '   ONADA ' + B.onada, W / 2, y0 - 4);
     g.fillStyle = '#333'; g.fillRect(W / 2 - w / 2 + 10, y0 + 6, w - 20, 8); g.fillStyle = '#d62828'; g.fillRect(W / 2 - w / 2 + 10, y0 + 6, (w - 20) * B.kos / B.objectiu, 8); g.textAlign = 'left';
   }
   if (J.guillem && !J.zona) { // l'avís d'en Guillem: d'on vindrà
@@ -6240,7 +6299,7 @@ function dibuixaHUD(W, H, dpr) {
     const gr = g.createRadialGradient(ax, ay, 10, ax, ay, 220); gr.addColorStop(0, 'rgba(255,0,0,' + (fl ? .45 : .25) + ')'); gr.addColorStop(1, 'rgba(255,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
     g.save(); g.translate(ax, ay); g.rotate(a); g.fillStyle = fl ? '#ff1f1f' : '#ffd23f'; g.strokeStyle = '#000'; g.lineWidth = 4;
     g.beginPath(); g.moveTo(40, 0); g.lineTo(-20, -30); g.lineTo(-8, 0); g.lineTo(-20, 30); g.closePath(); g.fill(); g.stroke(); g.restore();
-    g.font = '10px "Press Start 2P"'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; const txt = gu.avis > 0 ? 'GUILLEM!' : "ESQUIVA'L!";
+    g.font = fnt(10); g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; const txt = gu.avis > 0 ? 'GUILLEM!' : "ESQUIVA'L!";
     g.strokeText(txt, ax, ay + 50); g.fillStyle = '#ff1f1f'; g.fillText(txt, ax, ay + 50); g.textAlign = 'left';
   }
   if (J.gta && performance.now() < J.gta.fins) { // a l'estil GTA
@@ -6248,47 +6307,47 @@ function dibuixaHUD(W, H, dpr) {
     g.fillStyle = 'rgba(20,20,20,' + (.45 * k) + ')'; g.fillRect(0, 0, W, H);
     g.fillStyle = 'rgba(0,0,0,' + (.55 * k) + ')'; g.fillRect(0, H / 2 - 60, W, 110);
     g.save(); g.translate(W / 2, H / 2 + 14); g.scale(1 + (1 - k) * .6, 1 + (1 - k) * .6);
-    g.font = Math.min(64, W / 9) + 'px "Press Start 2P"'; g.textAlign = 'center'; g.lineWidth = 10; g.strokeStyle = '#000'; g.strokeText(J.gta.txt, 0, 0); g.fillStyle = J.gta.color; g.globalAlpha = k; g.fillText(J.gta.txt, 0, 0); g.restore(); g.textAlign = 'left'; g.globalAlpha = 1;
+    g.font = Math.min(110, W / 6) + 'px "Anton", ' + FONT_UI; g.textAlign = 'center'; g.lineWidth = 8; g.strokeStyle = '#000'; g.strokeText(J.gta.txt, 0, 0); g.fillStyle = J.gta.color; g.globalAlpha = k; g.fillText(J.gta.txt, 0, 0); g.restore(); g.textAlign = 'left'; g.globalAlpha = 1;
   }
   if (J.historia) dibuixaHistoria(g, W, H, petit, caixa);
   dibuixaRalliHUD(g, W, H, caixa, petit);
-  if (J.tir) { const T3 = J.tir; caixa(12, petit ? 150 : 96, 230, 48); g.font = '8px "Press Start 2P"'; g.fillStyle = '#ffd23f'; g.fillText(T3.mode === 'precisio' ? 'PRECISIÓ' : 'TIR AL PLAT', 22, (petit ? 150 : 96) + 16); g.fillStyle = '#fff'; g.fillText(T3.punts + ' PUNTS · ' + Math.min(10, T3.n) + '/10' + (tactil ? '' : '  [ESPAI]'), 22, (petit ? 150 : 96) + 36); }
+  if (J.tir) { const T3 = J.tir; caixa(12, petit ? 150 : 96, 230, 48); g.font = fnt(8); g.fillStyle = '#ffd23f'; g.fillText(T3.mode === 'precisio' ? 'PRECISIÓ' : 'TIR AL PLAT', 22, (petit ? 150 : 96) + 16); g.fillStyle = '#fff'; g.fillText(T3.punts + ' PUNTS · ' + Math.min(10, T3.n) + '/10' + (tactil ? '' : '  [ESPAI]'), 22, (petit ? 150 : 96) + 36); }
   { const ps = totsPunters().filter(p => Math.hypot(p.x - j.x, p.y - j.y) > 4 * TS).sort((a, b) => (b.t || 0) - (a.t || 0)); // fletxa cap al punter més nou
     if (ps.length && !J.zona) { const p = ps[0], a = Math.atan2(p.y - j.y, p.x - j.x), ax = W - 210, ay = H - (tactil ? 300 : 170), dd = Math.round(Math.hypot(p.x - j.x, p.y - j.y) / TS * 4);
       caixa(ax - 30, ay - 26, 210, 52); g.save(); g.translate(ax, ay); g.rotate(a); g.fillStyle = p.color; g.strokeStyle = '#000'; g.lineWidth = 3; g.beginPath(); g.moveTo(18, 0); g.lineTo(-9, -12); g.lineTo(-3, 0); g.lineTo(-9, 12); g.closePath(); g.fill(); g.stroke(); g.restore();
-      g.font = '7px "Press Start 2P"'; g.fillStyle = p.color; g.fillText(p.nom.slice(0, 14), ax + 26, ay - 4); g.fillStyle = '#fff'; g.fillText(dd + ' M' + (p.meu ? '' : ' · ' + String(p.autor).slice(0, 8)), ax + 26, ay + 12); } }
-  if (j.ciment) { g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#c9c1ad'; g.fillText('PORTES UN SAC DE CIMENT', W / 2, H - (tactil ? 240 : 130)); g.textAlign = 'left'; }
-  if (j.vollDamm > 0) { const t2 = Math.ceil(j.vollDamm); g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillStyle = '#2fd38a'; g.fillText('VOLL-DAMM ' + Math.floor(t2 / 60) + ':' + String(t2 % 60).padStart(2, '0'), W / 2, H - (tactil ? 220 : 110)); g.textAlign = 'left'; }
+      g.font = fnt(7); g.fillStyle = p.color; g.fillText(p.nom.slice(0, 14), ax + 26, ay - 4); g.fillStyle = '#fff'; g.fillText(dd + ' M' + (p.meu ? '' : ' · ' + String(p.autor).slice(0, 8)), ax + 26, ay + 12); } }
+  if (j.ciment) { g.font = fnt(9); g.textAlign = 'center'; g.fillStyle = '#c9c1ad'; g.fillText('PORTES UN SAC DE CIMENT', W / 2, H - (tactil ? 240 : 130)); g.textAlign = 'left'; }
+  if (j.vollDamm > 0) { const t2 = Math.ceil(j.vollDamm); g.font = fnt(9); g.textAlign = 'center'; g.fillStyle = '#2fd38a'; g.fillText('VOLL-DAMM ' + Math.floor(t2 / 60) + ':' + String(t2 % 60).padStart(2, '0'), W / 2, H - (tactil ? 220 : 110)); g.textAlign = 'left'; }
   if (enSala()) { // marcador de la sala
     const llista = [{ nom: nomJugador(), punts: J.punts, color: '#fff' }, ...[...XARXA.altres.values()].filter(r => r.vist && r.tx !== undefined && performance.now() - r.vist < 6000)].sort((a, b) => b.punts - a.punts);
     const bw = 170, bx = W - bw - 14, by = petit ? 250 : 286;
-    caixa(bx, by, bw, 22 + llista.length * 16); g.font = '7px "Press Start 2P"'; g.fillStyle = '#ffd23f'; g.fillText('SALA ' + XARXA.codi, bx + 10, by + 15);
+    caixa(bx, by, bw, 22 + llista.length * 16); g.font = fnt(7); g.fillStyle = '#ffd23f'; g.fillText('SALA ' + XARXA.codi, bx + 10, by + 15);
     llista.forEach((r, i) => { g.fillStyle = r.color; g.fillText(String(r.nom).slice(0, 10), bx + 10, by + 32 + i * 16); g.textAlign = 'right'; g.fillText(formatPunts(r.punts || 0), bx + bw - 10, by + 32 + i * 16); g.textAlign = 'left'; });
   }
   if (j.cotxe || (J.radioFins && performance.now() < J.radioFins)) { // l'emissora que sona
     const gran = J.radioFins && performance.now() < J.radioFins, txt = '♪ ' + EMISSORES[J.radio || 0] + (tactil ? '' : ' [T]');
-    g.font = (gran ? 11 : 7) + 'px "Press Start 2P"'; g.textAlign = 'center'; const w = g.measureText(txt).width + 24, y = gran ? H * .58 : H - (tactil ? 186 : 76);
+    g.font = fnt((gran ? 11 : 7)); g.textAlign = 'center'; const w = g.measureText(txt).width + 24, y = gran ? H * .58 : H - (tactil ? 186 : 76);
     caixa(W / 2 - w / 2, y - 16, w, gran ? 30 : 24); g.fillStyle = '#ff5c8a'; g.fillText(txt, W / 2, y + (gran ? 4 : 1)); g.textAlign = 'left';
   }
   if (j.cotxe && j.cotxe.benzina !== undefined && granMon() && !J.zona) {
     const bw = 190, bx = W / 2 - bw / 2, by = H - (tactil ? 150 : 40), b = j.cotxe.benzina / 100;
-    caixa(bx, by - 12, bw, 30); g.font = '7px "Press Start 2P"'; g.fillStyle = '#fff'; g.fillText('BENZINA', bx + 10, by + 6);
+    caixa(bx, by - 12, bw, 30); g.font = fnt(7); g.fillStyle = '#fff'; g.fillText('BENZINA', bx + 10, by + 6);
     // comptaquilòmetres
     const kmh = Math.round((j.cotxe.salt > 0 ? (j.cotxe.velSalt || 0) : j.cotxe.vel || 0) / KMH), sx = bx + bw + 52, sy = by - 4;
     g.fillStyle = 'rgba(10,10,10,.85)'; g.beginPath(); g.arc(sx, sy, 40, 0, TAU); g.fill(); g.strokeStyle = '#2fd38a'; g.lineWidth = 3; g.stroke();
     g.strokeStyle = '#333'; g.lineWidth = 6; g.beginPath(); g.arc(sx, sy, 31, Math.PI * .75, Math.PI * 2.25); g.stroke();
     g.strokeStyle = kmh > 180 ? '#ff3b3b' : kmh > 110 ? '#ffd23f' : '#2fd38a'; g.beginPath(); g.arc(sx, sy, 31, Math.PI * .75, Math.PI * (.75 + 1.5 * Math.min(1, kmh / 280))); g.stroke();
-    g.textAlign = 'center'; g.fillStyle = '#fff'; g.font = '13px "Press Start 2P"'; g.fillText(kmh, sx, sy + 5); g.font = '6px "Press Start 2P"'; g.fillStyle = '#9fb0a5'; g.fillText('KM/H', sx, sy + 20); g.textAlign = 'left';
+    g.textAlign = 'center'; g.fillStyle = '#fff'; g.font = fnt(13); g.fillText(kmh, sx, sy + 5); g.font = fnt(6); g.fillStyle = '#9fb0a5'; g.fillText('KM/H', sx, sy + 20); g.textAlign = 'left';
     g.fillStyle = '#333'; g.fillRect(bx + 76, by - 2, bw - 88, 10); g.fillStyle = b > .3 ? '#2fd38a' : b > .15 ? '#ffd23f' : (performance.now() / 250 | 0) % 2 ? '#ff3b3b' : '#661111'; g.fillRect(bx + 76, by - 2, (bw - 88) * b, 10);
   }
-  if (J.dobles > 0) { g.font = '12px "Press Start 2P"'; g.fillStyle = '#ffd166'; g.textAlign = 'center'; g.fillText('PUNTS x2  ' + Math.ceil(J.dobles), W / 2, petit ? 220 : 150); g.textAlign = 'left'; }
-  if (J.combo > 1) { g.font = '16px "Press Start 2P"'; g.fillStyle = '#ffd23f'; g.fillText('COMBO x' + J.combo.toFixed(1), 14, cy); g.fillRect(14, cy + 8, 150 * J.tCombo / 4, 4); }
+  if (J.dobles > 0) { g.font = fnt(12); g.fillStyle = '#ffd166'; g.textAlign = 'center'; g.fillText('PUNTS x2  ' + Math.ceil(J.dobles), W / 2, petit ? 220 : 150); g.textAlign = 'left'; }
+  if (J.combo > 1) { g.font = fnt(16); g.fillStyle = '#ffd23f'; g.fillText('COMBO x' + J.combo.toFixed(1), 14, cy); g.fillRect(14, cy + 8, 150 * J.tCombo / 4, 4); }
   // Arma, poder i bomba
   if (!tactil) {
     let py = H - 44;
     const fila = (txt, color, prog) => {
       caixa(12, py, 230, 32);
-      g.font = '8px "Press Start 2P"'; g.fillStyle = color; g.fillText(txt, 22, py + 14);
+      g.font = fnt(8); g.fillStyle = color; g.fillText(txt, 22, py + 14);
       if (prog !== undefined) { g.fillStyle = '#333'; g.fillRect(22, py + 20, 210, 5); g.fillStyle = color; g.fillRect(22, py + 20, 210 * prog, 5); }
       py -= 40;
     };
@@ -6310,7 +6369,7 @@ function dibuixaHUD(W, H, dpr) {
   const apF = accioPropera(), txtF = apF ? apF.text : null;
   if (txtF) {
     const txt = (tactil ? '' : '[F] ') + txtF;
-    g.font = (petit ? 7 : 9) + 'px "Press Start 2P"'; g.textAlign = 'center';
+    g.font = fnt((petit ? 7 : 9)); g.textAlign = 'center';
     const w = g.measureText(txt).width + 24, y = H * .72;
     caixa(W / 2 - w / 2, y - 16, w, 30); g.fillStyle = '#f2c230'; g.fillText(txt, W / 2, y + 3); g.textAlign = 'left';
   }
@@ -6345,11 +6404,11 @@ function dibuixaHUD(W, H, dpr) {
   g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 1; g.fillRect(mx + j.x * k - 3, my + j.y * k - 3, 6, 6); g.strokeRect(mx + j.x * k - 3, my + j.y * k - 3, 6, 6);
   g.restore();
   g.save(); // l'hora, a sota del minimapa
-  g.font = '8px "Press Start 2P"'; g.textAlign = 'right'; const nf = nitFactor() > .5; g.fillStyle = '#000'; g.fillRect(mx0 + mw - 74, my0 + mh + 4, 74, 16); g.fillStyle = nf ? '#9fb7ff' : '#ffd23f'; g.fillText((nf ? '☾ ' : '☀ ') + textHora(), mx0 + mw - 4, my0 + mh + 16);
+  g.font = fnt(8); g.textAlign = 'right'; const nf = nitFactor() > .5; g.fillStyle = '#000'; g.fillRect(mx0 + mw - 74, my0 + mh + 4, 74, 16); g.fillStyle = nf ? '#9fb7ff' : '#ffd23f'; g.fillText((nf ? '☾ ' : '☀ ') + textHora(), mx0 + mw - 4, my0 + mh + 16);
   g.restore();
   // Missatge central
   if (J.missatge) {
-    g.textAlign = 'center'; g.font = (petit ? 12 : 22) + 'px "Press Start 2P"';
+    g.textAlign = 'center'; g.font = fnt((petit ? 12 : 22));
     g.globalAlpha = Math.min(1, J.missatge.t * 3);
     g.fillStyle = '#000'; g.fillText(J.missatge.txt, W / 2 + 3, H * .3 + 3); g.fillStyle = '#fff'; g.fillText(J.missatge.txt, W / 2, H * .3);
     g.globalAlpha = 1;
@@ -6359,7 +6418,7 @@ function dibuixaHUD(W, H, dpr) {
     : J.cotxes.some(c => c.tipus === 'policia' && c.estat !== 'marxa') ? 'ET VOLEN PUNXAR LES RODES!'
     : J.agents.some(a => a.estat === 'persegueix' && a.veu) ? "T'HAN VIST! AMAGA'T!" : J.matons.some(m => !m.caigut) ? 'NOVIO GELÓS! TOMBA-LO!' : null;
   if (avis) {
-    g.textAlign = 'center'; g.font = '10px "Press Start 2P"'; g.fillStyle = Math.floor(performance.now() / 250) % 2 ? '#ff3b3b' : '#fff';
+    g.textAlign = 'center'; g.font = fnt(10); g.fillStyle = Math.floor(performance.now() / 250) % 2 ? '#ff3b3b' : '#fff';
     g.fillText(avis, W / 2, petit ? 190 : 120);
   }
   g.textAlign = 'left';
@@ -6811,7 +6870,7 @@ function dibuixaPaquet(g, p) {
   g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(p.x, p.y + 4, 16, 6, 0, 0, TAU); g.fill();
   const gl = g.createRadialGradient(p.x, p.y - 18 + b, 2, p.x, p.y - 18 + b, 34); gl.addColorStop(0, 'rgba(47,211,138,.55)'); gl.addColorStop(1, 'rgba(47,211,138,0)'); g.fillStyle = gl; g.beginPath(); g.arc(p.x, p.y - 18 + b, 34, 0, TAU); g.fill();
   g.fillStyle = '#c99a6a'; g.fillRect(p.x - 13, p.y - 30 + b, 26, 22); g.fillStyle = '#a07850'; g.fillRect(p.x - 13, p.y - 21 + b, 26, 4); g.fillRect(p.x - 2, p.y - 30 + b, 4, 22);
-  g.fillStyle = '#2fd38a'; g.font = '9px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('?', p.x, p.y - 35 + b);
+  g.fillStyle = '#2fd38a'; g.font = fnt(9); g.textAlign = 'center'; g.fillText('?', p.x, p.y - 35 + b);
 }
 
 // ---------- Llaunes de Voll-Damm escampades: n'agafes una i corres com un llamp 2 minuts ----------
@@ -7046,7 +7105,7 @@ function dibuixaEloi(g, e) {
     g.fillStyle = pr.pell; g.fillRect(e.x - 8, e.y - 40, 6, 34); g.fillRect(e.x + 2, e.y - 44 + Math.sin(t * 8) * 3, 6, 38);
     g.fillStyle = pr.banyador; g.fillRect(e.x - 9, e.y - 12, 18, 10);
     g.fillStyle = '#fff'; g.fillRect(e.x - 10, e.y - 44, 9, 5); g.fillRect(e.x + 1, e.y - 48 + Math.sin(t * 8) * 3, 9, 5);
-    for (let i = 0; i < 3; i++) { const a = t * 3 + i * TAU / 3; g.fillStyle = '#ffd23f'; g.font = '10px "Press Start 2P"'; g.textAlign = 'center'; g.fillText('*', e.x + Math.cos(a) * 18, e.y - 2 + Math.sin(a) * 5); }
+    for (let i = 0; i < 3; i++) { const a = t * 3 + i * TAU / 3; g.fillStyle = '#ffd23f'; g.font = fnt(10); g.textAlign = 'center'; g.fillText('*', e.x + Math.cos(a) * 18, e.y - 2 + Math.sin(a) * 5); }
     rotul(g, 'ELOI MENA', e.x, e.y - 62, '#7fc3ff', 6); return;
   }
   const y = e.y - e.h;
@@ -7058,7 +7117,7 @@ function dibuixaEloi(g, e) {
   g.restore();
   if (e.estat === 'aigua') { g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 2; g.beginPath(); g.ellipse(e.x, y - 16, 22 + Math.sin(t * 4) * 3, 7, 0, 0, TAU); g.stroke(); }
   rotul(g, 'ELOI MENA', e.x, y - 70, '#7fc3ff', 6);
-  if (e.estat !== 'aigua') { g.font = '7px "Press Start 2P"'; g.textAlign = 'center'; const w = g.measureText('SÓC EL 311').width + 12; g.fillStyle = '#fff'; g.fillRect(e.x - w / 2, y - 100, w, 16); g.strokeStyle = '#000'; g.lineWidth = 2; g.strokeRect(e.x - w / 2, y - 100, w, 16); g.fillStyle = '#d62828'; g.fillText('SÓC EL 311', e.x, y - 89); g.textAlign = 'left'; }
+  if (e.estat !== 'aigua') { g.font = fnt(7); g.textAlign = 'center'; const w = g.measureText('SÓC EL 311').width + 12; g.fillStyle = '#fff'; g.fillRect(e.x - w / 2, y - 100, w, 16); g.strokeStyle = '#000'; g.lineWidth = 2; g.strokeRect(e.x - w / 2, y - 100, w, 16); g.fillStyle = '#d62828'; g.fillText('SÓC EL 311', e.x, y - 89); g.textAlign = 'left'; }
 }
 function dibuixaSac(g, sc) {
   g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(sc.x, sc.y + 4, 18, 6, 0, 0, TAU); g.fill();
@@ -7105,9 +7164,9 @@ function dibuixaRalliHUD(g, W, H, caixa, petit) {
   const R2 = J.ralli, j = J.jug, dins = !J.zona && J.ciutat === 'capellades' && Math.hypot(j.x - (RALLI.x0 + RALLI.x1) / 2 * TS, j.y - (RALLI.y0 + RALLI.y1) / 2 * TS) < 40 * TS;
   if (!dins && !(R2 && R2.actiu)) return;
   const rank = Object.entries(J.rankRalli || {}).sort((a, b) => a[1] - b[1]).slice(0, 5), bw = 210, bx = 12, by = petit ? 150 : 96, bh = 46 + rank.length * 14;
-  caixa(bx, by, bw, bh); g.font = '8px "Press Start 2P"'; g.fillStyle = '#ff9a3d'; g.fillText('RAL·LI', bx + 10, by + 15);
+  caixa(bx, by, bw, bh); g.font = fnt(8); g.fillStyle = '#ff9a3d'; g.fillText('RAL·LI', bx + 10, by + 15);
   g.fillStyle = '#fff'; g.fillText(R2 && R2.actiu ? 'VOLTA ' + fmtVolta(R2.t) + '  CP ' + (R2.cp - 1) + '/' + (RALLI.punts.length - 1) : 'VES A LA SORTIDA', bx + 10, by + 30);
-  g.fillStyle = '#2fd38a'; g.font = '7px "Press Start 2P"'; g.fillText('MILLOR: ' + (millorRalli() ? fmtVolta(millorRalli()) : '--'), bx + 10, by + 43);
+  g.fillStyle = '#2fd38a'; g.font = fnt(7); g.fillText('MILLOR: ' + (millorRalli() ? fmtVolta(millorRalli()) : '--'), bx + 10, by + 43);
   rank.forEach(([nom, t], i) => { g.fillStyle = i ? '#cfd8d2' : '#ffd23f'; g.fillText((i + 1) + '. ' + nom.slice(0, 9), bx + 10, by + 58 + i * 14); g.textAlign = 'right'; g.fillText(fmtVolta(t), bx + bw - 10, by + 58 + i * 14); g.textAlign = 'left'; });
   if (R2 && R2.actiu) { // fletxa cap al punt de control següent
     const p = ptRalli(R2.cp < RALLI.punts.length ? R2.cp : 0), a = Math.atan2(p.y - j.y, p.x - j.x), ax = W / 2, ay = petit ? 120 : 92;
@@ -7141,8 +7200,8 @@ function dibuixaRalliDecorat(g, vist) {
   if (vist({ x: cxr, y: cyr })) {
     g.fillStyle = '#2b2f36'; g.fillRect(cxr - 8, cyr - 20, 16, 40); g.fillStyle = '#0a0a0a'; g.fillRect(cxr - 150, cyr - 92, 300, 76); g.strokeStyle = '#ff9a3d'; g.lineWidth = 4; g.strokeRect(cxr - 150, cyr - 92, 300, 76);
     const R2 = J.ralli, mill = millorRalli(); g.textAlign = 'center';
-    g.font = '22px "Press Start 2P"'; g.fillStyle = '#ffd23f'; g.fillText(R2 && R2.actiu ? fmtVolta(R2.t) : J.semafor && !J.semafor.verd ? 'PREPARATS' : '0:00.0', cxr, cyr - 52);
-    g.font = '10px "Press Start 2P"'; g.fillStyle = '#2fd38a'; g.fillText('RÈCORD ' + (mill ? fmtVolta(mill) : '--'), cxr, cyr - 28); g.textAlign = 'left';
+    g.font = fnt(22); g.fillStyle = '#ffd23f'; g.fillText(R2 && R2.actiu ? fmtVolta(R2.t) : J.semafor && !J.semafor.verd ? 'PREPARATS' : '0:00.0', cxr, cyr - 52);
+    g.font = fnt(10); g.fillStyle = '#2fd38a'; g.fillText('RÈCORD ' + (mill ? fmtVolta(mill) : '--'), cxr, cyr - 28); g.textAlign = 'left';
   }
 }
 function dibuixaControlsRalli(g, vist) { // banderoles als punts de control (el següent, més gros)
@@ -7217,9 +7276,9 @@ function dibuixaCampTir(g, vist) {
   // el marcador gegant
   const bx = 50 * TS, by = 102.2 * TS, mill = millorsTir(), r = J.rankTir || { precisio: {}, plat: {} };
   g.fillStyle = '#2b2f36'; g.fillRect(bx - 6, by - 10, 12, 50); g.fillStyle = '#0a0a0a'; g.fillRect(bx - 170, by - 110, 340, 104); g.strokeStyle = '#ffd23f'; g.lineWidth = 4; g.strokeRect(bx - 170, by - 110, 340, 104);
-  g.textAlign = 'center'; g.font = '12px "Press Start 2P"'; g.fillStyle = '#ffd23f'; g.fillText('MARCADOR', bx, by - 88);
+  g.textAlign = 'center'; g.font = fnt(12); g.fillStyle = '#ffd23f'; g.fillText('MARCADOR', bx, by - 88);
   const top = mode => { const l = Object.entries(r[mode] || {}); if (mill[mode]) l.push(['TU', mill[mode]]); return l.sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, p]) => String(n).slice(0, 7) + ' ' + p).join('  '); };
-  g.font = '8px "Press Start 2P"'; g.fillStyle = '#fff'; g.fillText('PRECISIÓ: ' + (top('precisio') || '--'), bx, by - 60); g.fillText('PLAT: ' + (top('plat') || '--'), bx, by - 36);
+  g.font = fnt(8); g.fillStyle = '#fff'; g.fillText('PRECISIÓ: ' + (top('precisio') || '--'), bx, by - 60); g.fillText('PLAT: ' + (top('plat') || '--'), bx, by - 36);
   if (J.tir) { g.fillStyle = '#2fd38a'; g.fillText('ARA: ' + J.tir.punts + ' PUNTS · ' + J.tir.n + '/10', bx, by - 16); }
   g.textAlign = 'left';
   // el plat en l'aire i la mira
@@ -7337,7 +7396,7 @@ function agullaMapa(g, px, py, u, color, nom, autor) {
   g.fillStyle = color; g.strokeStyle = '#000'; g.lineWidth = 1.5 * u;
   g.beginPath(); g.moveTo(px, py); g.bezierCurveTo(px - 4 * u, py - 10 * u, px - 11 * u, py - 14 * u, px - 11 * u, py - 22 * u); g.arc(px, py - 22 * u, 11 * u, Math.PI, 0); g.bezierCurveTo(px + 11 * u, py - 14 * u, px + 4 * u, py - 10 * u, px, py); g.fill(); g.stroke();
   g.fillStyle = '#fff'; g.beginPath(); g.arc(px, py - 22 * u, 4.5 * u, 0, TAU); g.fill();
-  if (nom) { g.font = Math.round(7 * u) + 'px "Press Start 2P"'; g.textAlign = 'center'; const txt = nom + (autor ? ' · ' + String(autor).toUpperCase() : ''), w = g.measureText(txt).width + 10 * u;
+  if (nom) { g.font = fnt(Math.round(7 * u)); g.textAlign = 'center'; const txt = nom + (autor ? ' · ' + String(autor).toUpperCase() : ''), w = g.measureText(txt).width + 10 * u;
     g.fillStyle = 'rgba(0,0,0,.8)'; g.fillRect(px - w / 2, py - 48 * u, w, 13 * u); g.fillStyle = color; g.fillText(txt, px, py - 38 * u); g.textAlign = 'left'; }
 }
 const VM = { z: 1, cx: 0, cy: 0 }; // vista del mapa gran: zoom i centre (en caselles)
@@ -7359,7 +7418,7 @@ function pintaMapaGran() {
   g.imageSmoothingEnabled = VM.z < 1.5; g.drawImage(minimapa, ox, oy, MW * es, MH * es);
   const u = d * Math.max(1, Math.min(1.8, VM.z * .7));
   const punt = (x, y, rr, color, vora) => { const [px, py] = P(x, y); g.fillStyle = color; g.beginPath(); g.arc(px, py, rr * u, 0, TAU); g.fill(); if (vora) { g.strokeStyle = vora; g.lineWidth = 2 * d; g.stroke(); } };
-  const rotul = (txt, x, y, color, mida = 9) => { const [px, py] = P(x, y); g.font = Math.round(mida * u) + 'px "Press Start 2P"'; g.textAlign = 'center'; g.lineWidth = 4 * d; g.strokeStyle = '#000'; g.strokeText(txt, px, py); g.fillStyle = color; g.fillText(txt, px, py); };
+  const rotul = (txt, x, y, color, mida = 9) => { const [px, py] = P(x, y); g.font = fnt(Math.round(mida * u)); g.textAlign = 'center'; g.lineWidth = 4 * d; g.strokeStyle = '#000'; g.strokeText(txt, px, py); g.fillStyle = color; g.fillText(txt, px, py); };
   if (!J.zona && J.ciutat === 'capellades' && granMon()) {
     for (const p of POBLES) rotul(p.nom, (p.x + p.w / 2) * TS, (p.y - 1) * TS, '#ffd23f');
     rotul('CAPELLADES', 30 * TS, 12 * TS, '#ffd23f'); rotul('BARCELONA', 100 * TS, 54 * TS, '#ffd23f'); rotul('MONTSERRAT', 20 * TS, 52 * TS, '#ffd23f', 8);
@@ -7516,7 +7575,7 @@ foto.onload = () => {
     cont.appendChild(b);
   }
   pintaBotiga(); pintaModes();
-  (document.fonts ? document.fonts.load('13px "Press Start 2P"') : Promise.resolve()).then(pintaRetols, pintaRetols);
+  (document.fonts ? document.fonts.load(fnt(13)) : Promise.resolve()).then(pintaRetols, pintaRetols);
   requestAnimationFrame(bucle);
 };
 </script>
