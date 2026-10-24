@@ -174,6 +174,13 @@ export async function executa() {
     const e = punta('esportiu'), c = punta('camio'), u = punta('utilitari'); v.model = undefined;
     return (e >= 220 && e <= 232 && c <= 106 && c > 80 && u > 150 && u <= 171) || 'esportiu ' + e + ', camió ' + c + ', utilitari ' + u;
   });
+  prova('Hi ha semàfors, senyals i rotondes, i el trànsit para en vermell', () => {
+    llestSenyals(); const S = [...SEMAFORS.values()].find(s => s.llums); if (!S || SENYALS.length < 50 || !mapa.rotondes.length) return 'semàfors ' + SEMAFORS.size + ', senyals ' + SENYALS.length;
+    const eix = llumSemafor(S, 'h') === 'vermell' ? 'h' : 'v', c = nouCotxe('normal', 300); c.model = 'berlina';
+    if (eix === 'h') { c.x = (S.ix - 1.5) * TS; c.y = (S.iy + 1.5) * TS; c.fx = 1; c.fy = 0; c.cami = [[(S.ix + .5) * TS, (S.iy + 1.5) * TS]]; } else { c.x = (S.ix + .5) * TS; c.y = (S.iy - 1.5) * TS; c.fx = 0; c.fy = 1; c.cami = [[(S.ix + .5) * TS, (S.iy + .5) * TS]]; }
+    const x0 = c.x, y0 = c.y, ab = J.cotxes; J.cotxes = [c]; condueixNPC(c, .1); J.cotxes = ab;
+    return (llumSemafor(S, eix) !== 'verd' && c.x === x0 && c.y === y0) || 'el cotxe no ha parat (' + llumSemafor(S, eix) + ')';
+  });
   prova("Si et quedes davant un cotxe gaire estona, t'atropella", () => {
     baixaVila(); const j = J.jug; J.vides = 3; j.invul = 0; const c = nouCotxe('normal', 300); c.estat = 'roda'; c.fx = 1; c.fy = 0; c.ang = 0; c.cami = [{ x: c.x + 999, y: c.y }]; J.cotxes = [c]; j.x = c.x + 70; j.y = c.y;
     const v0 = J.vides; for (let i = 0; i < 90 && J.vides === v0; i++) actualitzaVehicles(.1);

@@ -802,7 +802,7 @@ const POBLES = [
 const COMISSARIA = { x0: 584, y0: 160, x1: 624, y1: 192, porta: 604 }; // la porta és a dalt, a tocar de l'autopista
 const CASA_LLOC = { x: 46.5 * TS, y: 21.5 * TS };
 const pobleDe = (x, y) => POBLES.find(p => x >= p.x && x < p.x + p.w && y >= p.y && y < p.y + p.h);
-const quadricula = (x, y) => { if (MW <= 42) return [x, y]; if (x >= BCN.x0 && x <= BCN.x1 && y >= BCN.y0 && y <= BCN.y1) return [x - BCN.x0, y - BCN.y0]; const p = pobleDe(x, y); return p ? [x - p.x, y - p.y] : [x, y]; };
+const quadricula = (x, y) => { if (MW <= 42) return [x, y]; if (dinsVicT(x, y)) return [x - VIC.x0, y - VIC.y0]; if (x >= BCN.x0 && x <= BCN.x1 && y >= BCN.y0 && y <= BCN.y1) return [x - BCN.x0, y - BCN.y0]; const p = pobleDe(x, y); return p ? [x - p.x, y - p.y] : [x, y]; };
 // la costa: baixa en diagonal des de Barcelona i, passat Lleida, es gira cap a l'est (tot el sud-est és mar)
 const esMar = (x, y) => y >= 90 && x > 54 + (y - 90) * 1.3 + Math.sin(y * .05) * 4 && y > (x <= 640 ? 90 + Math.max(0, x - 128) * .55 : 371.6 + (x - 640) * .08) + Math.sin(x * .07) * 3;
 
@@ -1033,6 +1033,23 @@ function generaMon(m) {
       carretera(pts); omple(Math.max(1, bx - 1), Math.max(1, by + 2), Math.min(MW - 2, bx + 1), Math.min(MH - 2, by + 3), C.EDIF); // una masia al final
     }
   }
+  // Rotondes: a les cruïlles de carreteres convencionals de fora dels pobles (una illeta al mig i l'anell al voltant)
+  m.rotondes = [];
+  { const road = (x, y) => m[y] && m[y][x] === C.CARRER && !(m.auto[y] && m.auto[y][x]);
+    const lliureR = t => t === C.CARRER || t === C.GESPA || t === C.ARBRE || t === C.CULTIU || t === C.TERRA || t === C.ROCA || t === C.BOSC;
+    for (let y = 4; y < MH - 5; y++) for (let x = 4; x < MW - 5; x++) {
+      if (!road(x, y) || !road(x + 1, y) || !road(x, y + 1) || !road(x + 1, y + 1)) continue;
+      if (pobleDe(x, y) || dinsVicT(x, y) || (x < 128 && y < 96)) continue;
+      const brac = [road(x - 1, y) && road(x - 1, y + 1) && road(x - 2, y), road(x + 2, y) && road(x + 2, y + 1) && road(x + 3, y), road(x, y - 1) && road(x + 1, y - 1) && road(x, y - 2), road(x, y + 2) && road(x + 1, y + 2) && road(x, y + 3)];
+      if (brac.filter(Boolean).length < 3 || m.rotondes.some(r => Math.abs(r.x - x) < 12 && Math.abs(r.y - y) < 12)) continue;
+      let ok = true; for (let yy = y - 2; yy <= y + 3 && ok; yy++) for (let xx = x - 2; xx <= x + 3; xx++) if (!lliureR(m[yy][xx]) || m.auto[yy][xx]) { ok = false; break; }
+      if (!ok) continue;
+      for (let yy = y - 2; yy <= y + 3; yy++) for (let xx = x - 2; xx <= x + 3; xx++) m[yy][xx] = C.CARRER;
+      for (const [cx2, cy2] of [[x - 2, y - 2], [x + 3, y - 2], [x - 2, y + 3], [x + 3, y + 3]]) m[cy2][cx2] = C.GESPA;
+      m[y][x] = m[y][x + 1] = m[y + 1][x] = m[y + 1][x + 1] = C.GESPA; // l'illeta
+      m.rotondes.push({ x, y, brac });
+    }
+  }
   // Túnels: els trams de carretera que travessen una serra o un bosc (no a Capellades, ni a Montserrat, ni a Arinsal)
   m.tunel = new Uint8Array(MW * MH);
   { const R = 6, pre = new Int32Array((MW + 1) * (MH + 1)); // sumes acumulades per saber quanta muntanya hi ha al voltant
@@ -1240,7 +1257,17 @@ function detallsCarrer(g, m, senseOmbres, X0 = 0, Y0 = 0, X1 = MW, Y1 = MH) {
     if (m[y][x] !== C.CARRER) continue;
     const X = x * TS, Y = y * TS, V = 16;
     for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
-      if (!esEdif(m, x + dx, y + dy)) continue;
+      if (!esEdif(m, x + dx, y + dy)) {
+        const n = m[y + dy] && m[y + dy][x + dx];
+        if (n === undefined || n === C.CARRER || n === C.PARQUING || n === C.PLACA || n === C.AIGUA || n === C.MAR || n === C.BANC || n === C.TERRA || n === C.RAVE) continue;
+        if ((m.auto && m.auto[y][x]) || (m.tunel && m.tunel[y * MW + x]) || MW <= 42) continue; // a les autopistes i als túnels, no
+        if (!dinsPoble(x, y) && !dinsVicT(x, y)) { // carretera: vorada de formigó
+          const V2 = 7, rx = dx === 1 ? X + TS - V2 : X, ry = dy === 1 ? Y + TS - V2 : Y;
+          g.fillStyle = '#b3aea3'; g.fillRect(rx, ry, dx ? V2 : TS, dy ? V2 : TS);
+          g.fillStyle = '#7f7a70'; if (dx === 1) g.fillRect(rx, Y, 2, TS); if (dx === -1) g.fillRect(rx + V2 - 2, Y, 2, TS); if (dy === 1) g.fillRect(X, ry, TS, 2); if (dy === -1) g.fillRect(X, ry + V2 - 2, TS, 2);
+          continue;
+        }
+      }
       const rx = dx === 1 ? X + TS - V : X, ry = dy === 1 ? Y + TS - V : Y, rw = dx ? V : TS, rh = dy ? V : TS;
       g.fillStyle = '#bdb6a8'; g.fillRect(rx, ry, rw, rh);
       g.strokeStyle = 'rgba(120,110,95,.4)'; g.lineWidth = 1; g.beginPath();
@@ -1250,7 +1277,7 @@ function detallsCarrer(g, m, senseOmbres, X0 = 0, Y0 = 0, X1 = MW, Y1 = MH) {
       if (dx === 1) g.fillRect(rx, Y, 3, TS); if (dx === -1) g.fillRect(rx + rw - 3, Y, 3, TS);
       if (dy === 1) g.fillRect(X, ry, TS, 3); if (dy === -1) g.fillRect(X, ry + rh - 3, TS, 3);
     }
-    if (m.auto && m.auto[y][x]) continue;
+    if ((m.auto && m.auto[y][x]) || (MW > 42 && !dinsPoble(x, y) && !dinsVicT(x, y))) continue; // passos de vianants, només dins els pobles
     const [lx, ly] = quadricula(x, y), colV = lx % 8 < 2, filaH = ly % 7 < 2 || y === 2;
     g.fillStyle = 'rgba(236,233,224,.88)';
     if (colV && !filaH && (ly % 7 === 2 || ly % 7 === 6)) for (let k = 0; k < 5; k++) g.fillRect(X + 6 + k * 11, Y + (ly % 7 === 2 ? 8 : 32), 6, 24);
@@ -1378,6 +1405,13 @@ function pintaMapa(m, ciutat, nomesTerra = false, regio = { x0: 0, y0: 0, x1: MW
         if (carril === 2 || carril === 4) linia(-1.5, 'rgba(240,240,235,.85)', true);
         if (carril === 3) { linia(-4, '#f2c230', false); linia(1, '#f2c230', false); }
         if (carril === 4) linia(TS - 5, 'rgba(240,240,235,.9)', false);
+      } else if (!a && MW > 42 && !dinsPoble(x, y) && !dinsVicT(x, y) && !(m.rotondes && m.rotondes.some(r => x >= r.x - 2 && x <= r.x + 3 && y >= r.y - 2 && y <= r.y + 3))) {
+        const rd = (xx, yy) => m[yy] && m[yy][xx] === C.CARRER, h = rd(x - 1, y) || rd(x + 1, y), v = rd(x, y - 1) || rd(x, y + 1);
+        g.fillStyle = 'rgba(238,234,222,.85)';
+        if (h && rd(x, y + 1) && !rd(x, y - 1)) { for (let k = 0; k < TS; k += 32) g.fillRect(X + k, Y + TS - 1.5, 18, 3); g.fillRect(X, Y + 9, TS, 2.5); }
+        else if (h && rd(x, y - 1) && !rd(x, y + 1)) g.fillRect(X, Y + TS - 11.5, TS, 2.5);
+        if (v && rd(x + 1, y) && !rd(x - 1, y)) { for (let k = 0; k < TS; k += 32) g.fillRect(X + TS - 1.5, Y + k, 3, 18); g.fillRect(X + 9, Y, 2.5, TS); }
+        else if (v && rd(x - 1, y) && !rd(x + 1, y)) g.fillRect(X + TS - 11.5, Y, 2.5, TS);
       } else if (!a) {
         const [lx, ly] = quadricula(x, y);
         g.fillStyle = 'rgba(238,234,222,.85)';
@@ -1563,6 +1597,7 @@ function pintaMapa(m, ciutat, nomesTerra = false, regio = { x0: 0, y0: 0, x1: MW
     g.strokeStyle = '#111'; g.lineWidth = 5; g.beginPath(); g.moveTo(29 * TS, 21 * TS); g.bezierCurveTo(27 * TS, 19.5 * TS, 31 * TS, 19 * TS, 29 * TS, 18 * TS); g.stroke();
     g.restore();
   }
+  if (m.rotondes) pintaRotondes(g, m, X0, Y0, X1, Y1);
   if (m.tunel) pintaTunels(g, m, X0, Y0, X1, Y1);
   if (!nomesTerra) pintaRetolsTros(g, ciutat, regio);
   return fons;
@@ -1662,6 +1697,29 @@ RETOLS.capellades.push(['CASA DEL RAMON', 46.5, 17.6, '#2fd38a'], ['COMISSARIA D
   ['C-25 → VIC', 406, 62, '#2a7de1'], ['C-25', 470, 205.3, '#2a7de1'], ['C-25 VIC', 830, 205.3, '#2a7de1'], ['TÚNEL DEL COLL', 666, 204.6, '#ffd23f'], ['C-17', 762, 270, '#2a7de1'], ['AP-7', 400, 639.3, '#2a7de1'],
   ['VIC', 868, 197.3, '#2fd38a'], ['BOSC VERGE DEL COLLSACABRA', 820, 270, '#2fd38a'], ['ELS PORTS', 600, 470, '#c9a27a']);
 
+// Rotondes vistes des de dalt: anell d'asfalt, illeta amb gespa i un olivera, i les entrades
+function patro(g, nom) { const c = textures()[nom]; if (!c.pat || c.ctx !== g) { c.pat = g.createPattern(c, 'repeat'); c.ctx = g; if (c.escala) c.pat.setTransform(new DOMMatrix().scaleSelf(c.escala)); } return c.pat; }
+function pintaRotondes(g, m, X0, Y0, X1, Y1) {
+  for (const r of m.rotondes) {
+    if (r.x + 4 < X0 || r.x - 3 > X1 || r.y + 4 < Y0 || r.y - 3 > Y1) continue;
+    const cx = (r.x + 1) * TS, cy = (r.y + 1) * TS, x0 = (r.x - 2) * TS, y0 = (r.y - 2) * TS;
+    g.save(); g.beginPath(); g.rect(x0, y0, 6 * TS, 6 * TS); g.clip();
+    g.fillStyle = patro(g, 'gespa'); g.fillRect(x0, y0, 6 * TS, 6 * TS);
+    g.fillStyle = patro(g, 'asfalt');
+    const [w, e, n, sd] = r.brac;
+    if (w) g.fillRect(x0, cy - TS, 2 * TS, 2 * TS); if (e) g.fillRect(cx + TS, cy - TS, 2 * TS, 2 * TS);
+    if (n) g.fillRect(cx - TS, y0, 2 * TS, 2 * TS); if (sd) g.fillRect(cx - TS, cy + TS, 2 * TS, 2 * TS);
+    g.beginPath(); g.arc(cx, cy, 2.85 * TS, 0, TAU); g.fill();
+    g.strokeStyle = '#a8a397'; g.lineWidth = 6; g.beginPath(); g.arc(cx, cy, 2.85 * TS, 0, TAU); g.stroke();
+    g.strokeStyle = 'rgba(238,234,222,.85)'; g.lineWidth = 3; g.setLineDash([18, 14]); g.beginPath(); g.arc(cx, cy, 1.95 * TS, 0, TAU); g.stroke(); g.setLineDash([]);
+    g.fillStyle = patro(g, 'gespa'); g.beginPath(); g.arc(cx, cy, 1.05 * TS, 0, TAU); g.fill();
+    g.strokeStyle = '#c9c3b5'; g.lineWidth = 7; g.stroke(); g.strokeStyle = '#8e897f'; g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, 1.05 * TS + 3, 0, TAU); g.stroke();
+    // a cada entrada, la línia de "cediu el pas"
+    g.fillStyle = 'rgba(240,240,235,.9)';
+    for (let k = 0; k < 4; k++) { if (w) g.fillRect(cx - 2.9 * TS + 4, cy + 6 + k * 14, 4, 8); if (e) g.fillRect(cx + 2.9 * TS - 8, cy - 14 - k * 14, 4, 8); if (n) g.fillRect(cx - 14 - k * 14, cy - 2.9 * TS + 4, 8, 4); if (sd) g.fillRect(cx + 6 + k * 14, cy + 2.9 * TS - 8, 8, 4); }
+    g.restore();
+  }
+}
 // Túnels: la carretera a la fosca, amb parets de formigó, llums al sostre i la boca del túnel a cada punta
 function pintaTunels(g, m, X0, Y0, X1, Y1) {
   const T = m.tunel, es = (x, y) => x >= 0 && y >= 0 && x < MW && y < MH && T[y * MW + x], carr = (x, y) => m[y] && m[y][x] === C.CARRER;
@@ -1836,6 +1894,81 @@ const TAXI_VIC = { x: TAXI.x + VIC.x0 * TS, y: TAXI.y + VIC.y0 * TS };
 const VIC_ENTRADA = { x: (VIC.x0 + 1) * TS, y: (C25.y + 1) * TS }; // on la C-25 entra a Vic
 function activaCiutat(nom) { ciutatActiva = nom; ({ mapa, caselles, bancs, carrers, minimapa, arbres, aigues } = CIUTATS[nom]); MW = CIUTATS[nom].mw; MH = CIUTATS[nom].mh; }
 activaCiutat('capellades');
+// Semàfors a les cruïlles dels pobles (o STOP) i senyals a les carreteres (límits de velocitat, cediu el pas)
+const SEMAFORS = new Map(), SEM_T = new Map(), SENYALS = [];
+function preparaSenyals() {
+  const c = CIUTATS.capellades, m = c.mapa, W = c.mw, H = c.mh, road = (x, y) => m[y] && m[y][x] === C.CARRER && !(m.auto[y] && m.auto[y][x]);
+  const zones = [{ x0: 0, y0: 0, x1: 42, y1: 30 }, { x0: BCN.x0, y0: BCN.y0, x1: BCN.x1 + 1, y1: BCN.y1 + 1 }, { x0: VIC.x0, y0: VIC.y0, x1: VIC.x0 + VIC.w, y1: VIC.y0 + VIC.h }, ...POBLES.map(p => ({ x0: p.x, y0: p.y, x1: p.x + p.w, y1: p.y + p.h }))];
+  for (const z of zones) for (let iy = z.y0; iy < z.y1 - 1; iy += 7) for (let ix = z.x0; ix < z.x1 - 1; ix += 8) {
+    if (!road(ix, iy) || !road(ix + 1, iy) || !road(ix, iy + 1) || !road(ix + 1, iy + 1)) continue;
+    const brac = [road(ix - 1, iy) && road(ix - 1, iy + 1), road(ix + 2, iy) && road(ix + 2, iy + 1), road(ix, iy - 1) && road(ix + 1, iy - 1), road(ix, iy + 2) && road(ix + 1, iy + 2)];
+    if (brac.filter(Boolean).length < 3 || !(brac[0] || brac[1]) || !(brac[2] || brac[3])) continue;
+    const h = hash(ix * 3, iy * 7), S = { ix, iy, off: h * 16, llums: h < .6, stop: h >= .6 };
+    SEMAFORS.set(ix + ',' + iy, S); for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) SEM_T.set((iy + dy) * W + ix + dx, S);
+    if (S.stop) { if (brac[0]) SENYALS.push({ x: ix * TS - 10, y: (iy + 2) * TS + 12, tipus: 'stop' }); if (brac[1]) SENYALS.push({ x: (ix + 2) * TS + 10, y: iy * TS - 6, tipus: 'stop' }); }
+  }
+  // límits de velocitat: 120 a les autopistes, 90 a les carreteres i 50 a l'entrada dels pobles
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+    const a = m.auto[y][x];
+    if (a === 1 && x % 70 === 35 && !(m.auto[y - 1] && m.auto[y - 1][x])) SENYALS.push({ x: (x + .5) * TS, y: y * TS - 8, tipus: '120' });
+    if (a === 14 && y % 70 === 35 && m[y][x + 1] !== C.CARRER) SENYALS.push({ x: (x + 1) * TS + 10, y: (y + .5) * TS, tipus: '120' });
+    if (a || m[y][x] !== C.CARRER || dinsPoble(x, y) || dinsVicT(x, y) || (m.tunel && m.tunel[y * W + x])) continue;
+    if (x % 46 === 23 && road(x, y + 1) && !road(x, y - 1) && road(x - 3, y) && road(x + 3, y) && m[y - 1][x] !== C.EDIF) SENYALS.push({ x: (x + .5) * TS, y: y * TS - 4, tipus: '90' });
+    if (y % 46 === 23 && road(x + 1, y) && !road(x - 1, y) && road(x, y - 3) && road(x, y + 3) && m[y][x - 1] !== C.EDIF) SENYALS.push({ x: x * TS - 8, y: (y + .5) * TS, tipus: '90' });
+  }
+  for (const p of POBLES) for (const [x, y, sx, sy] of [...Array(p.w).keys()].flatMap(i => [[p.x + i, p.y - 1, 0, -1], [p.x + i, p.y + p.h, 0, 1]]).concat([...Array(p.h).keys()].flatMap(i => [[p.x - 1, p.y + i, -1, 0], [p.x + p.w, p.y + i, 1, 0]]))) {
+    if (!road(x, y) || !road(x + sx, y + sy)) continue;
+    if (sy && road(x - 1, y)) continue; if (sx && road(x, y - 1)) continue; // només un per carretera
+    SENYALS.push({ x: (x + (sy ? -.15 : .5 + sx)) * TS, y: (y + (sx ? -.1 : .5 + sy * .5)) * TS, tipus: '50', poble: p.nom });
+  }
+  for (const r of m.rotondes) { const [w, e, n, sd] = r.brac, cx = (r.x + 1) * TS, cy = (r.y + 1) * TS;
+    if (w) SENYALS.push({ x: cx - 3.2 * TS, y: cy + 1.2 * TS, tipus: 'cediu' }); if (e) SENYALS.push({ x: cx + 3.2 * TS, y: cy - 1.1 * TS, tipus: 'cediu' });
+    if (n) SENYALS.push({ x: cx - 1.2 * TS, y: cy - 3.1 * TS, tipus: 'cediu' }); if (sd) SENYALS.push({ x: cx + 1.2 * TS, y: cy + 3.3 * TS, tipus: 'cediu' }); }
+}
+const llestSenyals = () => { if (!preparaSenyals.fet) { preparaSenyals.fet = true; preparaSenyals(); } }; // es preparen el primer cop que calen
+const semaforA = (tx, ty) => (!J || J.zona || J.ciutat !== 'capellades') ? null : (llestSenyals(), SEM_T.get(ty * MW + tx) || null);
+// el cicle dura 16 s: primer passen els que van en horitzontal i després els que van en vertical
+function llumSemafor(S, eix) {
+  if (!S || !S.llums) return 'verd';
+  const t = (performance.now() / 1000 + S.off) % 16;
+  return eix === 'h' ? (t < 6.5 ? 'verd' : t < 8 ? 'groc' : 'vermell') : (t < 8 ? 'vermell' : t < 14.5 ? 'verd' : 'groc');
+}
+function dibuixaPalSemafor(g, x, y, llum) {
+  g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(x + 4, y + 2, 7, 3, 0, 0, TAU); g.fill();
+  g.fillStyle = '#3a3d42'; g.fillRect(x - 2, y - 44, 4, 44);
+  g.fillStyle = '#16181b'; rodaRect(g, x - 7, y - 72, 14, 30, 3); g.fill();
+  for (const [nom, col, dy] of [['vermell', '#ff3b2f', -65], ['groc', '#ffc21a', -57], ['verd', '#2fe07a', -49]]) {
+    const on = llum === nom; g.fillStyle = on ? col : 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(x, y + dy, 3.6, 0, TAU); g.fill();
+    if (on) { g.fillStyle = col + '40'; g.beginPath(); g.arc(x, y + dy, 9, 0, TAU); g.fill(); }
+  }
+}
+function dibuixaSenyal(g, s) {
+  const x = s.x, y = s.y, cy = y - 50;
+  g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(x + 3, y + 2, 6, 3, 0, 0, TAU); g.fill();
+  g.fillStyle = '#8d9096'; g.fillRect(x - 1.5, y - 40, 3, 40);
+  if (s.tipus === 'stop') {
+    g.fillStyle = '#fff'; g.beginPath(); for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; g.lineTo(x + Math.cos(a) * 13, cy + Math.sin(a) * 13); } g.closePath(); g.fill();
+    g.fillStyle = '#c8102e'; g.beginPath(); for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; g.lineTo(x + Math.cos(a) * 11.5, cy + Math.sin(a) * 11.5); } g.closePath(); g.fill();
+    g.fillStyle = '#fff'; g.font = 'bold 7px sans-serif'; g.textAlign = 'center'; g.fillText('STOP', x, cy + 2.5); g.textAlign = 'left';
+  } else if (s.tipus === 'cediu') {
+    g.fillStyle = '#c8102e'; g.beginPath(); g.moveTo(x - 13, cy - 10); g.lineTo(x + 13, cy - 10); g.lineTo(x, cy + 12); g.closePath(); g.fill();
+    g.fillStyle = '#fff'; g.beginPath(); g.moveTo(x - 8, cy - 7); g.lineTo(x + 8, cy - 7); g.lineTo(x, cy + 6); g.closePath(); g.fill();
+  } else {
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(x, cy, 12.5, 0, TAU); g.fill(); g.strokeStyle = '#c8102e'; g.lineWidth = 3.5; g.beginPath(); g.arc(x, cy, 10.5, 0, TAU); g.stroke();
+    g.fillStyle = '#111'; g.font = 'bold ' + (s.tipus.length > 2 ? 8 : 9) + 'px sans-serif'; g.textAlign = 'center'; g.fillText(s.tipus, x, cy + 3.2); g.textAlign = 'left';
+    if (s.poble) { g.font = 'bold 7px sans-serif'; const w = g.measureText(s.poble).width + 10; g.fillStyle = '#fff'; g.fillRect(x - w / 2, cy - 30, w, 12); g.strokeStyle = '#111'; g.lineWidth = 1; g.strokeRect(x - w / 2, cy - 30, w, 12); g.fillStyle = '#111'; g.textAlign = 'center'; g.fillText(s.poble, x, cy - 21); g.textAlign = 'left'; }
+  }
+}
+function afegeixSenyals(ents, vist) {
+  llestSenyals();
+  for (const S of SEMAFORS.values()) {
+    if (!vist({ x: (S.ix + 1) * TS, y: (S.iy + 1) * TS })) continue;
+    if (!S.llums) continue;
+    const h = llumSemafor(S, 'h'), v = llumSemafor(S, 'v'), x0 = S.ix * TS, y0 = S.iy * TS, x1 = (S.ix + 2) * TS, y1 = (S.iy + 2) * TS;
+    for (const [x, y, l] of [[x0 - 8, y1 + 10, h], [x1 + 8, y0 - 4, h], [x0 - 8, y0 - 4, v], [x1 + 8, y1 + 10, v]]) ents.push([y, () => dibuixaPalSemafor(cx, x, y, l)]);
+  }
+  for (const sn of SENYALS) if (vist(sn)) ents.push([sn.y, () => dibuixaSenyal(cx, sn)]);
+}
 
 const tileA = (px, py) => { const x = Math.floor(px / TS), y = Math.floor(py / TS); return (x < 0 || y < 0 || x >= MW || y >= MH) ? C.EDIF : mapa[y][x]; };
 const lliure = (px, py, r) => transitable(tileA(px - r, py - r)) && transitable(tileA(px + r, py - r)) && transitable(tileA(px - r, py + r)) && transitable(tileA(px + r, py + r));
@@ -4026,6 +4159,15 @@ function explotaSubineta(s) {
 
 function actualitzaVehicles(dt) {
   const j = J.jug;
+  if (j.cotxe && !J.zona) { // t'has saltat un semàfor en vermell?
+    const S = semaforA(Math.floor(j.x / TS), Math.floor(j.y / TS)), k = S ? S.ix + ',' + S.iy : null;
+    if (S && S.llums && k !== J.ultimaCruilla && Math.abs(j.cotxe.vel || 0) > 80 && llumSemafor(S, Math.abs(Math.cos(j.cotxe.ang || 0)) > .7 ? 'h' : 'v') === 'vermell') {
+      const poli = !J.pacific && (J.agents.some(a => !a.carceller && Math.hypot(a.x - j.x, a.y - j.y) < 900) || J.cotxes.some(c => c.tipus === 'policia' && Math.hypot(c.x - j.x, c.y - j.y) < 1100));
+      textFlotant(j.x, j.y - 95, poli ? "T'HAS SALTAT UN SEMÀFOR! LA POLICIA T'HA VIST" : 'SEMÀFOR EN VERMELL!', poli ? '#ff5c5c' : '#ffd23f', 9);
+      if (poli) { liala(); J.cerca = Math.min(5, (J.cerca || 0) + .9); so('xiulet'); }
+    }
+    J.ultimaCruilla = k;
+  }
   // El Vilamovil apareix de tant en tant
   if (!J.vila && (J.tVila -= dt) <= 0) { J.vila = nouCotxe('vilamovil', 450); J.vila.color = '#f7f7f2'; anunci('HA ARRIBAT EL VILAMOVIL!', 1.6); so('pec'); }
   if (granMon()) J.cotxes = J.cotxes.filter(c => c.tipus !== 'normal' || Math.hypot(c.x - j.x, c.y - j.y) < 3800);
@@ -4074,7 +4216,7 @@ function actualitzaVehicles(dt) {
         mou(c, c.fx * 260, c.fy * 260, dt, 4);
         if (Math.hypot(j.x - c.x, j.y - c.y) < 42 && j.invul <= 0) { c.espera = 0; so('xoc'); textFlotant(c.x, c.y - 70, 'ET HE AVISAT!', '#ff5c5c', 11); return ferit("T'HA ATROPELLAT!"); }
       } else if (davant) { if ((c.pec -= dt) <= 0) { c.pec = 1.6; so('pec'); textFlotant(c.x, c.y - 50, c.espera > 4 ? "APARTA'T O ET XAFO!" : c.espera > 2 ? 'APARTA!' : 'PEC PEC!', c.espera > 4 ? '#ff9a9a' : '#fff', 9); } }
-      else if (!segueixCami(c, Math.min(modelDe(c).punta * KMH, c.tipus === 'policia' ? 360 : velVia(c)), dt)) rutaCotxe(c);
+      else if (c.tipus === 'normal' ? !condueixNPC(c, dt) : !segueixCami(c, Math.min(modelDe(c).punta * KMH, c.tipus === 'policia' ? 360 : velVia(c)), dt)) rutaCotxe(c);
     }
     c.vel = Math.hypot(c.x - x0, c.y - y0) / dt;
     orienta(c, dt);
@@ -4178,6 +4320,42 @@ function mou(e, vx, vy, dt, r) {
   const ny = e.y + vy * dt; if (lliure(e.x, ny, r)) e.y = ny;
 }
 
+// El punt del camí, però al carril de la dreta (a les autopistes, els camions pel de fora)
+function puntCarril(px, py, c) {
+  const tx = Math.floor(px / TS), ty = Math.floor(py / TS), a = mapa.auto && mapa.auto[ty] ? mapa.auto[ty][tx] : 0, rd = (x, y) => mapa[y] && mapa[y][x] === C.CARRER;
+  let dx = px - c.x, dy = py - c.y; if (Math.abs(dx) >= Math.abs(dy)) { dx = Math.sign(dx); dy = 0; } else { dy = Math.sign(dy); dx = 0; }
+  const k = a && a !== 99 && c.model === 'camio' ? 1.5 : .5;
+  if (dx) {
+    const mig = a && a < 10 ? (ty - (a - 1) + 2) * TS : rd(tx, ty + 1) && !rd(tx, ty - 1) ? (ty + 1) * TS : rd(tx, ty - 1) && !rd(tx, ty + 1) ? ty * TS : null;
+    return mig === null || (a && a > 10) ? [px, py] : [px, mig + dx * TS * k];
+  }
+  const mig = a > 10 && a < 99 ? (tx - (a - 11) + 2) * TS : rd(tx + 1, ty) && !rd(tx - 1, ty) ? (tx + 1) * TS : rd(tx - 1, ty) && !rd(tx + 1, ty) ? tx * TS : null;
+  return mig === null || (a && a < 10) ? [px, py] : [mig - dy * TS * k, py];
+}
+// Un conductor normal: respecta els semàfors, va pel seu carril, no passa del límit i guarda la distància
+function condueixNPC(c, dt) {
+  if (!c.cami.length) return false;
+  const [nx, ny] = c.cami[0], S = semaforA(Math.floor(nx / TS), Math.floor(ny / TS));
+  let atura = false;
+  if (S && S !== semaforA(Math.floor(c.x / TS), Math.floor(c.y / TS)) && llumSemafor(S, Math.abs(nx - c.x) > Math.abs(ny - c.y) ? 'h' : 'v') !== 'verd') atura = true;
+  c.ignora = Math.max(0, (c.ignora || 0) - dt);
+  let perCotxe = false;
+  if (!atura && !c.ignora) for (const o of [...J.cotxes, J.jug.cotxe, J.vila, J.carro, J.bestia]) {
+    if (!o || o === c) continue; const dx = o.x - c.x, dy = o.y - c.y, d = Math.hypot(dx, dy), mateix = o.fx * c.fx + o.fy * c.fy;
+    if (d < 115 && d > 1 && (dx * c.fx + dy * c.fy) / d > .88 && (mateix > .3 || ((o.vel || 0) < 20 && mateix > -.2))) { atura = perCotxe = true; break; }
+  }
+  c.esperaCotxe = perCotxe ? (c.esperaCotxe || 0) + dt : 0;
+  if (c.esperaCotxe > 4) { c.esperaCotxe = 0; c.ignora = 1.5; } // no es queden encallats per sempre: al cap d'una estona passen
+  const vmax = Math.min(modelDe(c).punta * KMH, velVia(c)), obj = atura ? 0 : vmax;
+  c.va = c.va || 0; c.va += Math.sign(obj - c.va) * Math.min(Math.abs(obj - c.va), (obj > c.va ? 170 : 700) * dt);
+  if (c.va < 2) return true;
+  const [lx, ly] = puntCarril(nx, ny, c), dx = lx - c.x, dy = ly - c.y, d = Math.hypot(dx, dy);
+  if (d < 8 + c.va * dt) { c.cami.shift(); return true; }
+  const v = Math.min(c.va, d / dt); c.x += dx / d * v * dt; c.y += dy / d * v * dt;
+  c.fx += (dx / d - c.fx) * Math.min(1, dt * 7); c.fy += (dy / d - c.fy) * Math.min(1, dt * 7);
+  const n = Math.hypot(c.fx, c.fy) || 1; c.fx /= n; c.fy /= n;
+  return true;
+}
 function segueixCami(e, vel, dt) {
   if (!e.cami.length) return false;
   const [tx, ty] = e.cami[0], dx = tx - e.x, dy = ty - e.y, d = Math.hypot(dx, dy);
@@ -5423,6 +5601,7 @@ function dibuixa() {
   const vist = e => e.x > camX - 60 && e.x < camX + W / zoom + 60 && e.y > camY - 20 && e.y < camY + H / zoom + 80; // només el que surt a la pantalla
   const vent = a => Math.sin(t * 1.3 + a.x * .004) * .04 + Math.sin(t * 3.4 + a.y * .01) * .015;
   for (const a of arbres) if (vist(a)) ents.push([a.y + 18, () => pintaCopa(cx, a.x, a.y, a.h, vent(a))]);
+  if (!J.zona && J.ciutat === 'capellades') afegeixSenyals(ents, vist); // semàfors i senyals de trànsit
   J.clons.forEach(c => ents.push([c.y, () => { cx.globalAlpha = .55; const jr = J.jug, gx = jr.x, gy = jr.y, gp = jr.pas, gm = jr.mou; Object.assign(jr, { x: c.x, y: c.y, pas: c.pas, mou: true }); dibuixaJugador(cx); Object.assign(jr, { x: gx, y: gy, pas: gp, mou: gm }); cx.globalAlpha = 1; }]));
   J.sorpreses.forEach(e => SORPRESES[e.tipus].dibuixa && ents.push([e.y, escalat(e, () => SORPRESES[e.tipus].dibuixa(cx, e), e.tipus === 'gallina' || e.tipus === 'gat' ? 1.5 : 1.2)]));
   J.ous.forEach(o => ents.push([o.y, () => { cx.fillStyle = '#fff7e0'; cx.beginPath(); cx.ellipse(o.x, o.y - 18, 6, 8, 0, 0, TAU); cx.fill(); }]));
