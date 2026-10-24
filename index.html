@@ -1108,10 +1108,11 @@ function fesRepetible(img, N, filtre) {
   ga.putImageData(da, 0, 0); return a;
 }
 const FOTOS_TEX = {};
-for (const [nom, src, N, filtre] of [['gespa', 'tex-gespa.jpg', 320, 'saturate(.8) brightness(.9)'], ['asfalt', 'tex-asfalt.jpg', 256, 'brightness(1.05) contrast(.9)']]) {
+// escala real: una casella (64 px) són uns 3 m; la foto d'herba fa ~1,5 m i la d'asfalt ~1 m
+for (const [nom, src, N, filtre, mida] of [['gespa', 'tex-gespa.jpg', 512, 'saturate(.8) brightness(.9)', 34], ['asfalt', 'tex-asfalt.jpg', 384, 'brightness(1.05) contrast(.9)', 22]]) {
   const im = new Image();
   im.onload = () => {
-    FOTOS_TEX[nom] = { c: fesRepetible(im, N, filtre) };
+    FOTOS_TEX[nom] = { c: fesRepetible(im, N, filtre) }; FOTOS_TEX[nom].c.escala = mida / N;
     if (TEXT) { TEXT[nom] = FOTOS_TEX[nom].c; }
     // es tornen a pintar els trossos del mapa (i el 3D) amb la textura nova
     if (typeof CIUTATS !== 'undefined') for (const k in CIUTATS) CIUTATS[k].trossos.clear();
@@ -1121,7 +1122,7 @@ for (const [nom, src, N, filtre] of [['gespa', 'tex-gespa.jpg', 320, 'saturate(.
 }
 function texturaCasella(g, nom, X, Y) {
   const c = textures()[nom];
-  if (!c.pat || c.ctx !== g) { c.pat = g.createPattern(c, 'repeat'); c.ctx = g; }
+  if (!c.pat || c.ctx !== g) { c.pat = g.createPattern(c, 'repeat'); c.ctx = g; if (c.escala) c.pat.setTransform(new DOMMatrix().scaleSelf(c.escala)); }
   g.fillStyle = c.pat; g.fillRect(X, Y, TS, TS);
 }
 // Variació a gran escala (taques més clares i més fosques) perquè el terreny no sembli repetit
