@@ -1089,9 +1089,36 @@ function textures() {
     for (let i = 0; i < 500; i++) { g.fillStyle = r(i, 1) < .5 ? 'rgba(255,255,255,.9)' : 'rgba(150,175,205,.35)'; g.fillRect(r(i, 2) * n, r(i, 3) * n, 1 + (r(i, 4) < .2), 1); }
   });
   TEXT = { gespa, asfalt, roca, sorra, terra, aigua, mar, neu };
+  for (const nom in FOTOS_TEX) if (FOTOS_TEX[nom].c) TEXT[nom] = FOTOS_TEX[nom].c; // les textures de foto, si ja han carregat
   return TEXT;
 }
 // Omple una casella amb la textura, alineada amb el món perquè no es notin les juntes
+// ---------- Textures fetes a partir de fotos (herba i asfalt) ----------
+// Es fan repetibles barrejant la foto amb una còpia desplaçada mitja mida: les vores encaixen i no es veuen juntes
+function fesRepetible(img, N, filtre) {
+  const a = document.createElement('canvas'); a.width = a.height = N; const ga = a.getContext('2d');
+  if (filtre) ga.filter = filtre; ga.drawImage(img, 0, 0, N, N); ga.filter = 'none';
+  const b = document.createElement('canvas'); b.width = b.height = N; const gb = b.getContext('2d'), h = N / 2;
+  for (const [dx, dy] of [[-h, -h], [h, -h], [-h, h], [h, h]]) gb.drawImage(a, dx, dy);
+  const da = ga.getImageData(0, 0, N, N), db = gb.getImageData(0, 0, N, N), o = da.data, p = db.data, vora = N * .28;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const e = Math.min(x, y, N - 1 - x, N - 1 - y), k = Math.min(1, e / vora), w = k * k * (3 - 2 * k), i = (y * N + x) * 4;
+    for (let c = 0; c < 3; c++) o[i + c] = o[i + c] * w + p[i + c] * (1 - w);
+  }
+  ga.putImageData(da, 0, 0); return a;
+}
+const FOTOS_TEX = {};
+for (const [nom, src, N, filtre] of [['gespa', 'tex-gespa.jpg', 320, 'saturate(.8) brightness(.9)'], ['asfalt', 'tex-asfalt.jpg', 256, 'brightness(1.05) contrast(.9)']]) {
+  const im = new Image();
+  im.onload = () => {
+    FOTOS_TEX[nom] = { c: fesRepetible(im, N, filtre) };
+    if (TEXT) { TEXT[nom] = FOTOS_TEX[nom].c; }
+    // es tornen a pintar els trossos del mapa (i el 3D) amb la textura nova
+    if (typeof CIUTATS !== 'undefined') for (const k in CIUTATS) CIUTATS[k].trossos.clear();
+    if (typeof M3D !== 'undefined' && M3D && M3D.invalida) M3D.invalida('');
+  };
+  im.src = src;
+}
 function texturaCasella(g, nom, X, Y) {
   const c = textures()[nom];
   if (!c.pat || c.ctx !== g) { c.pat = g.createPattern(c, 'repeat'); c.ctx = g; }
