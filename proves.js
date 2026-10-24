@@ -174,6 +174,24 @@ export async function executa() {
     const e = punta('esportiu'), c = punta('camio'), u = punta('utilitari'); v.model = undefined;
     return (e >= 220 && e <= 232 && c <= 106 && c > 80 && u > 150 && u <= 171) || 'esportiu ' + e + ', camió ' + c + ', utilitari ' + u;
   });
+  prova("Si la lies molt arriba l'exèrcit, i un soldat et porta a la presó de l'illa", () => {
+    const j = J.jug, ab = { liada: J.liada, cerca: J.cerca, gravetat: J.gravetat, agents: J.agents, cotxes: J.cotxes }; J.zona = null; J.pacific = false;
+    J.liada = true; J.cerca = 5; J.gravetat = 15; J.exercit = null; actualitzaExercit(.1); if (!J.exercit) return "no ve l'exèrcit";
+    const c = nouCotxe('militar', 950); c.x = j.x + 200; c.y = j.y; J.cotxes = [c]; actualitzaVehicles(.05);
+    const soldats = J.agents.filter(a => a.militar); if (soldats.length < 4) return 'soldats: ' + soldats.length;
+    j.invul = 0; soldats[0].x = j.x + 10; soldats[0].y = j.y; soldats[0].glacat = 0; estat = 'joc'; actualitzaVehicles(.05);
+    const ok = estat === 'busted'; J.continuaDetencio = null; estat = 'joc'; Object.assign(J, ab); J.exercit = null; return ok || 'no et detenen';
+  });
+  prova("De la presó de l'illa només se surt amb les claus, la porta i la barca (o complint la condemna)", () => {
+    const j = J.jug; entraIlla(); const I = J.illa;
+    try {
+      j.x = 30 * TS; j.y = 31.4 * TS; const tancada = accioPropera(); if (!tancada || tancada.boto !== 'TANCADA') return 'la porta no és tancada';
+      j.x = 30 * TS; j.y = 20 * TS; I.pati = false; I.tPati = 99; const g = J.agents[1]; g.x = j.x - 100; g.y = j.y; g.ruta = [{ x: g.x, y: g.y }]; g.r = 0; g.fx = 1; g.fy = 0; g.glacat = 0; j.invul = 0; actualitzaGuardiaIlla(g, .05);
+      if (!dinsCellaIlla(j) || I.condemna <= 240) return "el guàrdia no t'ha enxampat";
+      I.condemna = .01; actualitza(.05); const lliure = !J.illa; acabaVideo(); estat = 'joc';
+      return (lliure && J.zona === null && Math.hypot(j.x - PORT_ILLA.x, j.y - PORT_ILLA.y) < 50) || 'zona ' + J.zona;
+    } finally { if (J.zona === 'illa') { J.illa = null; sortirZona(); } if (VID) acabaVideo(); estat = 'joc'; }
+  });
   prova('Hi ha semàfors, senyals i rotondes, i el trànsit para en vermell', () => {
     llestSenyals(); const S = [...SEMAFORS.values()].find(s => s.llums); if (!S || SENYALS.length < 50 || !mapa.rotondes.length) return 'semàfors ' + SEMAFORS.size + ', senyals ' + SENYALS.length;
     const eix = llumSemafor(S, 'h') === 'vermell' ? 'h' : 'v', c = nouCotxe('normal', 300); c.model = 'berlina';
