@@ -220,6 +220,28 @@ export async function executa() {
     const ok = J.ramonada && J.ramonada.aliats.length === 4 && !J.bigRamonada && J.ramonada.t === 60;
     J.ramonada.t = .01; actualitzaRamonada(.05); return (ok && !J.ramonada) || 'ramonada ' + JSON.stringify(J.ramonada && J.ramonada.t);
   });
+  prova('El teu cotxe no travessa els altres: hi xoca i tots dos es fan malbé; amb molts trets explota', () => {
+    const j = J.jug; j.invul = 99; const v = vehicleAparcat('aparcat', 300 * TS, 16.5 * TS, 0); v.model = 'berlina'; v.tipus = 'robat'; v.ang = 0; v.va = 120 * KMH; j.cotxe = v; v.estat = 'conduit'; j.x = v.x; j.y = v.y;
+    const o = vehicleAparcat('aparcat', 302.5 * TS, 16.5 * TS, 0); o.model = 'furgoneta'; const ab = J.aparcats; J.aparcats = [v, o];
+    for (let i = 0; i < 30; i++) condueix(v, j, 1, 0, 1, 1 / 30);
+    const ok = v.x < o.x && v.salut < 100 && o.salut < 100; let n = 0; while (!v.explotat && n++ < 100) danyaCotxe(v, 2.5);
+    J.aparcats = ab; j.cotxe = null; return (ok && v.explotat && n > 20) || 'davant ' + (v.x < o.x) + ', salut ' + v.salut + ', trets ' + n;
+  });
+  prova('Matar una persona és un delicte molt greu; els animals salvatges es poden caçar', () => {
+    const p = novaParella('passeja'); J.parelles.push(p); const g0 = J.gravetat; J.pacific = false; mataParella(p, 'tret');
+    const a = { tipus: 'senglar', x: 0, y: 0, vida: 3 }; const p0 = J.punts; mataAnimal(a);
+    return (p.estat === 'mort' && J.gravetat - g0 === 8 && J.cerca === 5 && a.mort && J.punts - p0 === 150) || 'gravetat +' + (J.gravetat - g0) + ', cerca ' + J.cerca;
+  });
+  prova('La gent no camina per les carreteres ni per les autopistes', () => {
+    const j = J.jug; j.x = 245 * TS; j.y = 50 * TS; for (let i = 0; i < 40; i++) { const c = casellaVianant(300, 2000), tx = Math.floor(c.x / TS), ty = Math.floor(c.y / TS); if (mapa[ty][tx] === C.CARRER && !carrerVianant(tx, ty)) return 'casella de carretera ' + tx + ',' + ty; }
+    return !carrerVianant(200, 15) || "l'autopista es pot caminar";
+  });
+  prova("Al garatge del Ramon s'hi entra amb la R i se'n pot treure una moto d'enduro", () => {
+    const j = J.jug; J.zona = null; j.cotxe = null; j.x = PORTA_GARATGE.x; j.y = PORTA_GARATGE.y - 20; if (!portaGaratgeProper()) return 'no és a prop de la porta';
+    entraGaratge(); if (J.zona !== 'garatge') return 'zona ' + J.zona;
+    const e = exposicioGaratge().find(e => e.model === 'enduro'); j.x = e.x; j.y = e.y + 50; const ac = accioPropera(); if (!ac || ac.boto !== 'TREURE') { sortirZona(); return 'acció ' + (ac && ac.boto); } ac.fer();
+    const ok = !J.zona && j.cotxe && j.cotxe.model === 'enduro'; baixaVila(); return ok || 'no hi vas a sobre';
+  });
   prova('Hi ha semàfors, senyals i rotondes, i el trànsit para en vermell', () => {
     llestSenyals(); const S = [...SEMAFORS.values()].find(s => s.llums); if (!S || SENYALS.length < 50 || !mapa.rotondes.length) return 'semàfors ' + SEMAFORS.size + ', senyals ' + SENYALS.length;
     const eix = llumSemafor(S, 'h') === 'vermell' ? 'h' : 'v', c = nouCotxe('normal', 300); c.model = 'berlina';
