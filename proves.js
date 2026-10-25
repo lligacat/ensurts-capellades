@@ -1,7 +1,7 @@
 // Proves automàtiques del joc. Obre la pàgina amb ?proves al final de l'adreça i els resultats surten a la pantalla i a la consola.
 // Fan servir les funcions i l'estat globals del joc, i deixen el moneder i la botiga tal com estaven.
 
-const CLAUS = ['ensurts-tir', 'ensurts-ralli-millor', 'ensurts-moneder', 'ensurts-skins', 'ensurts-explosions', 'ensurts-missions', 'ensurts-historia', 'ensurts-mode', 'ensurts-paquets', 'ensurts-garatge'];
+const CLAUS = ['ensurts-tir', 'ensurts-ralli-millor', 'ensurts-moneder', 'ensurts-skins', 'ensurts-explosions', 'ensurts-missions', 'ensurts-historia', 'ensurts-mode', 'ensurts-paquets', 'ensurts-garatge', 'ensurts-canvi'];
 
 export async function executa() {
   const resultats = [], guardat = Object.fromEntries(CLAUS.map(k => [k, localStorage.getItem(k)]));
@@ -199,6 +199,26 @@ export async function executa() {
     const c = J.aparcats.find(c => c.tipus === 'propi' && c.model === 'skyline'), pl = placesGaratge()[0];
     if (!c || Math.hypot(c.x - pl.x, c.y - pl.y) > 5 || moneder.get() !== 3000) return 'cotxe ' + !!c + ', moneder ' + moneder.get();
     J.aparcats = []; posaAparcats(); return (J.aparcats.some(c => c.tipus === 'propi' && c.model === 'skyline') && accioConcessionari(e).boto === 'TEU') || 'no hi és a la partida següent';
+  });
+  prova('Canvi manual dels cotxes de tuning: embragatge, marxes seqüencials, el motor es cala i arriba a la punta', () => {
+    const j = J.jug; localStorage.setItem('ensurts-canvi', 'manual'); document.body.classList.remove('tactil');
+    const v = vehicleAparcat('propi', 120 * TS, 16.5 * TS, 0); v.model = 'supra'; j.cotxe = v; v.estat = 'conduit'; v.ang = 0; v.va = 0; v.benzina = 100; j.x = v.x; j.y = v.y;
+    const pas = n => { for (let i = 0; i < n; i++) { condueix(v, j, 0, 0, 0, 1 / 30); v.x = 120 * TS; } }, G = () => v.caixa;
+    try {
+      pas(1); canviMarxa(1); if (G().marxa !== 0) return 'ha entrat sense embragatge';
+      tecles.KeyE = true; canviMarxa(3); if (G().marxa !== 0) return 'no és seqüencial';
+      canviMarxa(1); tecles.KeyW = true; pas(10); tecles.KeyE = false; pas(60); if (Math.abs(v.va) / KMH < 40) return 'no surt: ' + Math.round(v.va / KMH);
+      for (const m of [2, 3, 4, 5, 6]) { tecles.KeyE = true; canviMarxa(m); pas(2); tecles.KeyE = false; pas(m * 90); }
+      const punta = Math.abs(v.va) / KMH; tecles.KeyW = false; tecles.KeyS = true; pas(300); tecles.KeyS = false;
+      return (punta > 220 && G().calat) || 'punta ' + Math.round(punta) + ', calat ' + G().calat;
+    } finally { tecles.KeyE = tecles.KeyW = tecles.KeyS = false; j.cotxe = null; localStorage.removeItem('ensurts-canvi'); }
+  });
+  prova("Espantar el Teo i l'Abril dona la BIG RAMONADA: venen els quatre monstres 1 minut", () => {
+    const j = J.jug; J.zona = null; J.bigRamonada = false; J.ramonada = null;
+    const p = novaParella('passeja'); p.especial = PARELLES_NOM.find(q => q.id === 'teoabril'); J.parelles.push(p); j.x = p.x - 40; j.y = p.y; j.recBuh = 0; j.cotxe = null; accio();
+    if (!J.bigRamonada) return 'no la dona'; activaRamonada();
+    const ok = J.ramonada && J.ramonada.aliats.length === 4 && !J.bigRamonada && J.ramonada.t === 60;
+    J.ramonada.t = .01; actualitzaRamonada(.05); return (ok && !J.ramonada) || 'ramonada ' + JSON.stringify(J.ramonada && J.ramonada.t);
   });
   prova('Hi ha semàfors, senyals i rotondes, i el trànsit para en vermell', () => {
     llestSenyals(); const S = [...SEMAFORS.values()].find(s => s.llums); if (!S || SENYALS.length < 50 || !mapa.rotondes.length) return 'semàfors ' + SEMAFORS.size + ', senyals ' + SENYALS.length;
