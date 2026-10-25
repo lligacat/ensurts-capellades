@@ -170,7 +170,7 @@ export async function executa() {
     ap.fer(); return (j.cotxe === c && J.liada) || 'no condueixes el cotxe';
   });
   prova('Cada model té la seva velocitat punta real (un esportiu arriba als 230 km/h)', () => {
-    const j = J.jug, v = j.cotxe, punta = model => { v.model = model; v.x = 200 * TS; v.y = 16.5 * TS; v.ang = 0; v.va = 0; v.benzina = 100; j.x = v.x; j.y = v.y; let max = 0; tecles.KeyW = true; for (let i = 0; i < 1000; i++) { condueix(v, j, 0, 0, 0, .03); max = Math.max(max, v.va); v.x = 200 * TS; } tecles.KeyW = false; return Math.round(max / KMH); };
+    const j = J.jug, v = j.cotxe, punta = model => { v.model = model; v.x = 200 * TS; v.y = 16.5 * TS; v.ang = 0; v.va = 0; v.benzina = 100; j.x = v.x; j.y = v.y; let max = 0; for (let i = 0; i < 1000; i++) { condueix(v, j, 1, 0, 1, .03); max = Math.max(max, v.va); v.x = 200 * TS; } return Math.round(max / KMH); };
     const e = punta('esportiu'), c = punta('camio'), u = punta('utilitari'); v.model = undefined;
     return (e >= 220 && e <= 232 && c <= 106 && c > 80 && u > 150 && u <= 171) || 'esportiu ' + e + ', camió ' + c + ', utilitari ' + u;
   });
@@ -267,7 +267,7 @@ export async function executa() {
   });
   prova('Passar per una rampa a tota velocitat fa saltar el cotxe', () => {
     const j = J.jug; if (!j.cotxe) { const a = J.aparcats.find(v => v.tipus === 'carromato'); j.x = a.x; j.y = a.y; pujaVila(); }
-    const v = j.cotxe, r = RAMPES[0]; Object.assign(v, { x: r.x - 10, y: r.y, fx: 1, fy: 0, vel: 500, salt: 0 }); j.x = v.x; j.y = v.y;
+    const v = j.cotxe, r = RAMPES[0]; Object.assign(v, { x: r.x - 10, y: r.y, fx: 1, fy: 0, vel: 80 * KMH, salt: 0 }); j.x = v.x; j.y = v.y;
     const p0 = J.punts; actualitzaRampes(.016);
     return (v.salt > 0 && J.punts - p0 === 1000) || 'salt ' + v.salt + ', punts +' + (J.punts - p0);
   });

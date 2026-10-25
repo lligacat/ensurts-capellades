@@ -3057,8 +3057,8 @@ function koAgent(a, txt = 'K.O.!') {
 }
 // Pujant una muntanya, el cotxe va més lent; baixant, més ràpid (la definició real és a la part de la muntanya)
 // Velocitat punta de cada vehicle (px/s). 4,2 px/s = 1 km/h, així el més ràpid fa 150 km/h
-// 4,2 px/s = 1 km/h. punta: km/h; acc: km/h que guanya cada segon (0-100 en 100/acc segons); L, A: mig llarg i mig ample
-const KMH = 4.2;
+// 8,4 px/s = 1 km/h (els cotxes van el doble de ràpid que abans per als mateixos km/h). punta: km/h; acc: km/h que guanya cada segon (0-100 en 100/acc segons); L, A: mig llarg i mig ample
+const KMH = 8.4;
 const MODELS = {
   utilitari: { nom: 'UTILITARI', punta: 170, acc: 10, L: 31, A: 16, forma: 'turisme' },
   berlina:   { nom: 'BERLINA', punta: 205, acc: 12, L: 37, A: 17, forma: 'turisme' },
@@ -3087,36 +3087,34 @@ const modelDe = c => (c && (MODELS[c.model] || MODEL_TIPUS[c.tipus])) || MODELS.
 const modelAtzar = () => tria(MODELS_TRANSIT);
 // Física del cotxe com un de real: accelerador, fre (i marxa enrere) i volant; cada model té la seva punta i acceleració
 function condueix(v, j, ix, iy, m, dt) {
-  const md = modelDe(v), pend = pendent(v, Math.cos(v.ang || 0), Math.sin(v.ang || 0)), benz = v.benzina > 0 ? 1 : .16;
-  const punta = md.punta * KMH * benz * Math.max(.55, pend), acc = md.acc * KMH;
+  const md = modelDe(v), benz = v.benzina > 0 ? 1 : .16;
   if (v.ang === undefined) v.ang = Math.atan2(v.fy, v.fx);
+  const pend = pendent(v, Math.cos(v.ang), Math.sin(v.ang)), punta = md.punta * KMH * benz * Math.max(.55, pend), acc = md.acc * KMH * 1.6;
   v.va = v.va || 0;
-  let gas = 0, gir = 0;
-  if (J.primera && j.ctl) { gas = j.ctl.gas; gir = j.ctl.gir; }
-  else if (joystick.actiu) { // al mòbil: assenyales on vols anar i el cotxe hi gira i hi accelera
-    if (m > .1) { const d = Math.atan2(Math.sin(Math.atan2(iy, ix) - v.ang), Math.cos(Math.atan2(iy, ix) - v.ang));
-      if (Math.abs(d) > 2.5 && v.va < 80) gas = -Math.min(1, m); else { gir = Math.max(-1, Math.min(1, d * 2.2)); gas = Math.min(1, m) * Math.max(.3, Math.cos(d)); } }
-  } else {
-    gas = ((tecles.ArrowUp || tecles.KeyW) ? 1 : 0) - ((tecles.ArrowDown || tecles.KeyS) ? 1 : 0);
-    gir = ((tecles.ArrowRight || tecles.KeyD) ? 1 : 0) - ((tecles.ArrowLeft || tecles.KeyA) ? 1 : 0);
+  // com sempre: apuntes cap on vols anar (fletxes, WASD o joystick) i el cotxe hi gira i hi accelera
+  let gas = 0, gir = 0, frena = false;
+  if (m > .1) {
+    const d = Math.atan2(Math.sin(Math.atan2(iy, ix) - v.ang), Math.cos(Math.atan2(iy, ix) - v.ang));
+    if (Math.abs(d) > 2.3 && v.va > 25 * KMH) frena = true; // cap enrere anant de pressa: primer frena
+    else { gas = Math.min(1, m) * (.45 + .55 * Math.max(0, Math.cos(d))); gir = d; }
   }
-  if (gas > 0) {
-    if (v.va < -10) v.va = Math.min(0, v.va + 520 * dt);
-    else v.va += acc * gas * Math.max(0, 1 - Math.pow(Math.max(0, v.va) / punta, 2.2)) * (v.va < 30 * KMH ? 1.25 : 1) * dt;
-  } else if (gas < 0) {
-    if (v.va > 10) { v.va = Math.max(0, v.va - 470 * dt * -gas); if (v.va > 320 && !v.frenant) { v.frenant = true; so('frenada'); } }
-    else v.va = Math.max(-punta * .22, v.va - acc * .7 * dt);
-  } else v.va -= Math.sign(v.va) * Math.min(Math.abs(v.va), (45 + Math.abs(v.va) * .18) * dt); // es deixa anar
-  if (gas >= 0) v.frenant = false;
-  if (v.va > punta) v.va = Math.max(punta, v.va - 200 * dt); // pujant o sense benzina
-  // el volant gira menys a poc a poc (cal moure's) i a molta velocitat (estabilitat)
-  const av = Math.abs(v.va), rate = 2.5 * Math.min(1, av / 110) / (1 + av / 1100) * (md.forma === 'camio' ? .6 : md.forma === 'esport' ? 1.15 : 1);
-  v.ang += gir * rate * dt * Math.sign(v.va || 1);
+  const kmh = Math.abs(v.va) / KMH;
+  if (frena) { v.va = Math.max(0, v.va - 140 * KMH * dt); if (kmh > 70 && !v.frenant) { v.frenant = true; so('frenada'); } }
+  else if (gas > 0) v.va += acc * gas * Math.max(0, 1 - Math.pow(Math.max(0, v.va) / punta, 2.2)) * dt;
+  else { v.va -= Math.sign(v.va) * Math.min(Math.abs(v.va), (14 + kmh * .3) * KMH * dt); if (!v.frenant && kmh > 90 && m <= .1) { v.frenant = true; so('frenada'); } }
+  if (gas > 0) v.frenant = false;
+  if (v.va > punta) v.va = Math.max(punta, v.va - 30 * KMH * dt); // pujant o sense benzina
+  if (gir) { // gira de pressa a poc a poc i una mica més suau a tota velocitat
+    const rate = 8 / (1 + kmh / 120) * (md.forma === 'camio' ? .55 : md.forma === 'esport' ? 1.15 : 1);
+    v.ang += Math.sign(gir) * Math.min(Math.abs(gir), rate * dt);
+    if (Math.abs(gir) > .6 && kmh > 110 && (v.tMarca = (v.tMarca || 0) - dt) <= 0) { v.tMarca = .05; (J.marques = J.marques || []).push({ x: v.x, y: v.y, ang: v.ang }); if (J.marques.length > 400) J.marques.splice(0, 60); }
+  }
   v.fx = Math.cos(v.ang); v.fy = Math.sin(v.ang);
-  if (Math.abs(gir) > .5 && av > 560 && (v.tMarca = (v.tMarca || 0) - dt) <= 0) { v.tMarca = .05; (J.marques = J.marques || []).push({ x: v.x, y: v.y, ang: v.ang }); if (J.marques.length > 400) J.marques.splice(0, 60); }
-  if (av > 1) {
-    const ax = v.x, ay = v.y, r = Math.min(24, md.A + 2); mou(v, v.fx * v.va, v.fy * v.va, dt, r);
-    if (Math.hypot(v.x - ax, v.y - ay) < av * dt * .3) { if (av > 330) { J.tremolor = Math.max(J.tremolor, Math.min(1, av / 900)); so('xoc'); textFlotant(v.x, v.y - 60, 'CRASH!', '#ff9a3d', 11); } v.va *= -.15; } // xoc: rebota una mica
+  const av = Math.abs(v.va);
+  if (av > 1) { // en passos petits perquè a tota velocitat no travessi parets
+    const r = Math.min(24, md.A + 2), n = Math.max(1, Math.ceil(av * dt / 18)); let xoc = false;
+    for (let i = 0; i < n; i++) { const bx = v.x, by = v.y; mou(v, v.fx * v.va, v.fy * v.va, dt / n, r); if (Math.hypot(v.x - bx, v.y - by) < av * dt / n * .3) { xoc = true; break; } }
+    if (xoc) { if (kmh > 45) { J.tremolor = Math.max(J.tremolor, Math.min(1, kmh / 200)); so('xoc'); textFlotant(v.x, v.y - 60, 'CRASH!', '#ff9a3d', 11); } v.va *= -.15; }
   }
 }
 function pendent(v, dx, dy) { if (J.zona || J.ciutat !== 'capellades') return 1; const dh = altTerra(v.x + dx * 40, v.y + dy * 40) - altTerra(v.x, v.y); return 1 - Math.max(-.35, Math.min(.6, dh * 2.2)); }
@@ -4328,7 +4326,7 @@ function actualitzaCarretera(dt) {
   if (v && J.liada && !J.guillem && (J.tGuillem -= dt) <= 0) {
     J.tGuillem = 30 + Math.random() * 25;
     const lat = (Math.random() - .5) * 1.2, a0 = Math.atan2(v.fy, v.fx) + lat; // ve de davant, una mica de costat
-    J.guillem = { x: v.x + Math.cos(a0) * 1250, y: v.y + Math.sin(a0) * 1250, vx: 0, vy: 0, t: 7, ang: 0, avis: 2.2 };
+    J.guillem = { x: v.x + Math.cos(a0) * 1900, y: v.y + Math.sin(a0) * 1900, vx: 0, vy: 0, t: 7, ang: 0, avis: 2.2 };
     anunci('COMPTE! VE EN GUILLEM AMB EL TOT TERRENY!', 2); so('alarma');
   }
   const gu = J.guillem;
@@ -4338,7 +4336,7 @@ function actualitzaCarretera(dt) {
     if (gu.avis > 0) { // primer l'avís (fletxa vermella); quan s'acaba, apunta on ets i ja no gira
       gu.avis -= dt; gu.ang = Math.atan2(dy, dx);
       if ((gu.tBip = (gu.tBip || 0) - dt) <= 0) { gu.tBip = .3; so('bip'); }
-      if (gu.avis <= 0) { gu.vx = dx / d * 640; gu.vy = dy / d * 640; so('motor'); so('frenada'); }
+      if (gu.avis <= 0) { gu.vx = dx / d * 1150; gu.vy = dy / d * 1150; so('motor'); so('frenada'); }
       return;
     }
     gu.x += gu.vx * dt; gu.y += gu.vy * dt; gu.ang = Math.atan2(gu.vy, gu.vx);
@@ -4511,7 +4509,7 @@ function actualitzaVehicles(dt) {
       if (d < 330) {
         c.estat = 'aparcat'; c.buit = true; c.t = 0; so('porta'); textFlotant(c.x, c.y - 70, tria(['DESPLEGUEU-VOS!', 'ALTO! EXÈRCIT!', 'ENDAVANT!']), '#b6d36b', 10);
         for (let k = 0; k < 4; k++) { const a = nouAgent(); Object.assign(a, { x: c.x + (k - 1.5) * 26, y: c.y + 48, estat: 'persegueix', ultim: { x: j.x, y: j.y }, perdut: 0, recTir: 1.2 + k * .3, mosso: true, militar: true, vida: 4, vidaMax: 4 }); if (!lliure(a.x, a.y, 12)) { a.x = c.x; a.y = c.y; } J.agents.push(a); }
-      } else { if (!c.cami.length || Math.random() < dt) c.cami = cami(c.x, c.y, Math.floor(j.x / TS), Math.floor(j.y / TS)); if (!segueixCami(c, 430, dt)) { mou(c, dx / d * 300, dy / d * 300, dt, 18); c.fx = dx / d; c.fy = dy / d; } }
+      } else { if (!c.cami.length || Math.random() < dt) c.cami = cami(c.x, c.y, Math.floor(j.x / TS), Math.floor(j.y / TS)); if (!segueixCami(c, 860, dt)) { mou(c, dx / d * 600, dy / d * 600, dt, 18); c.fx = dx / d; c.fy = dy / d; } }
     }
     else if (c.tipus === 'policia' && c.estat !== 'marxa' && !c.aPeu && (!J.liada || J.cerca < .8) && !(J.autostop && J.autostop.estat === 'dins')) { c.estat = 'marxa'; } // si ja no et busquen, se'n van
     else if (c.tipus === 'policia' && c.estat !== 'marxa') {
@@ -4526,8 +4524,8 @@ function actualitzaVehicles(dt) {
       else {
         const dx = v.x - c.x, dy = v.y - c.y, d = Math.hypot(dx, dy) || 1;
         const sc = J.mentida > 0 ? -1 : 1;
-        if (d < 240 && hiHaVista(c.x, c.y, v.x, v.y)) { mou(c, dx / d * 290 * sc, dy / d * 290 * sc, dt, 16); c.fx = dx / d * sc; c.fy = dy / d * sc; }
-        else { if (!c.cami.length || Math.random() < dt * 1.5) c.cami = cami(c.x, c.y, Math.floor(v.x / TS), Math.floor(v.y / TS)); segueixCami(c, 290, dt); }
+        if (d < 240 && hiHaVista(c.x, c.y, v.x, v.y)) { mou(c, dx / d * 600 * sc, dy / d * 600 * sc, dt, 16); c.fx = dx / d * sc; c.fy = dy / d * sc; }
+        else { if (!c.cami.length || Math.random() < dt * 1.5) c.cami = cami(c.x, c.y, Math.floor(v.x / TS), Math.floor(v.y / TS)); segueixCami(c, 600, dt); }
         if (d < 54 && J.cerca >= 1) punxada();
       }
     } else {
@@ -4541,7 +4539,7 @@ function actualitzaVehicles(dt) {
         mou(c, c.fx * 260, c.fy * 260, dt, 4);
         if (Math.hypot(j.x - c.x, j.y - c.y) < 42 && j.invul <= 0) { c.espera = 0; so('xoc'); textFlotant(c.x, c.y - 70, 'ET HE AVISAT!', '#ff5c5c', 11); return ferit("T'HA ATROPELLAT!"); }
       } else if (davant) { if ((c.pec -= dt) <= 0) { c.pec = 1.6; so('pec'); textFlotant(c.x, c.y - 50, c.espera > 4 ? "APARTA'T O ET XAFO!" : c.espera > 2 ? 'APARTA!' : 'PEC PEC!', c.espera > 4 ? '#ff9a9a' : '#fff', 9); } }
-      else if (c.tipus === 'normal' ? !condueixNPC(c, dt) : !segueixCami(c, Math.min(modelDe(c).punta * KMH, c.tipus === 'policia' ? 360 : velVia(c)), dt)) rutaCotxe(c);
+      else if (c.tipus === 'normal' ? !condueixNPC(c, dt) : !segueixCami(c, Math.min(modelDe(c).punta * KMH, c.tipus === 'policia' ? 90 * KMH : velVia(c)), dt)) rutaCotxe(c);
     }
     c.vel = Math.hypot(c.x - x0, c.y - y0) / dt;
     orienta(c, dt);
@@ -4716,7 +4714,6 @@ function actualitza(dt) {
     let fw = 0, st = 0;
     if (tecles.KeyW || tecles.ArrowUp) fw++; if (tecles.KeyS || tecles.ArrowDown) fw--; if (tecles.KeyA) st--; if (tecles.KeyD) st++;
     if (joystick.actiu) { fw = -joystick.dy; st = joystick.dx; }
-    j.ctl = { gas: fw, gir: st }; // al volant: W accelera, S frena, A/D giren
     const ca = Math.cos(j.angCam), sa = Math.sin(j.angCam);
     ix = ca * fw - sa * st; iy = sa * fw + ca * st;
     if (j.cotxe && !camAgafada && j.cotxe.vel > 40) { const d = Math.atan2(Math.sin(j.cotxe.ang - j.angCam), Math.cos(j.cotxe.ang - j.angCam)); j.angCam += d * Math.min(1, dt * 2.2); } // la càmera es posa darrere el cotxe
@@ -4733,7 +4730,7 @@ function actualitza(dt) {
     if (!(v.salt > 0)) condueix(v, j, ix, iy, m, dt);
     v.vel = Math.hypot(v.x - x0, v.y - y0) / dt;
     if (v.tipus === 'ralli') v.benzina = 100; // els cotxes de ral·li tenen el dipòsit infinit
-    else if (granMon() && !J.zona) { const ab = v.benzina; v.benzina = Math.max(0, v.benzina - v.vel * dt / 900); if (ab > 15 && v.benzina <= 15) anunci('QUEDA POCA BENZINA! BUSCA UNA GASOLINERA', 2.2); if (ab > 0 && v.benzina <= 0) anunci('SENSE BENZINA! VAS A PAS DE TORTUGA', 2.2); }
+    else if (granMon() && !J.zona) { const ab = v.benzina; v.benzina = Math.max(0, v.benzina - v.vel / KMH * 4.2 * dt / 900); if (ab > 15 && v.benzina <= 15) anunci('QUEDA POCA BENZINA! BUSCA UNA GASOLINERA', 2.2); if (ab > 0 && v.benzina <= 0) anunci('SENSE BENZINA! VAS A PAS DE TORTUGA', 2.2); }
     if (v.vel > 50 && Math.random() < dt * 6) fum(v, '#bbb', .6);
     j.x = v.x; j.y = v.y; j.fx = v.fx; j.fy = v.fy;
   } else if (m > 0.1 && !(j.ensopega > 0)) {
@@ -5870,7 +5867,7 @@ function dibuixaMans(g, w, h, hor) {
 function dibuixa() {
   const W = cv.width, H = cv.height, dpr = window.devicePixelRatio || 1;
   const vCot = J && J.jug.cotxe ? Math.abs(J.jug.cotxe.vel || 0) : 0;
-  if (J) J.zVel = (J.zVel || 0) + (Math.min(1, Math.max(0, (vCot - 200) / 700)) - (J.zVel || 0)) * .03; // com més corres, més lluny veus
+  if (J) J.zVel = (J.zVel || 0) + (Math.min(1, Math.max(0, (vCot / KMH - 50) / 170)) - (J.zVel || 0)) * .03; // com més corres, més lluny veus
   const zoom = Math.max(0.6, Math.min(1.15, Math.min(W, H) / dpr / 720)) * dpr * (1 - .36 * (J ? J.zVel : 0));
   cx.setTransform(1, 0, 0, 1, 0, 0);
   cx.fillStyle = '#1d2a22'; cx.fillRect(0, 0, W, H);
@@ -5883,7 +5880,7 @@ function dibuixa() {
     dibuixaHUD(W / dpr, H / dpr, dpr); return;
   }
   const j = J.jug;
-  { const v = j.cotxe, k = v ? Math.min(420, Math.abs(v.vel || 0) * .38) * Math.sign(v.va || 1) : 0, ox = v ? Math.cos(v.ang || 0) * k : 0, oy = v ? Math.sin(v.ang || 0) * k : 0;
+  { const v = j.cotxe, k = v ? Math.min(520, Math.abs(v.vel || 0) / KMH * 2.6) * Math.sign(v.va || 1) : 0, ox = v ? Math.cos(v.ang || 0) * k : 0, oy = v ? Math.sin(v.ang || 0) * k : 0;
     J.avanc = J.avanc || { x: 0, y: 0 }; J.avanc.x += (ox - J.avanc.x) * .05; J.avanc.y += (oy - J.avanc.y) * .05; } // la càmera mira cap on vas
   let camX = j.x + J.avanc.x - W / zoom / 2, camY = j.y + J.avanc.y - H / zoom / 2;
   if (J.tir && J.tir.cam) { camX = J.tir.cam.x - W / zoom / 2; camY = J.tir.cam.y - H / zoom / 2; } // al concurs de tir, la càmera mira les dianes
@@ -7326,13 +7323,13 @@ const RAMPES = [[180, 15.5, 'h'], [330, 15.5, 'h'], [560, 15.5, 'h'], [210, 73.5
 function actualitzaRampes(dt) {
   const j = J.jug, v = j.cotxe; if (!v || J.zona || J.ciutat !== 'capellades' || !granMon()) return;
   if (v.salt > 0) { // volant: segueix recte sense tocar a terra
-    v.salt -= dt; const vel = Math.max(380, v.velSalt || 0) * 1.1; v.x += v.fx * vel * dt; v.y += v.fy * vel * dt; j.x = v.x; j.y = v.y; v.vel = vel;
+    v.salt -= dt; const vel = Math.max(45 * KMH, v.velSalt || 0) * 1.1; v.x += v.fx * vel * dt; v.y += v.fy * vel * dt; j.x = v.x; j.y = v.y; v.vel = vel;
     if (v.salt <= 0) { J.tremolor = .5; so('cop'); for (let i = 0; i < 14; i++) J.particules.push({ x: v.x, y: v.y + 10, vx: (Math.random() - .5) * 260, vy: -Math.random() * 120, t: .6, c: '#bbb', m: 7 }); }
     return;
   }
   for (const r of RAMPES) {
     const al = r.d === 'h' ? Math.abs(v.fx) > .7 : Math.abs(v.fy) > .7;
-    if (al && v.vel > 260 && (r.d === 'h' ? Math.abs(v.x - r.x) < 30 && Math.abs(v.y - r.y) < 2.2 * TS : Math.abs(v.y - r.y) < 30 && Math.abs(v.x - r.x) < 2.2 * TS)) {
+    if (al && v.vel > 60 * KMH && (r.d === 'h' ? Math.abs(v.x - r.x) < 30 && Math.abs(v.y - r.y) < 2.2 * TS : Math.abs(v.y - r.y) < 30 && Math.abs(v.x - r.x) < 2.2 * TS)) {
       v.salt = 1.15; v.velSalt = v.vel; const fets = J.saltsFets || (J.saltsFets = new Set()), nou = !fets.has(r.id); fets.add(r.id);
       J.punts += nou ? 1000 : 250; anunci(nou ? 'SALT ÚNIC! +1000' : 'SALT! +250', 1.6); so('salt'); so('motor'); J.flash = .2;
       break;
